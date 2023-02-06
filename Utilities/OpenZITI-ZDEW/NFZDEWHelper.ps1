@@ -641,7 +641,7 @@ function RunEnroll {
 				} elseif ($CurrentMessage -EQ "PROCESS_COMPLETED_FAILURE") {
 					GoToPrint "1" "Red" "ERROR: $LastMessage"
 				}
-				if ($Verbosity -GE 3) {
+				if ($Verbosity -GE 1) {
 					GoToPrint "1" "DarkGray" "$CurrentMessage"
 				}
 				# Set the last message.
