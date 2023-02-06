@@ -8,8 +8,8 @@
 # This configuration file will be created from defaults if it does not exist or if not loaded from a cloud server.
 # You can modify the configuration file with changes which will not be overwritten if an update occurs.
 ###################################################################################################################
-#Powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing https://fragale.us/PDATA/NFZDEWHelper.ps1 -OutFile NFZDEWHelper.ps1; .\NFZDEWHelper.ps1"
-#Powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing https://fragale.us/PDATA/NFZDEWHelper.ps1 -OutFile NFZDEWHelper.ps1; .\NFZDEWHelper.ps1 -conf https://fragale.us/PDATA/NFZDEWHelper_BASICINSTALL.ps1"
+#Powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing https://github.com/NicFragale/NetFoundry/blob/545833acd40202667e22bbab18feec3936182dd0/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1 -OutFile NFZDEWHelper.ps1; .\NFZDEWHelper.ps1"
+#Powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing https://github.com/NicFragale/NetFoundry/blob/545833acd40202667e22bbab18feec3936182dd0/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1 -OutFile NFZDEWHelper.ps1; .\NFZDEWHelper.ps1 -conf https://github.com/NicFragale/NetFoundry/blob/545833acd40202667e22bbab18feec3936182dd0/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1/NFZDEWHelper_BASICINSTALL.ps1"
 ###################################################################################################################
 [CmdletBinding(PositionalBinding=$false)]
 param(
@@ -38,7 +38,7 @@ $MyPath			= Split-Path $MyInvocation.MyCommand.Path
 $ThisUser		= [System.Security.Principal.WindowsIdentity]::GetCurrent()
 $MyRootExec		= $MyInvocation.MyCommand.Name
 $MyRootName		= $MyRootExec.split(".")[0]
-$MyCommandLine	= ($MyInvocation.Line -Replace ".*$([regex]::escape($MyRootExec))(.*);?.*",'$1').Trim() 
+$MyCommandLine	= ($MyInvocation.Line -Replace ".*$([regex]::escape($MyRootExec))(.*);?.*",'$1').Trim()
 $MyConfig		= $MyPath + "\" + $MyRootName + "_config.ps1"
 $MyName			= $MyRootName + "_" + (Get-Random)
 $MyTmpPath		= $MyPath + "\" + $MyName
@@ -71,7 +71,7 @@ $OptionalCmds	= @(
 $ConfigDefaults	= '
 	$script:DefaultMode		= "environment" # Default mode if no options arguments are passed in. See help menu for options.
 	$script:AutoUpdate		= "true" # Instructs the program to check for an update to itself from the specified server (true=try to update | false=ignore).
-	$script:ServerURL		= "https://fragale.us/PDATA" # Update server URL.
+	$script:ServerURL		= "https://github.com/NicFragale/NetFoundry/blob/main/Utilities/OpenZITI-ZDEW" # Update server URL.
 	$script:ServerRootExec	= "NFZDEWHelper.ps1" # Filename of runtime on update server.
 	$script:ZDERVer			= "AUTO" # ZITI Desktop Edge (Win) version to target from repos (AUTO=find automatically | [X.XX.XX=target this version]).
 	$script:ZCLIRVer		= "AUTO" # ZITI CLI version to target from repos (AUTO=find automatically | [X.XX.XX]=target this version).
@@ -147,11 +147,11 @@ function PrintBanner ($PrintType = "INIT") {
 	}
 	foreach ($BannerLine in $($NFBanner -split "`r`n")) {
 		switch ($script:BLRandom) {
-			0 {GoToPrint "-1" "White:DarkMagenta" "$BannerLine"} 
-			1 {GoToPrint "-1" "Green:Black" "$BannerLine"} 
+			0 {GoToPrint "-1" "White:DarkMagenta" "$BannerLine"}
+			1 {GoToPrint "-1" "Green:Black" "$BannerLine"}
 			2 {GoToPrint "-1" "DarkBlue:Gray" "$BannerLine"}
-			3 {GoToPrint "-1" "DarkYellow:DarkCyan" "$BannerLine"} 
-			4 {GoToPrint "-1" "DarkRed:DarkGray" "$BannerLine"} 
+			3 {GoToPrint "-1" "DarkYellow:DarkCyan" "$BannerLine"}
+			4 {GoToPrint "-1" "DarkRed:DarkGray" "$BannerLine"}
 		}
 	}
 }
@@ -188,7 +188,7 @@ function RunGetCurrentEnv ($GetTypes="ALL") {
 		if (FindProcess "ZitiDesktopEdge") {
 			GoToPrint "1" "Green" "ZITI DESKTOP EDGE [RUNNING]."
 		} else {
-			GoToPrint "1" "Yellow" "ZITI DESKTOP EDGE [NOTRUNNING]." 
+			GoToPrint "1" "Yellow" "ZITI DESKTOP EDGE [NOTRUNNING]."
 		}
 		if (FindProcess "ziti-tunnel") {
 			GoToPrint "1" "Green" "ZITI TUNNEL [RUNNING]."
@@ -307,9 +307,9 @@ function RunAdd {
 function Parse-JWTtoken {
 	[cmdletbinding()]
 	param([Parameter(Mandatory=$true)][string]$InputJWT)
-	
+
 	# Parse the input.
-	if (-NOT($InputJWT.Contains(".")) -OR -NOT($InputJWT.StartsWith("eyJ"))) { 
+	if (-NOT($InputJWT.Contains(".")) -OR -NOT($InputJWT.StartsWith("eyJ"))) {
 		GoToPrint "1" "Red" "Invalid JWT was provided."
 		return 0
 	}
@@ -317,8 +317,8 @@ function Parse-JWTtoken {
 	# Payload.
 	$JWTPayload = $InputJWT.Split(".")[1].Replace('-', '+').Replace('_', '/')
 	# Fix padding as needed, keep adding "=" until string length modulus 4 reaches 0.
-	while ($JWTPayload.Length % 4) { 
-		$JWTPayload += "=" 
+	while ($JWTPayload.Length % 4) {
+		$JWTPayload += "="
 	}
 	# Convert to Byte array.
 	$ByteArray = [System.Convert]::FromBase64String($JWTPayload)
@@ -338,7 +338,7 @@ function RunRepoResolve ($ResolveRepo) {
 
 # Choose a method to DOWNLOAD.
 function DownloadMethod ($DLSource, $DLWhat, $DLDestination, $DLMethod="$DLDefaultMethod") {
-	GoToPrint "1" "Yellow" "Downloading [$DLWhat] from [$DLSource] using [$DLMethod], please wait..." 
+	GoToPrint "1" "Yellow" "Downloading [$DLWhat] from [$DLSource] using [$DLMethod], please wait..."
 	if ($DLMethod -EQ "WEBCLIENT") {
 		try {
 			Invoke-WebRequest -UseBasicParsing "$DLSource/$DLWhat" -OutFile "$DLDestination"
@@ -392,7 +392,7 @@ function DownloadInstall {
 		} until (Test-Path "$MyTmpPath\$ZDERBinary")
 		GoToPrint "1" "Green" "ZITI installation binary is available. Download complete."
 
-		GoToPrint "1" "Yellow" "Now installing NetFoundry software silently, please wait..." 
+		GoToPrint "1" "Yellow" "Now installing NetFoundry software silently, please wait..."
 		Start-Process "$MyTmpPath\$ZDERBinary" -WorkingDirectory "$MyTmpPath" -ArgumentList "/PASSIVE" -Wait
 
 		if ($EnrollMethod -EQ "ZCLI") {
@@ -522,7 +522,7 @@ function RunEnroll {
 					Write-Host "$PrintMessage" -ForegroundColor "$FGColor" -BackgroundColor "${BGColor}"
 				}
 			}
-		}		
+		}
 	}
 
 	$AllEnrollments | ForEach-Object {
@@ -536,10 +536,10 @@ function RunEnroll {
 			$JSONExp = (([System.DateTimeOffset]::FromUnixTimeSeconds($JSONObj.exp)).DateTime).ToString()
 			if ((Get-Date) -GT $JSONExp) {
 				GoToPrint "1" "Red" "Enrollment of [$TargetFile] failed because it is expired as of [$JSONObj]."
-				return 
+				return
 			} elseif (Test-Path -Path "$ZDEKSPath\$TargetFile.json" -PathType Leaf) {
 				GoToPrint "1" "Yellow" "Enrollment of [$TargetFile] will not occur because it has already been enrolled."
-				return 
+				return
 			} else {
 				GoToPrint "3" "DarkGray" "The JWT points towards the ZITI controller at [$($JSONObj.iss)]."
 				GoToPrint "3" "DarkGray" "The JWT has an expiration of [$JSONExp]."
@@ -547,7 +547,7 @@ function RunEnroll {
 			}
 		} else {
 			GoToPrint "1" "Red" "Enrollment of [$TargetFile] failed because it is not a valid JWT."
-			return 
+			return
 		}
 
 		GoToPrint "1" "Yellow" "Now enrolling [$TargetFile] using method [$EnrollMethod], please wait..."
@@ -568,7 +568,7 @@ function RunEnroll {
 					}
 					GoToPrint "1" "DarkGray" "Waiting for ZITI IPC pipe to become available, please wait... ($WAITCOUNT/10)"
 				} until (ZPipeRelay "OPEN")
-				GoToPrint "1" "DarkGray" "The ZITI IPC pipe became available." 
+				GoToPrint "1" "DarkGray" "The ZITI IPC pipe became available."
 				ZPipeRelay "{""Data"":{""JwtFileName"":""$TargetFile.jwt"",""JwtContent"":""$TargetJWTString""},""Command"":""AddIdentity""}\n"
 				GoToPrint "1" "DarkGray" "The ZITI IPC pipe has been sent all data."
 				ZPipeRelay "READ"
@@ -825,7 +825,7 @@ function InitialChecking ($ParameterList=$null) {
 	} finally {
 		$error.clear()
 	}
-	
+
 	PrintBanner "INIT"
 
 	if ($Verbosity -GE 2) {
