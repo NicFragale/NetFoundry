@@ -2,4 +2,3 @@
 $script:AutoUpdate      = $true
 $script:InputMode       = "install"
 $script:OverwriteInst   = $true
-$script:Verbosity       = 3
