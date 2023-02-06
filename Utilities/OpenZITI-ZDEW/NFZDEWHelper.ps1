@@ -71,7 +71,7 @@ $OptionalCmds	= @(
 $ConfigDefaults	= '
 	$script:DefaultMode		= "environment" # Default mode if no options arguments are passed in. See help menu for options.
 	$script:AutoUpdate		= "true" # Instructs the program to check for an update to itself from the specified server (true=try to update | false=ignore).
-	$script:ServerURL		= "https://github.com/NicFragale/NetFoundry/blob/main/Utilities/OpenZITI-ZDEW" # Update server URL.
+	$script:ServerURL		= "https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW" # Update server URL.
 	$script:ServerRootExec	= "NFZDEWHelper.ps1" # Filename of runtime on update server.
 	$script:ZDERVer			= "AUTO" # ZITI Desktop Edge (Win) version to target from repos (AUTO=find automatically | [X.XX.XX=target this version]).
 	$script:ZCLIRVer		= "AUTO" # ZITI CLI version to target from repos (AUTO=find automatically | [X.XX.XX]=target this version).
