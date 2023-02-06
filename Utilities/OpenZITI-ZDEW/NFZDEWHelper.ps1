@@ -467,7 +467,7 @@ function RunEnroll {
 					$script:ZIPCWRITE = New-Object System.IO.StreamWriter $script:ZIPCIO
 					$script:ZIPCWRITE.AutoFlush = $true
 				} catch {
-					$script:ZIPCIO = $null
+					PipeClose
 				}
 			}
 			function PipeSubmitPayload ($PipeInputPayload) {
@@ -475,7 +475,7 @@ function RunEnroll {
 					$script:ZIPCWRITE.WriteLine($PipeInputPayload)
 					$script:ZIPCWRITE.Flush()
 				} catch {
-					$script:ZIPCIO = $null
+					PipeClose
 				}
 			}
 			function PipeClose {
@@ -487,32 +487,52 @@ function RunEnroll {
 					$script:ZIPCIO = $null
 				}				
 			}
-			function PipeRead {
+			function PipeRead ($ReadKey="$null", $ReadValue="$null") {
 				try {
-					$script:ReturnData = $script:ZIPCREAD.ReadLine()
-					Write-Output("$script:ReturnData")
+					$script:ReturnData = $script:ZIPCREAD.ReadLine()	
+					if ($ReadKey -AND $ReadValue) {
+						GoToPrint "1" "DarkGray" "KEY:$($ReadKey), VALUE:$(($script:ReturnData | ConvertFrom-Json).$ReadKey)"
+						if ((($script:ReturnData | ConvertFrom-Json).$ReadKey).ToString() -EQ $ReadValue) {
+							return 1
+						} else {
+							return 0
+						}
+					} elseif ($ReadKey) {
+						GoToPrint "1" "DarkGray" "KEY:$($ReadKey), VALUE:$(($script:ReturnData | ConvertFrom-Json).$ReadKey)"
+					} else {
+						GoToPrint "1" "DarkGray" "$script:ReturnData"
+					}
 				} catch {
-					$script:ZIPCIO = $null
+					PipeClose
 				}				
 			}
+			function PipeStatus {
+				if ($script:ZIPCIO.IsConnected -EQ "True") {
+					return 1
+				} else {
+					return 0
+				}			
+			}			
 			if ($PipeInputPayload -EQ "CLOSE") {
 				PipeClose
 			} elseif ($PipeInputPayload -EQ "OPEN") {
 				if ($script:ZIPCIO -EQ $null -OR $script:ZIPCIO -EQ "") {
 					PipeOpen
 				}
-				if ($script:ZIPCIO.IsConnected -EQ "True") {
-					return 1
+				PipeStatus
+			} elseif ($PipeInputPayload -IMATCH "READ") {
+				if ($PipeInputPayload -IMATCH "READ:") {
+					PipeRead "$($PipeInputPayload.Split(":")[1])" "$($PipeInputPayload.Split(":")[2])"
 				} else {
-					return 0
+					PipeRead
 				}
-			} elseif ($PipeInputPayload -EQ "READ") {
-				PipeRead
-			} else {
+			} elseif (-NOT($PipeInputPayload -EQ $null)) {
 				PipeSubmitPayload "$PipeInputPayload"
+			} else {
+				PipeStatus
 			}
 		}
-		function GoToPrint ([int]$PrintLevel="1", $PrintColor="DarkGray:White", $PrintMessage="No Message") {
+		function GoToPrint ([int]$PrintLevel="1", $PrintColor="DarkGray", $PrintMessage="No Message") {
 			if (($PrintLevel -LT 0) -OR ($Verbosity -GE $PrintLevel)) {
 				if (($PrintLevel -GT 0) -AND ($Verbosity -GE 2)) {
 					$PrintMessage = "[$PrintLevel|$Verbosity|3] [$($InitSystemRuntime + [math]::Round($SystemRuntime.Elapsed.TotalSeconds,0))s] $PrintMessage"
@@ -565,7 +585,7 @@ function RunEnroll {
 			$null = Start-Job -Name "$TargetFile-ZENROLL" -InitializationScript $PipeInit -ArgumentList "$TargetJWT","$TargetFile","$Verbosity","$PrintLevel",$([math]::Round($SystemRuntime.Elapsed.TotalSeconds,0)) -ScriptBlock {
 				param($TargetJWT,$TargetFile,$Verbosity,$PrintLevel,$InitSystemRuntime)
 				$SystemRuntime = [system.diagnostics.stopwatch]::StartNew()
-				$TargetJWTString = Get-Content "$($TargetJWT)" 2>&1
+				$TargetJWTString = Get-Content "$TargetJWT" 2>&1
 				$WAITCOUNT = 0;
 				do {
 					$WAITCOUNT++
@@ -578,9 +598,6 @@ function RunEnroll {
 					GoToPrint "1" "DarkGray" "Waiting for OpenZITI IPC pipe to become available, please wait... ($WAITCOUNT/20)"
 					Start-Sleep 1
 				} until ([System.IO.Directory]::GetFiles("\\.\\pipe\\") | findstr "ziti-edge-tunnel.sock")
-
-				#GoToPrint "1" "DarkGray" "The OpenZITI IPC pipe has become available.  Allowing initialization time, please wait..."
-				#Start-Sleep 5
 
 				$WAITCOUNT = 0;
 				do {
@@ -595,7 +612,19 @@ function RunEnroll {
 					Start-Sleep 1
 				} until (ZPipeRelay "OPEN")				
 				GoToPrint "1" "DarkGray" "The OpenZITI IPC pipe is now open."
-				ZPipeRelay "{""Data"":{""JwtFileName"":""$TargetFile.jwt"",""JwtContent"":""$TargetJWTString""},""Command"":""AddIdentity""}\n"
+
+				$WAITCOUNT = 0;
+				do {
+					$WAITCOUNT++
+					if ($WAITCOUNT -GT 10) {
+						GoToPrint "1" "Red" "Enrollment of [$TargetFile] failed."
+						GoToPrint "1" "Red" "> The OpenZITI IPC pipe failed to parse and return the enrollment."
+						ZPipeRelay "CLOSE"
+						return 0
+					}
+					GoToPrint "1" "DarkGray" "Waiting for OpenZITI IPC pipe to process all data, please wait... ($WAITCOUNT/10)"
+					Start-Sleep 1
+				} until (ZPipeRelay "{""Data"":{""JwtFileName"":""$TargetFile.jwt"",""JwtContent"":""$TargetJWTString""},""Command"":""AddIdentity""}\n" -AND ZPipeRelay "READ:Success:True")
 				GoToPrint "1" "DarkGray" "The OpenZITI IPC pipe has been sent all data."
 				ZPipeRelay "READ"
 				ZPipeRelay "CLOSE"
