@@ -569,18 +569,18 @@ function RunEnroll {
 				$WAITCOUNT = 0;
 				do {
 					$WAITCOUNT++
-					if ($WAITCOUNT -GT 10) {
+					if ($WAITCOUNT -GT 20) {
 						GoToPrint "1" "Red" "Enrollment of [$TargetFile] failed."
 						GoToPrint "1" "Red" "> The OpenZITI IPC pipe failed to become available."
 						ZPipeRelay "CLOSE"
 						return 0
 					}
-					GoToPrint "1" "DarkGray" "Waiting for OpenZITI IPC pipe to become available, please wait... ($WAITCOUNT/10)"
+					GoToPrint "1" "DarkGray" "Waiting for OpenZITI IPC pipe to become available, please wait... ($WAITCOUNT/20)"
 					Start-Sleep 1
 				} until ([System.IO.Directory]::GetFiles("\\.\\pipe\\") | findstr "ziti-edge-tunnel.sock")
 
-				GoToPrint "1" "DarkGray" "The OpenZITI IPC pipe has become available.  Allowing initialization time, please wait..."
-				Start-Sleep 5
+				#GoToPrint "1" "DarkGray" "The OpenZITI IPC pipe has become available.  Allowing initialization time, please wait..."
+				#Start-Sleep 5
 
 				$WAITCOUNT = 0;
 				do {
