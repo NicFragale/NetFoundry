@@ -8,8 +8,8 @@
 # This configuration file will be created from defaults if it does not exist or if not loaded from a cloud server.
 # You can modify the configuration file with changes which will not be overwritten if an update occurs.
 ###################################################################################################################
-#Powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing https://github.com/NicFragale/NetFoundry/blob/545833acd40202667e22bbab18feec3936182dd0/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1 -OutFile NFZDEWHelper.ps1; .\NFZDEWHelper.ps1"
-#Powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing https://github.com/NicFragale/NetFoundry/blob/545833acd40202667e22bbab18feec3936182dd0/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1 -OutFile NFZDEWHelper.ps1; .\NFZDEWHelper.ps1 -conf https://github.com/NicFragale/NetFoundry/blob/545833acd40202667e22bbab18feec3936182dd0/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1/NFZDEWHelper_BASICINSTALL.ps1"
+#Powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1 -OutFile NFZDEWHelper.ps1; .\NFZDEWHelper.ps1"
+#Powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1 -conf https://github.com/NicFragale/NetFoundry/blob/545833acd40202667e22bbab18feec3936182dd0/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1/NFZDEWHelper_BASICINSTALL.ps1"
 ###################################################################################################################
 [CmdletBinding(PositionalBinding=$false)]
 param(
