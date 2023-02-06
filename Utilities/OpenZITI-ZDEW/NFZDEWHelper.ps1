@@ -183,19 +183,19 @@ function RunGetCurrentEnv ($GetTypes="ALL") {
 	if (($GetTypes -EQ "ALL") -OR ($GetTypes -EQ "ZPROCESSES")) {
 		GoToPrint "1" "White:DarkCyan" "######## ZITIPROCESSINFO ########"
 		if (FindProcess "ZitiDesktopEdge") {
-			GoToPrint "1" "Green" "ZITI DESKTOP EDGE [RUNNING]."
+			GoToPrint "1" "Green" "OPENZITI WINDOWS DESKTOP EDGE [RUNNING]."
 		} else {
-			GoToPrint "1" "Yellow" "ZITI DESKTOP EDGE [NOTRUNNING]."
+			GoToPrint "1" "Yellow" "OPENZITI WINDOWS DESKTOP EDGE [NOTRUNNING]."
 		}
 		if (FindProcess "ziti-tunnel") {
-			GoToPrint "1" "Green" "ZITI TUNNEL [RUNNING]."
+			GoToPrint "1" "Green" "OPENZITI WINDOWS TUNNEL [RUNNING]."
 		} else {
-			GoToPrint "1" "Yellow" "ZITI TUNNEL [NOTRUNNING]."
+			GoToPrint "1" "Yellow" "OPENZITI WINDOWS TUNNEL [NOTRUNNING]."
 		}
 		if (FindProcess "ZitiUpdateService") {
-			GoToPrint "1" "Green" "ZITI UPDATE SERVICE [RUNNING]."
+			GoToPrint "1" "Green" "OPENZITI WINDOWS UPDATE SERVICE [RUNNING]."
 		} else {
-			GoToPrint "1" "Yellow" "ZITI UPDATE SERVICE [NOTRUNNING]."
+			GoToPrint "1" "Yellow" "OPENZITI WINDOWS UPDATE SERVICE [NOTRUNNING]."
 		}
 	}
 
@@ -384,10 +384,10 @@ function DownloadInstall {
 				GoToPrint "1" "White:Red" "Download failed. Cannot continue."
 				return 0
 			}
-			GoToPrint "1" "DarkGray" "Waiting for ZITI installation binary to become available, please wait... ($WAITCOUNT/10)"
+			GoToPrint "1" "DarkGray" "Waiting for OpenZITI installation binary to become available, please wait... ($WAITCOUNT/10)"
 			Start-Sleep 1
 		} until (Test-Path "$MyTmpPath\$ZDERBinary")
-		GoToPrint "1" "Green" "ZITI installation binary is available. Download complete."
+		GoToPrint "1" "Green" "OpenZITI installation binary is available. Download complete."
 
 		GoToPrint "1" "Yellow" "Now installing NetFoundry software silently, please wait..."
 		Start-Process "$MyTmpPath\$ZDERBinary" -WorkingDirectory "$MyTmpPath" -ArgumentList "/PASSIVE" -Wait
@@ -402,10 +402,10 @@ function DownloadInstall {
 			return 1
 		} else {
 			if (-NOT (Test-Path "$ZRPath\$ZUIRBinary"))  {
-				GoToPrint "1" "White:Red" "ZITI runtime binary at path [$ZRPath\$ZUIRBinary] does not exist."
+				GoToPrint "1" "White:Red" "OpenZITI runtime binary at path [$ZRPath\$ZUIRBinary] does not exist."
 			}
 			if (($EnrollMethod -EQ "NATIVE") -AND (-NOT (Test-Path "$ZDECLIEnroll")))  {
-				GoToPrint "1" "White:Red" "ZITI CLI at path [$ZDECLIEnroll] does not exist."
+				GoToPrint "1" "White:Red" "OpenZITI CLI at path [$ZDECLIEnroll] does not exist."
 			}
 			GoToPrint "1" "White:Red" "Install failed.  Cannot continue."
 			return 0
@@ -456,7 +456,7 @@ function RunEnroll {
 
 	}
 
-	# Interworking for the ZITI Pipe system.
+	# Interworking for the OpenZITI Pipe system.
 	$PipeInit = {
 		function ZPipeRelay ($PipeInputPayload) {
 			function PipeOpen {
@@ -538,7 +538,7 @@ function RunEnroll {
 				GoToPrint "1" "Yellow" "Enrollment of [$TargetFile] will not occur because it has already been enrolled."
 				return
 			} else {
-				GoToPrint "3" "DarkGray" "The JWT points towards the ZITI controller at [$($JSONObj.iss)]."
+				GoToPrint "3" "DarkGray" "The JWT points towards the OpenZITI controller at [$($JSONObj.iss)]."
 				GoToPrint "3" "DarkGray" "The JWT has an expiration of [$JSONExp]."
 				GoToPrint "3" "Green" "Enrollment of [$TargetFile] proceeding."
 			}
@@ -559,15 +559,30 @@ function RunEnroll {
 					$WAITCOUNT++
 					if ($WAITCOUNT -GT 10) {
 						GoToPrint "1" "Red" "Enrollment of [$TargetFile] failed."
-						GoToPrint "1" "Red" "> The ZITI IPC pipe failed to become available."
+						GoToPrint "1" "Red" "> The OpenZITI IPC pipe failed to become available."
 						ZPipeRelay "CLOSE"
 						return 0
 					}
-					GoToPrint "1" "DarkGray" "Waiting for ZITI IPC pipe to become available, please wait... ($WAITCOUNT/10)"
-				} until (ZPipeRelay "OPEN")
-				GoToPrint "1" "DarkGray" "The ZITI IPC pipe became available."
+					GoToPrint "1" "DarkGray" "Waiting for OpenZITI IPC pipe to become available, please wait... ($WAITCOUNT/10)"
+				} until ([System.IO.Directory]::GetFiles("\\.\\pipe\\") | findstr "ziti-edge-tunnel.sock")
+
+				GoToPrint "1" "DarkGray" "The OpenZITI IPC pipe has become available.  Allowing initialization time, please wait..."
+				Start-Sleep 5
+
+				$WAITCOUNT = 0;
+				do {
+					$WAITCOUNT++
+					if ($WAITCOUNT -GT 10) {
+						GoToPrint "1" "Red" "Enrollment of [$TargetFile] failed."
+						GoToPrint "1" "Red" "> The OpenZITI IPC pipe failed open."
+						ZPipeRelay "CLOSE"
+						return 0
+					}
+					GoToPrint "1" "DarkGray" "Waiting for OpenZITI IPC pipe to open, please wait... ($WAITCOUNT/10)"
+				} until (ZPipeRelay "OPEN")				
+				GoToPrint "1" "DarkGray" "The OpenZITI IPC pipe is now open."
 				ZPipeRelay "{""Data"":{""JwtFileName"":""$TargetFile.jwt"",""JwtContent"":""$TargetJWTString""},""Command"":""AddIdentity""}\n"
-				GoToPrint "1" "DarkGray" "The ZITI IPC pipe has been sent all data."
+				GoToPrint "1" "DarkGray" "The OpenZITI IPC pipe has been sent all data."
 				ZPipeRelay "READ"
 				ZPipeRelay "CLOSE"
 			}
