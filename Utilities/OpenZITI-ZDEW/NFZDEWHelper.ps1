@@ -338,7 +338,7 @@ function DownloadMethod ($DLSource, $DLWhat, $DLDestination, $DLMethod="$DLDefau
 	GoToPrint "1" "Yellow" "Downloading [$DLWhat] from [$DLSource] using [$DLMethod], please wait..."
 	if ($DLMethod -EQ "WEBCLIENT") {
 		try {
-			Invoke-WebRequest -Disable KeepAlive -UseBasicParsing "$DLSource/$DLWhat" -OutFile "$DLDestination"
+			Invoke-WebRequest -DisableKeepAlive -UseBasicParsing "$DLSource/$DLWhat" -OutFile "$DLDestination"
 		} catch {
 	  		$BTRETURN = $_
 		}
@@ -915,7 +915,7 @@ function InitialChecking ($ParameterList=$null) {
 		$CentralConfFile = ($CentralConfURL -Split "/")[-1]
 		$CentralConfServer = $CentralConfURL -Replace "/$CentralConfFile"
 		try {
-			$CentralConfContext = Invoke-WebRequest -Disable KeepAlive -UseBasicParsing "$CentralConfURL"
+			$CentralConfContext = Invoke-WebRequest -DisableKeepAlive -UseBasicParsing "$CentralConfURL"
 			if ($Verbosity -GE 2) {
 				GoToPrint "2" "White:Black" "CentralConfContext:"
 				GoToPrint "1" "DarkGray" "$CentralConfContext"
