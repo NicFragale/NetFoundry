@@ -8,9 +8,6 @@
 # This configuration file will be created from defaults if it does not exist or if not loaded from a cloud server.
 # You can modify the configuration file with changes which will not be overwritten if an update occurs.
 ###################################################################################################################
-#Powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1 -OutFile NFZDEWHelper.ps1; .\NFZDEWHelper.ps1"
-#Powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1 -conf https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW/NFZDEWHelper_BASICINSTALL.ps1"
-###################################################################################################################
 [CmdletBinding(PositionalBinding=$false)]
 param(
 	[Parameter()][Alias('Resolve')][string]$InputModeResolve,
