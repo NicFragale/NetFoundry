@@ -535,7 +535,7 @@ function RunEnroll {
 				if (($PrintLevel -GT 0) -AND ($Verbosity -GE 2)) {
 					$PrintMessage = "[$PrintLevel|$Verbosity|3] [$($InitSystemRuntime + [math]::Round($SystemRuntime.Elapsed.TotalSeconds,0))s] $PrintMessage"
 				} elseif (($PrintLevel -GT 0) -AND ($Verbosity -GE 0)) {
-					$PrintMessage = "[$([math]::Round($SystemRuntime.Elapsed.TotalSeconds,0))s] $PrintMessage"
+					$PrintMessage = "[$($InitSystemRuntime + [math]::Round($SystemRuntime.Elapsed.TotalSeconds,0))s] $PrintMessage"
 				}
 				$private:FGColor = $PrintColor.Split(":")[0]
 				$private:BGColor = $PrintColor.Split(":")[1]
