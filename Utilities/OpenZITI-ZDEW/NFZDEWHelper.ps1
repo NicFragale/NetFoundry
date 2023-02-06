@@ -491,16 +491,16 @@ function RunEnroll {
 				try {
 					$script:ReturnData = $script:ZIPCREAD.ReadLine()	
 					if ($ReadKey -AND $ReadValue) {
-						GoToPrint "1" "DarkGray" "KEY:$($ReadKey), VALUE:$(($script:ReturnData | ConvertFrom-Json).$ReadKey)"
+						Write-Host("KEY:$($ReadKey), VALUE:$(($script:ReturnData | ConvertFrom-Json).$ReadKey)")
 						if ((($script:ReturnData | ConvertFrom-Json).$ReadKey).ToString() -EQ $ReadValue) {
 							return 1
 						} else {
 							return 0
 						}
 					} elseif ($ReadKey) {
-						GoToPrint "1" "DarkGray" "KEY:$($ReadKey), VALUE:$(($script:ReturnData | ConvertFrom-Json).$ReadKey)"
+						Write-Host("KEY:$($ReadKey), VALUE:$(($script:ReturnData | ConvertFrom-Json).$ReadKey)")
 					} else {
-						GoToPrint "1" "DarkGray" "$script:ReturnData"
+						Write-Host("$script:ReturnData")
 					}
 				} catch {
 					PipeClose
@@ -530,26 +530,6 @@ function RunEnroll {
 				PipeSubmitPayload "$PipeInputPayload"
 			} else {
 				PipeStatus
-			}
-		}
-		function GoToPrint ([int]$PrintLevel="1", $PrintColor="DarkGray", $PrintMessage="No Message") {
-			if (($PrintLevel -LT 0) -OR ($Verbosity -GE $PrintLevel)) {
-				if (($PrintLevel -GT 0) -AND ($Verbosity -GE 2)) {
-					$PrintMessage = "[$PrintLevel|$Verbosity|3] [$($InitSystemRuntime + [math]::Round($SystemRuntime.Elapsed.TotalSeconds,0))s] $PrintMessage"
-				} elseif (($PrintLevel -GT 0) -AND ($Verbosity -GE 0)) {
-					$PrintMessage = "[$([math]::Round($SystemRuntime.Elapsed.TotalSeconds,0))s] $PrintMessage"
-				}
-				$private:FGColor = $PrintColor.Split(":")[0]
-				$private:BGColor = $PrintColor.Split(":")[1]
-				if ($FGColor -EQ $BGColor) {
-					Write-Host "$PrintMessage" -ForegroundColor "$FGColor"
-				} elseif (($FGColor) -AND (-NOT($BGColor))) {
-					Write-Host "$PrintMessage" -ForegroundColor "$FGColor"
-				} elseif (($BGColor) -AND (-NOT($FGColor))) {
-					Write-Host "$PrintMessage" -BackgroundColor "$BGColor"
-				} else {
-					Write-Host "$PrintMessage" -ForegroundColor "$FGColor" -BackgroundColor "${BGColor}"
-				}
 			}
 		}
 	}
@@ -618,38 +598,36 @@ function RunEnroll {
 					$WAITCOUNT++
 					if ($WAITCOUNT -GT 10) {
 						GoToPrint "1" "Red" "Enrollment of [$TargetFile] failed."
-						GoToPrint "1" "Red" "> The OpenZITI IPC pipe failed to parse and return the enrollment."
+						Write-Host("PROCESS_COMPLETED_FAILURE")
 						ZPipeRelay "CLOSE"
 						return 0
 					}
-					GoToPrint "1" "DarkGray" "Waiting for OpenZITI IPC pipe to process all data, please wait... ($WAITCOUNT/10)"
+					GoToPrint "1" "DarkGray" "Waiting for OpenZITI IPC pipe to process the enrollment, please wait... ($WAITCOUNT/10)"
 					Start-Sleep 1
 				} until (ZPipeRelay "{""Data"":{""JwtFileName"":""$TargetFile.jwt"",""JwtContent"":""$TargetJWTString""},""Command"":""AddIdentity""}\n" -AND ZPipeRelay "READ:Success:True")
-				GoToPrint "1" "DarkGray" "The OpenZITI IPC pipe has been sent all data."
-				ZPipeRelay "READ"
+				GoToPrint "1" "Green" "The OpenZITI IPC pipe has processed the enrollment successfully."
+				Write-Host("PROCESS_COMPLETED_SUCCESS")
 				ZPipeRelay "CLOSE"
 			}
 
 			# Begin review of enrollment process until no more data is available on the process.
 			$EnrollState = $false
 			do {
-				$CurrentLine = Get-Job -Name "$TargetFile-ZENROLL" | Receive-Job
-				if ([string]::IsNullOrWhiteSpace($CurrentLine)) {
+				$CurrentMessage = Get-Job -Name "$TargetFile-ZENROLL" | Receive-Job
+				if ([string]::IsNullOrWhiteSpace($CurrentMessage)) {
 					continue
-				} else {
-					$CurrentLinePayload = $CurrentLine | ConvertFrom-Json
-					$ErrorMessage = $CurrentLinePayload.Error
 				}
-				# Successful enrollment.  Flag TRUE.
-				if ($CurrentLine.Contains("""Success"":true")) {
+				# Enrollment flags.
+				if ($CurrentMessage -EQ "PROCESS_COMPLETED_SUCCESS") {
 					$EnrollState = $true
-				} else {
-					$CurrentLinePayload = $CurrentLine | ConvertFrom-Json
-					$ErrorMessage = $CurrentLinePayload.Error
-					if (($ErrorMessage) -AND ($Verbosity -GE 3)) {
-						GoToPrint "1" "Red" "$CurrentLine"
-					}
+				} elseif ($CurrentMessage -EQ "PROCESS_COMPLETED_FAILURE") {
+					GoToPrint "1" "Red" "$LastMessage"
 				}
+				if ($Verbosity -GE 3) {
+					GoToPrint "1" "DarkGray" "$CurrentMessage"
+				}
+				# Set the last message.
+				$LastMessage = $CurrentMessage
 			} while (((Get-Job -Name "$TargetFile-ZENROLL").HasMoreData) -EQ "True")
 
 			# If the flag of TRUE was caught, review that data payload from the output.
