@@ -488,7 +488,7 @@ function RunEnroll {
 			function PipeRead ($ReadKey="$null", $ReadValue="$null") {
 				try {
 					$script:ReturnData = $script:ZIPCREAD.ReadLine()	
-					Write-Host("$script:ReturnData")
+					Write-Host($script:ReturnData)
 					if ($ReadKey -AND $ReadValue) {
 						Write-Host("KEY:$($ReadKey), VALUE:$(($script:ReturnData | ConvertFrom-Json).$ReadKey)")
 						if ((($script:ReturnData | ConvertFrom-Json).$ReadKey).ToString() -EQ $ReadValue) {
@@ -499,7 +499,7 @@ function RunEnroll {
 					} elseif ($ReadKey) {
 						Write-Host("KEY:$($ReadKey), VALUE:$(($script:ReturnData | ConvertFrom-Json).$ReadKey)")
 					} else {
-						Write-Host("$script:ReturnData")
+						Write-Host($script:ReturnData)
 					}
 				} catch {
 					PipeClose
