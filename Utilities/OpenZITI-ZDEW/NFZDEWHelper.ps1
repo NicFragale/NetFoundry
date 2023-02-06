@@ -427,7 +427,7 @@ function RunEnroll {
 
 		if ($InputJWT.length -LT 500) {
 			GoToPrint "1" "Red" "ERROR: The input JWT string is not correct for processing."
-			return 0
+			return 
 		}
 		Set-Content $TargetJWT $InputJWT 2>&1 | out-null
 		$AllEnrollments = New-Object -TypeName psobject
@@ -449,7 +449,7 @@ function RunEnroll {
 		$AllEnrollments = Get-ChildItem -Path $MyPath *.jwt -File -ErrorAction SilentlyContinue
 		if ($AllEnrollments.count -EQ 0) {
 			GoToPrint "1" "Yellow" "WARNING: There were no JWTs for enrollment in the local path."
-			return 0
+			return
 		} else {
 			GoToPrint "1" "Green" "Found [$($AllEnrollments.count)] enrollments to process."
 		}
