@@ -471,17 +471,29 @@ function RunEnroll {
 				}
 			}
 			function PipeSubmitPayload ($PipeInputPayload) {
-				$script:ZIPCWRITE.WriteLine($PipeInputPayload)
-				$script:ZIPCWRITE.Flush()
+				try {
+					$script:ZIPCWRITE.WriteLine($PipeInputPayload)
+					$script:ZIPCWRITE.Flush()
+				} catch {
+					$script:ZIPCIO = $null
+				}
 			}
 			function PipeClose {
-				$script:ZIPCREAD.Dispose()
-				$script:ZIPCIO.Dispose()
-				$script:ZIPCIO = $null
+				try {
+					$script:ZIPCREAD.Dispose()
+					$script:ZIPCIO.Dispose()
+					$script:ZIPCIO = $null
+				} catch {
+					$script:ZIPCIO = $null
+				}				
 			}
 			function PipeRead {
-				$script:ReturnData = $script:ZIPCREAD.ReadLine()
-				Write-Output("$script:ReturnData")
+				try {
+					$script:ReturnData = $script:ZIPCREAD.ReadLine()
+					Write-Output("$script:ReturnData")
+				} catch {
+					$script:ZIPCIO = $null
+				}				
 			}
 			if ($PipeInputPayload -EQ "CLOSE") {
 				PipeClose
@@ -564,6 +576,7 @@ function RunEnroll {
 						return 0
 					}
 					GoToPrint "1" "DarkGray" "Waiting for OpenZITI IPC pipe to become available, please wait... ($WAITCOUNT/10)"
+					Start-Sleep 1
 				} until ([System.IO.Directory]::GetFiles("\\.\\pipe\\") | findstr "ziti-edge-tunnel.sock")
 
 				GoToPrint "1" "DarkGray" "The OpenZITI IPC pipe has become available.  Allowing initialization time, please wait..."
@@ -579,6 +592,7 @@ function RunEnroll {
 						return 0
 					}
 					GoToPrint "1" "DarkGray" "Waiting for OpenZITI IPC pipe to open, please wait... ($WAITCOUNT/10)"
+					Start-Sleep 1
 				} until (ZPipeRelay "OPEN")				
 				GoToPrint "1" "DarkGray" "The OpenZITI IPC pipe is now open."
 				ZPipeRelay "{""Data"":{""JwtFileName"":""$TargetFile.jwt"",""JwtContent"":""$TargetJWTString""},""Command"":""AddIdentity""}\n"
