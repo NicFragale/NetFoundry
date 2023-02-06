@@ -377,7 +377,7 @@ function DownloadInstall {
 
 	if ([string]::IsNullOrWhiteSpace($BTRETURN)) {
 
-		$WAITCOUNT = 0
+		$WAITCOUNT = 0;
 		do {
 			$WAITCOUNT++
 			if ($WAITCOUNT -GT 10) {
@@ -584,7 +584,7 @@ function RunEnroll {
 				param($TargetJWT,$TargetFile,$Verbosity,$PrintLevel,$InitSystemRuntime)
 				$SystemRuntime = [system.diagnostics.stopwatch]::StartNew()
 				$TargetJWTString = Get-Content "$TargetJWT" 2>&1
-				$WAITCOUNT = 0
+				$WAITCOUNT = 0;
 				do {
 					$WAITCOUNT++
 					if ($WAITCOUNT -GT 20) {
@@ -597,7 +597,7 @@ function RunEnroll {
 					Start-Sleep 1
 				} until ([System.IO.Directory]::GetFiles("\\.\\pipe\\") | findstr "ziti-edge-tunnel.sock")
 
-				$WAITCOUNT = 0
+				$WAITCOUNT = 0;
 				do {
 					$WAITCOUNT++
 					if ($WAITCOUNT -GT 10) {
@@ -611,7 +611,7 @@ function RunEnroll {
 				} until (ZPipeRelay "OPEN")				
 				GoToPrint "1" "DarkGray" "The OpenZITI IPC pipe is now open."
 
-				$WAITCOUNT = 0
+				$WAITCOUNT = 0;
 				do {
 					$WAITCOUNT++
 					if ($WAITCOUNT -GT 10) {
@@ -650,7 +650,7 @@ function RunEnroll {
 
 			# If the flag of TRUE was caught, review that data payload from the output.
 			if ($EnrollState) {
-				$WAITCOUNT = 0
+				$WAITCOUNT = 0;
 				do {
 					$WAITCOUNT++
 					if ($WAITCOUNT -GT 5) {
@@ -675,7 +675,7 @@ function RunEnroll {
 				Start-Process "$ZTUNRBinary" -WorkingDirectory "$ZRPath" -ArgumentList "stop" -Wait
 				Start-Sleep 2
 				Start-Process "$ZTUNRBinary" -WorkingDirectory "$ZRPath" -ArgumentList "start" -Wait
-				$WAITCOUNT = 0
+				$WAITCOUNT = 0;
 				do {
 					$WAITCOUNT++
 					if ($WAITCOUNT -GT 30) {
