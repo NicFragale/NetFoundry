@@ -17,6 +17,7 @@ This command is broken down as:
 * Invoke-WebRequest (Powershell Commandlet) is run to retrieve this utility from GitHub and place it into a file located in the folder where the command was launched from.
 * Subsequent to download of the utility, it is run in the same Powershell session with a [-conf] flag which is to be used for default configurations for running.  This option is not required, but helps to simplify the command syntax for installation.  
 * The configuration file is also pulled from GitHub.  Feel free to review it, download it locally, modify it, or remove it from the option chain.
+* If you wish to use an identity [JWTs] through the file context instead of transferring the file itself, you may add [-JWT (JWTCONTEXT)] to the runtime options string.
 
 Once run, the command performs the following:
 1. Downloads the latest version of the NetFoundry OpenZITI Desktop Edge for Windows.
