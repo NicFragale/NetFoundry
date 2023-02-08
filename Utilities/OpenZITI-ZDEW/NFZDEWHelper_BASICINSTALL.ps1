@@ -1,4 +1,4 @@
-# The following "Defaults" will be used when this file is referenced as a configuration.
+# The following "defaults" will be used when this file is referenced as a configuration.
 $script:DefaultMode		= "install" # Default mode if no options arguments are passed in. See help menu for options.
 #$script:AutoUpdate		= "true" # Instructs the program to check for an update to itself from the specified server (true=try to update | false=ignore).
 #$script:ServerURL		= "https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW" # Update server URL.
