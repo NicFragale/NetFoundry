@@ -27,33 +27,33 @@ param(
 )
 
 ### STATIC VARIABLES LOADER ###
-$MyWarranty		= "This program comes without any warranty, implied or otherwise."
-$MyLicense		= "This program utilizes the Apache 2.0 license."
-$MyVersion		= "20230208"
-$SystemRuntime	= [system.diagnostics.stopwatch]::StartNew()
-$MyPath			= Split-Path $MyInvocation.MyCommand.Path
-$ThisUser		= [System.Security.Principal.WindowsIdentity]::GetCurrent()
-$MyRootExec		= $MyInvocation.MyCommand.Name
-$MyRootName		= $MyRootExec.split(".")[0]
-$MyCommandLine	= ($MyInvocation.Line -Replace ".*$([regex]::escape($MyRootExec))(.*);?.*",'$1').Trim()
-$MyConfig		= $MyPath + "\" + $MyRootName + "_config.ps1"
-$MyName			= $MyRootName + "_" + (Get-Random)
-$MyTmpPath		= $MyPath + "\" + $MyName
-$ZDEKSPath		= "$env:windir\System32\config\systemprofile\AppData\Roaming\NetFoundry"
-$ZSWName		= "NetFoundry, Inc.\Ziti Desktop Edge"
-$RegistryZSW	= "HKLM:\SOFTWARE\$ZSWName"
-$RegistryNRPT	= "HKLM:\SYSTEM\ControlSet001\Services\Dnscache\Parameters\DnsPolicyConfig"
-$ZRPath			= "${env:ProgramFiles(x86)}\$ZSWName"
-$ZTUNRBinary	= "ziti-tunnel.exe"
-$ZUIRBinary		= "ZitiDesktopEdge.exe"
+$MyWarranty     = "This program comes without any warranty, implied or otherwise."
+$MyLicense      = "This program utilizes the Apache 2.0 license."
+$MyVersion      = "20230208"
+$SystemRuntime  = [system.diagnostics.stopwatch]::StartNew()
+$MyPath         = Split-Path $MyInvocation.MyCommand.Path
+$ThisUser       = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+$MyRootExec     = $MyInvocation.MyCommand.Name
+$MyRootName     = $MyRootExec.split(".")[0]
+$MyCommandLine  = ($MyInvocation.Line -Replace ".*$([regex]::escape($MyRootExec))(.*);?.*",'$1').Trim()
+$MyConfig       = $MyPath + "\" + $MyRootName + "_config.ps1"
+$MyName         = $MyRootName + "_" + (Get-Random)
+$MyTmpPath      = $MyPath + "\" + $MyName
+$ZDEKSPath      = "$env:windir\System32\config\systemprofile\AppData\Roaming\NetFoundry"
+$ZSWName        = "NetFoundry, Inc.\Ziti Desktop Edge"
+$RegistryZSW    = "HKLM:\SOFTWARE\$ZSWName"
+$RegistryNRPT   = "HKLM:\SYSTEM\ControlSet001\Services\Dnscache\Parameters\DnsPolicyConfig"
+$ZRPath         = "${env:ProgramFiles(x86)}\$ZSWName"
+$ZTUNRBinary    = "ziti-tunnel.exe"
+$ZUIRBinary     = "ZitiDesktopEdge.exe"
 $ZTCLIRBinary   = "ziti.exe"
-$ZDERRepo		= "https://api.github.com/repos/openziti/desktop-edge-win/releases/latest"
-$ZCLIRRepo		= "https://api.github.com/repos/openziti/ziti/releases/latest"
-$ZDERTarget		= "https://github.com/openziti/desktop-edge-win/releases/download"
-$ZCLIRTarget	= "https://github.com/openziti/ziti/releases/download"
-$DisplayName	= "NetFoundry DNS Redirect"
-$Comment		= "Created by $MyRootName"
-$RequiredCmds	= @(
+$ZDERRepo       = "https://api.github.com/repos/openziti/desktop-edge-win/releases/latest"
+$ZCLIRRepo      = "https://api.github.com/repos/openziti/ziti/releases/latest"
+$ZDERTarget     = "https://github.com/openziti/desktop-edge-win/releases/download"
+$ZCLIRTarget    = "https://github.com/openziti/ziti/releases/download"
+$DisplayName    = "NetFoundry DNS Redirect"
+$Comment        = "Created by $MyRootName"
+$RequiredCmds   = @(
 	"Get-Command","Split-Path","Write-Host","Select-Object","Out-String","Format-Table","Sort-Object","Test-Path",
 	"Invoke-Expression","Invoke-Command","Get-FileHash","Get-CimInstance","Read-Host","ForEach-Object","Start-Sleep","Expand-Archive",
 	"Rename-Item","Get-ItemProperty","Set-Content","New-Object","Add-Member","Get-ChildItem","New-Item","Get-Content","Move-Item","Remove-Item",
