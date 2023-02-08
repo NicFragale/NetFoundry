@@ -1,5 +1,5 @@
  ###################################################################################################################
-# NFZDEWHelper - A helper utility for installing/enrolling/DNSing NetFoundry ZITI on Windows.
+# NFZDEWHelper - A helper utility for installing/enrolling/DNSing NetFoundry OpenZITI Desktop Edge for Windows.
 # Written by Nic Fragale @ NetFoundry.
 ###################################################################################################################
 ############################################# DO NOT MODIFY THIS FILE #############################################
@@ -29,7 +29,7 @@ param(
 ### STATIC VARIABLES LOADER ###
 $MyWarranty		= "This program comes without any warranty, implied or otherwise."
 $MyLicense		= "This program utilizes the Apache 2.0 license."
-$MyVersion		= "20230207"
+$MyVersion		= "20230208"
 $SystemRuntime	= [system.diagnostics.stopwatch]::StartNew()
 $MyPath			= Split-Path $MyInvocation.MyCommand.Path
 $ThisUser		= [System.Security.Principal.WindowsIdentity]::GetCurrent()
@@ -39,11 +39,11 @@ $MyCommandLine	= ($MyInvocation.Line -Replace ".*$([regex]::escape($MyRootExec))
 $MyConfig		= $MyPath + "\" + $MyRootName + "_config.ps1"
 $MyName			= $MyRootName + "_" + (Get-Random)
 $MyTmpPath		= $MyPath + "\" + $MyName
-$ZDEKSPath		= "C:\Windows\System32\config\systemprofile\AppData\Roaming\NetFoundry"
+$ZDEKSPath		= "$env:windir\System32\config\systemprofile\AppData\Roaming\NetFoundry"
 $ZSWName		= "NetFoundry, Inc.\Ziti Desktop Edge"
 $RegistryZSW	= "HKLM:\SOFTWARE\$ZSWName"
 $RegistryNRPT	= "HKLM:\SYSTEM\ControlSet001\Services\Dnscache\Parameters\DnsPolicyConfig"
-$ZRPath			= "C:\Program Files (x86)\$ZSWName"
+$ZRPath			= "${env:ProgramFiles(x86)}\$ZSWName"
 $ZTUNRBinary	= "ziti-tunnel.exe"
 $ZUIRBinary		= "ZitiDesktopEdge.exe"
 $ZTCLIRBinary   = "ziti.exe"
