@@ -66,22 +66,22 @@ $OptionalCmds	= @(
 
 ### INTERNAL CONFIGURATION DEFAULTS ###
 $ConfigDefaults	= '
-	$script:DefaultMode		= "environment" # Default mode if no options arguments are passed in. See help menu for options.
-	$script:AutoUpdate		= "true" # Instructs the program to check for an update to itself from the specified server (true=try to update | false=ignore).
-	$script:ServerURL		= "https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW" # Update server URL.
-	$script:ServerRootExec	= "NFZDEWHelper.ps1" # Filename of runtime on update server.
-	$script:ZDERVer			= "AUTO" # ZITI Desktop Edge (Win) version to target from repos (AUTO=find automatically | [X.XX.XX=target this version]).
-	$script:ZCLIRVer		= "AUTO" # ZITI CLI version to target from repos (AUTO=find automatically | [X.XX.XX]=target this version).
-	$script:OverwriteInst	= "false" # If set to "true" will overwrite if software already exists (true=overwrite | false=ignore).
-	$script:JWTObtain		= "SEARCH" # Default Enrollment Action when no JWT string is passed in (ASK=Ask with prompt for JWT string | SEARCH=Find any JWTs in local dir).
-	$script:EnrollMethod	= "NATIVE" # Method in which to invoke enrollment (NATIVE=IPC | ZCLI=ZITI CLI).
-	$script:DLDefaultMethod	= "BITS" # The default method by which to request downloads (BITS | WEBCLIENT).
-	$script:LogElevation	= "true" # A flag which causes the elevation event and subsequent runtime to be placed into a log file (true=logging enabled | false=no logging).
-	$script:AddSuffix		= "domain.local" # Change the following DOMAIN and NAMESERVERS as appropriate.
-	$script:Domain			= @(
+	$script:DefaultMode     = "environment" # Default mode if no options arguments are passed in. See help menu for options.
+	$script:AutoUpdate      = "true" # Instructs the program to check for an update to itself from the specified server (true=try to update | false=ignore).
+	$script:ServerURL       = "https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW" # Update server URL.
+	$script:ServerRootExec  = "NFZDEWHelper.ps1" # Filename of runtime on update server.
+	$script:ZDERVer         = "AUTO" # ZITI Desktop Edge (Win) version to target from repos (AUTO=find automatically | [X.XX.XX=target this version]).
+	$script:ZCLIRVer        = "AUTO" # ZITI CLI version to target from repos (AUTO=find automatically | [X.XX.XX]=target this version).
+	$script:OverwriteInst   = "false" # If set to "true" will overwrite if software already exists (true=overwrite | false=ignore).
+	$script:JWTObtain       = "SEARCH" # Default Enrollment Action when no JWT string is passed in (ASK=Ask with prompt for JWT string | SEARCH=Find any JWTs in local dir).
+	$script:EnrollMethod    = "NATIVE" # Method in which to invoke enrollment (NATIVE=IPC | ZCLI=ZITI CLI).
+	$script:DLDefaultMethod = "BITS" # The default method by which to request downloads (BITS | WEBCLIENT).
+	$script:LogElevation    = "true" # A flag which causes the elevation event and subsequent runtime to be placed into a log file (true=logging enabled | false=no logging).
+	$script:AddSuffix       = "domain.local" # Change the following DOMAIN and NAMESERVERS as appropriate.
+	$script:Domain          = @(
 		".domain.local"
 	)
-	$script:NameServers	= @(
+	$script:NameServers     = @(
 		"1.2.3.4"
 		"5.6.7.8"
 	)
@@ -181,7 +181,7 @@ function FindProcess ($ThisProcess) {
 # Get current environment.
 function RunGetCurrentEnv ($GetTypes="ALL") {
 	if (($GetTypes -EQ "ALL") -OR ($GetTypes -EQ "ZPROCESSES")) {
-		GoToPrint "1" "White:DarkCyan" "######## ZITIPROCESSINFO ########"
+		GoToPrint "1" "White:DarkCyan" "######## OPENZITIPROCESSINFO ########"
 		if (FindProcess "ZitiDesktopEdge") {
 			GoToPrint "1" "Green" "OPENZITI WINDOWS DESKTOP EDGE [RUNNING]."
 		} else {
@@ -380,11 +380,11 @@ function DownloadInstall {
 		$WAITCOUNT = 0
 		do {
 			$WAITCOUNT++
-			if ($WAITCOUNT -GT 10) {
+			if ($WAITCOUNT -GT 20) {
 				GoToPrint "1" "White:Red" "Download failed. Cannot continue."
 				return 0
 			}
-			GoToPrint "1" "DarkGray" "Waiting for OpenZITI installation binary to become available, please wait... ($WAITCOUNT/10)"
+			GoToPrint "1" "DarkGray" "Waiting for OpenZITI installation binary to become available, please wait... ($WAITCOUNT/20)"
 			Start-Sleep 1
 		} until (Test-Path "$MyTmpPath\$ZDERBinary")
 		GoToPrint "1" "Green" "OpenZITI installation binary is available. Download complete."
@@ -427,7 +427,7 @@ function RunEnroll {
 
 		if ($InputJWT.length -LT 500) {
 			GoToPrint "1" "Red" "ERROR: The input JWT string is not correct for processing."
-            return
+			return
 		}
 		Set-Content $TargetJWT $InputJWT 2>&1 | out-null
 		$AllEnrollments = New-Object -TypeName psobject
@@ -455,7 +455,7 @@ function RunEnroll {
 
 	}
 
-	# Interworking for the ZITI Pipe system.
+	# Interworking for the pipe system.
 	$PipeInit = {
 		function ZPipeRelay ($PipeInputPayload) {
 			function PipeOpen {
@@ -471,55 +471,55 @@ function RunEnroll {
 			}
 			function PipeSubmitPayload ($PipeInputPayload) {
 				try {
-                    $script:ZIPCWRITE.WriteLine($PipeInputPayload)
-				    $script:ZIPCWRITE.Flush()
-                } catch {}
+					$script:ZIPCWRITE.WriteLine($PipeInputPayload)
+					$script:ZIPCWRITE.Flush()
+				} catch {}
 			}
 			function PipeClose {
-                try {
-				    $script:ZIPCREAD.Dispose()
-				    $script:ZIPCIO.Dispose()
+				try {
+					$script:ZIPCREAD.Dispose()
+					$script:ZIPCIO.Dispose()
 				} catch {}
-                $script:ZIPCIO = $null
+				$script:ZIPCIO = $null
 			}
 			function PipeRead {
 				try {
-                    $script:ZIPCIOENROLLRESPONSE = $script:ZIPCREAD.ReadLine()
-                    if (($script:ZIPCIOENROLLRESPONSE | ConvertFrom-Json).Error -IMATCH "failed to parse") {
-                        return 0
-                    } else {
-                        return 1
-                    }
-                } catch {
-                    return 1
-                }          
+					$script:ZIPCIOENROLLRESPONSE = $script:ZIPCREAD.ReadLine()
+					if (($script:ZIPCIOENROLLRESPONSE | ConvertFrom-Json).Error -IMATCH "failed to parse") {
+						return 0
+					} else {
+						return 1
+					}
+				} catch {
+					return 1
+				}
 			}
-            function PipeStatus {
-                if ($script:ZIPCIO.IsConnected -EQ "True") {
+			function PipeStatus {
+				if ($script:ZIPCIO.IsConnected -EQ "True") {
 					return 1
 				} else {
 					return 0
 				}
-            }
+			}
 			if ($PipeInputPayload -EQ "CLOSE") {
 				PipeClose
 			} elseif ($PipeInputPayload -EQ "OPEN") {
 				if (-NOT(PipeStatus)) {
 					PipeOpen
 				}
-                PipeStatus
+				PipeStatus
 			} elseif ($PipeInputPayload -EQ "READ") {
 				PipeRead
 			} elseif ($PipeInputPayload -EQ $null) {
-                PipeStatus
+				PipeStatus
 			} else {
-                PipeSubmitPayload "$PipeInputPayload"
+				PipeSubmitPayload "$PipeInputPayload"
 			}
 		}
-        function GoToPrintJSON ($MessageVerbosity=$null, $MessageColor=$null, $Message=$null, $ErrorMessage=$null) {        
-                @{Verbosity=$MessageVerbosity;Color=$MessageColor;Message=$Message;Error=$ErrorMessage} | ConvertTo-Json -Compress
-                start-sleep -Milliseconds 100
-        }
+		function GoToPrintJSON ($MessageVerbosity=$null, $MessageColor=$null, $Message=$null, $ErrorMessage=$null) {
+				@{Verbosity=$MessageVerbosity;Color=$MessageColor;Message=$Message;Error=$ErrorMessage} | ConvertTo-Json -Compress
+				start-sleep -Milliseconds 100
+		}
 	}
 
 	$AllEnrollments | ForEach-Object {
@@ -533,18 +533,18 @@ function RunEnroll {
 			$JSONExp = (([System.DateTimeOffset]::FromUnixTimeSeconds($JSONObj.exp)).DateTime).ToString()
 			if ((Get-Date) -GT $JSONExp) {
 				GoToPrint "1" "Red" "Enrollment of [$TargetFile] failed because it is expired as of [$JSONObj]."
-				return 
+				return
 			} elseif (Test-Path -Path "$ZDEKSPath\$TargetFile.json" -PathType Leaf) {
 				GoToPrint "1" "Yellow" "Enrollment of [$TargetFile] will not occur because it has already been enrolled."
-				return 
+				return
 			} else {
-				GoToPrint "3" "DarkGray" "The JWT points towards the ZITI controller at [$($JSONObj.iss)]."
+				GoToPrint "3" "DarkGray" "The JWT points towards the OpenZITI controller at [$($JSONObj.iss)]."
 				GoToPrint "3" "DarkGray" "The JWT has an expiration of [$JSONExp]."
 				GoToPrint "3" "Green" "Enrollment of [$TargetFile] proceeding."
 			}
 		} else {
 			GoToPrint "1" "Red" "Enrollment of [$TargetFile] failed because it is not a valid JWT."
-			return 
+			return
 		}
 
 		GoToPrint "1" "Yellow" "Now enrolling [$TargetFile] using method [$EnrollMethod], please wait..."
@@ -558,29 +558,29 @@ function RunEnroll {
 				do {
 					$WAITCOUNT++
 					if ($WAITCOUNT -GT 20) {
-                        GoToPrintJSON "1" "Red" "The ZITI IPC pipe failed to become available."
+						GoToPrintJSON "1" "Red" "The OpenZITI IPC pipe failed to become available."
 						ZPipeRelay "CLOSE"
 						return
 					}
-					GoToPrintJSON "1" "DarkGray" "Waiting for ZITI IPC pipe to become available, please wait... ($WAITCOUNT/20)"
+					GoToPrintJSON "1" "DarkGray" "Waiting for OpenZITI IPC pipe to become available, please wait... ($WAITCOUNT/20)"
 				} until (ZPipeRelay "OPEN")
-				GoToPrintJSON "1" "DarkGray" "The ZITI IPC pipe became available."
+				GoToPrintJSON "1" "DarkGray" "The OpenZITI IPC pipe became available."
 
-                $WAITCount = 0
-                do {
+				$WAITCount = 0
+				do {
 					$WAITCOUNT++
-					if ($WAITCOUNT -GT 10) {
-                        GoToPrintJSON "1" "Red" "The ZITI IPC pipe failed to accept inbound enrollment request."
+					if ($WAITCOUNT -GT 20) {
+						GoToPrintJSON "1" "Red" "The OpenZITI IPC pipe failed to accept inbound enrollment request."
 						ZPipeRelay "CLOSE"
 						return
 					}
-                    GoToPrintJSON "1" "DarkGray" "Sending the ZITI IPC pipe the enrollment request, please wait... ($WAITCOUNT/10)"
-                    ZPipeRelay "{""Data"":{""JwtFileName"":""$TargetFile.jwt"",""JwtContent"":""$TargetJWTString""},""Command"":""AddIdentity""}\n"
-                    start-sleep 1
-                } until (ZPipeRelay "READ")
-                GoToPrintJSON "1" "DarkGray" "The ZITI IPC pipe accepted the enrollment request."
+					GoToPrintJSON "1" "DarkGray" "Sending the OpenZITI IPC pipe the enrollment request, please wait... ($WAITCOUNT/20)"
+					ZPipeRelay "{""Data"":{""JwtFileName"":""$TargetFile.jwt"",""JwtContent"":""$TargetJWTString""},""Command"":""AddIdentity""}\n"
+					start-sleep 1
+				} until (ZPipeRelay "READ")
+				GoToPrintJSON "1" "DarkGray" "The OpenZITI IPC pipe accepted the enrollment request."
 
-                $script:ZIPCIOENROLLRESPONSE
+				$script:ZIPCIOENROLLRESPONSE
 
 				ZPipeRelay "CLOSE"
 			}
@@ -590,31 +590,31 @@ function RunEnroll {
 			do {
 				$CurrentLine = Receive-Job -Name "$TargetFile-ZENROLL" -ErrorAction Continue 6>&1
 				if ([string]::IsNullOrWhiteSpace($CurrentLine)) {
-                    continue
-				} else {                    
+					continue
+				} else {
 					$CurrentLineJSON = $CurrentLine | ConvertFrom-Json
 				}
 				# Enrollment flags.
 				if (($CurrentLineJSON.Success -EQ $null) -AND ($CurrentLineJSON.Error -EQ $null) -AND ($CurrentLineJSON.Message -EQ $null)) {
-                    GoToPrint "1" "Red" "UNKNOWN_RESPONSE [$CurrentLine]"
-                } elseif ($CurrentLineJSON.Success -EQ $null) {
-                    if ($CurrentLineJSON.Error) {
-                        GoToPrint $CurrentLineJSON.Verbosity $CurrentLineJSON.Color "$($CurrentLineJSON.Message) [$($CurrentLineJSON.Error)]"
-                    } else {                        
-                        GoToPrint $CurrentLineJSON.Verbosity $CurrentLineJSON.Color "$($CurrentLineJSON.Message)"
-                    }                    
-                } elseif ($CurrentLineJSON.Success -EQ $true) {
+					GoToPrint "1" "Red" "UNKNOWN_RESPONSE [$CurrentLine]"
+				} elseif ($CurrentLineJSON.Success -EQ $null) {
+					if ($CurrentLineJSON.Error) {
+						GoToPrint $CurrentLineJSON.Verbosity $CurrentLineJSON.Color "$($CurrentLineJSON.Message) [$($CurrentLineJSON.Error)]"
+					} else {
+						GoToPrint $CurrentLineJSON.Verbosity $CurrentLineJSON.Color "$($CurrentLineJSON.Message)"
+					}
+				} elseif ($CurrentLineJSON.Success -EQ $true) {
 					$EnrollState = $CurrentLineJSON.Success
-                    GoToPrint "1" "Green" "The ZITI IPC pipe returned [$EnrollState]."
-                    break
+					GoToPrint "1" "Green" "The OpenZITI IPC pipe returned [$EnrollState]."
+					break
 				} elseif ($CurrentLineJSON.Success -EQ $false) {
 					$EnrollState = $CurrentLineJSON.Success
-                    GoToPrint "1" "Red" "The ZITI IPC pipe returned [$EnrollState] with message [$($CurrentLineJSON.Error)]."
-                    break            
+					GoToPrint "1" "Red" "The OpenZITI IPC pipe returned [$EnrollState] with message [$($CurrentLineJSON.Error)]."
+					break
 				}
 			} while (((Get-Job -Name "$TargetFile-ZENROLL").HasMoreData) -EQ $true)
 
-            Remove-Job -Force -Name $TargetFile-ZENROLL
+			Remove-Job -Force -Name $TargetFile-ZENROLL
 
 			# If the flag of TRUE was caught, review that data payload from the output.
 			if ($EnrollState) {
@@ -1091,4 +1091,4 @@ switch (CheckAdmin) {
 PrintBanner "TERM"
 ###################################################################################################################
 # EOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOF #
-################################################################################################################### 
+###################################################################################################################
