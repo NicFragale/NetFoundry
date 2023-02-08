@@ -1,6 +1,6 @@
-# Home Assistant Add-on: NetFoundry OpenZITI
+# NetFoundry OpenZITI Utility: Silent Install and Enroller for Windows OpenZITI Desktop Edge
 
-![Designed for Windows and OpenZITI Desktop Edge][PS-shield]
+![Designed for Windows OpenZITI Desktop Edge][PS-shield]
 
 ## How to Use
 
