@@ -6,14 +6,13 @@
  Get started quickly with a silent installation and enrollment.  Place your JWTs in a folder of your choice.  Open Windows Explorer on that folder and paste in the following.
  > Powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -DisableKeepAlive -UseBasicParsing https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1 -OutFile NFZDEWHelper.ps1; .\NFZDEWHelper.ps1 -install"
 
-![Example][Example]
-
-<center>Hungry for more?  Read further below!</center>
+Hungry for more?  Read further below!
 
 ---
 
-
 ## How to Use
+
+![Example][Example]
 
 Regardless of which system controls the endpoint (CloudZITI or OpenZITI) the endpoint must be registered as a valid identity. If you wish to try out the FREE TEAMS EDITION of CloudZITI, sign up at [CloudZITI](https://nfconsole.io/signup).
 
