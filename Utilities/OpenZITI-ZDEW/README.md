@@ -6,7 +6,7 @@
  Get started quickly with a silent installation and enrollment.  Place your JWTs in a folder of your choice.  Open Windows Explorer on that folder and paste in the following.
  > Powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -DisableKeepAlive -UseBasicParsing https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW/NFZDEWHelper.ps1 -OutFile NFZDEWHelper.ps1; .\NFZDEWHelper.ps1 -install"
 
-<center> ![Example][Example] </center>
+![Example][Example]
 
 <center>Hungry for more?  Read further below!</center>
 
