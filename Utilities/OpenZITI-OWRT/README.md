@@ -4,7 +4,7 @@
 
 ## How to Use
 
-### (Build Machine) Running the Compile and Builder
+### (Build Machine) Running the Compile and Builder "OWRT_Builder.bash"
 This utility was written for Ubuntu 22.04+.  Though it may work on other environments that utilize the APT package manager, it is not tested on others.  Run on the build server as a BUILD CAPABLE USER (ROOT is assumed in this example).
 
 Once this repo has been cloned to the building server (or the raw script downloaded), change the run permissions of the file for execute rights. 
@@ -13,7 +13,7 @@ Once this repo has been cloned to the building server (or the raw script downloa
 Modify the header of the file as required, then run the utility.
 > ./OWRT_Builder.bash
 
-### (Router Device)
+### (Router Device) Running the Installer and Enroller "OWRT_Installer.sh"
 Run on the router device as the administrative user (ROOT is assumed in this example).
 
 Once this repo has been cloned to the router device (or the raw script downloaded), change the run permissions of the file for execute rights. 
