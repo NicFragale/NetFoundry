@@ -43,7 +43,7 @@ start_service() {
     procd_close_instance
 }
 
-stop() {
+stop_service() {
     start-stop-daemon -K -p \$PID_FILE -s TERM
     rm -rf \$PID_FILE
 }
