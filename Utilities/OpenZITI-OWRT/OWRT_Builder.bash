@@ -106,8 +106,8 @@ cmake --build "${ZT_WORKDIR}" --target "ziti-edge-tunnel" || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Compress."
-gzip -k9 OpenWRT/programs/ziti-edge-tunnel/ziti-edge-tunnel || GTE ${ZT_STEP}
-mv OpenWRT/programs/ziti-edge-tunnel/ziti-edge-tunnel.gz OpenWRT || GTE ${ZT_STEP}
+gzip -k9 programs/ziti-edge-tunnel/ziti-edge-tunnel || GTE ${ZT_STEP}
+mv -vf programs/ziti-edge-tunnel/ziti-edge-tunnel.gz ../ || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Compile and Build Complete."
