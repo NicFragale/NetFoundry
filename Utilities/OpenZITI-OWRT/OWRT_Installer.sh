@@ -84,7 +84,7 @@ else
     echo "Please run with one of the following options:"
     echo "> To install the structures for running..."
     echo ">> ./$0 install"
-    echo "> To enroll any JWT in the already installed identities directory..."
+    echo "> To enroll any JWTs in the already installed identities directory..."
     echo ">> ./$0 enroll"
 
 fi
