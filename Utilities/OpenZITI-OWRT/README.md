@@ -13,7 +13,7 @@ Once this repo has been cloned to the building server (or the raw script downloa
 Modify the header of the file as required, then run the utility.
 > ./OWRT_Builder.bash
 
-### (Router Device) Running the Installer and Enroller "OWRT_Installer.sh"
+### (Router Device) Running the Installer and Setup "OWRT_Installer.bash"
 Run on the router device as the administrative user (ROOT is assumed in this example).
 
 Once this repo has been cloned to the router device (or the raw script downloaded), change the run permissions of the file for execute rights. 
