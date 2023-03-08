@@ -12,7 +12,7 @@ ZT_ZET=("ziti-edge-tunnel" "tgz")
 ZT_EW="ziti-enrollwatch"
 ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_enrollwatch-service")
 ZT_PADLINE=""
-ZT_SWIDTH="$(tput cols || echo 80)"
+ZT_SWIDTH="${COLUMNS:-80}"
 for ((i=0;i<(ZT_SWIDTH/2);i++)); do ZT_PADLINE+=' '; done
 function CPrint() { printf "\e[37;41m%-${ZT_SWIDTH}s\e[1;0m\n" "${ZT_PADLINE:0:-$((${#1}/2))}${1}"; }
 function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
@@ -112,21 +112,24 @@ done
 EOFEOF
 chmod 755 "${ZT_DIR}/${ZT_EW}" || GTE ${ZT_STEP}
 
-# Obtain the compiled and built ZITI EDGE TUNNEL binary.
-wget --no-check-certificate "${ZT_URL}/${ZT_ZET}" -O /tmp/${ZT_ZET}.${ZT_FT}
-# Unpack the package and move it into place.
-gzip -d /tmp/${ZT_ZET}.${ZT_FT}
-mv /tmp/${ZT_ZET} ${ZT_DIR}
-# Cleanup.
-rm -f /tmp/${ZT_ZET}.${ZT_FT}
+###################################################
+CPrint "Begin Step $((++ZT_STEP)): Obtaining Runtime."
+wget --no-check-certificate "${ZT_URL}/${ZT_ZET}" -O "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
 
-# Test the binary function.
-chmod 755 ${ZT_DIR}/${ZT_ZET}
-${ZT_DIR}/${ZT_ZET} version
+###################################################
+CPrint "Begin Step $((++ZT_STEP)): Setup of Runtime."
+gzip -d "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
+mv "/tmp/${ZT_ZET[0]}" "${ZT_DIR}" || GTE ${ZT_STEP}
+rm -f "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
+chmod 755 "${ZT_DIR}/${ZT_ZET}" || GTE ${ZT_STEP}
+${ZT_DIR}/${ZT_ZET} version || GTE ${ZT_STEP}
 
-# Enable and start the binary.
-${ZT_SERVICE} enable
-${ZT_SERVICE} start
+###################################################
+CPrint "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
+${ZT_SERVICE[0]} enable || GTE ${ZT_STEP}
+${ZT_SERVICE[1]} enable || GTE ${ZT_STEP}
+${ZT_SERVICE[0]} start || GTE ${ZT_STEP}
+${ZT_SERVICE[1]} start || GTE ${ZT_STEP}
 
-# Done.
-echo "Enrollment done.  If there were any newly enrolled identities, please restart the machine or the OpenZITI application to make it take effect."
+###################################################
+CPrint "Compile and Build Complete."
