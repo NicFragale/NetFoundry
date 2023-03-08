@@ -53,7 +53,7 @@ stop_service() {
     rm -rf \$PID_FILE
 }
 EOFEOF
-chmod 755 "${ZT_SERVICE[0]}" || GTE ${ZT_STEP}
+chmod 755 "${ZT_SERVICES[0]}" || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Create EnrollWatch Service."
@@ -84,7 +84,7 @@ stop_service() {
     rm -rf \$PID_FILE
 }
 EOFEOF
-chmod 755 "${ZT_SERVICE[1]}" || GTE ${ZT_STEP}
+chmod 755 "${ZT_SERVICES[1]}" || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Create EnrollWatch."
@@ -126,10 +126,10 @@ ${ZT_DIR}/${ZT_ZET} version || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
-${ZT_SERVICE[0]} enable || GTE ${ZT_STEP}
-${ZT_SERVICE[1]} enable || GTE ${ZT_STEP}
-${ZT_SERVICE[0]} start || GTE ${ZT_STEP}
-${ZT_SERVICE[1]} start || GTE ${ZT_STEP}
+${ZT_SERVICES[0]} enable || GTE ${ZT_STEP}
+${ZT_SERVICES[1]} enable || GTE ${ZT_STEP}
+${ZT_SERVICES[0]} start || GTE ${ZT_STEP}
+${ZT_SERVICES[1]} start || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Compile and Build Complete."
