@@ -5,7 +5,7 @@
 
 ###################################################
 # Set initial variables/functions.
-ZT_BVER="20230301: NFragale: Install and Run Helper for OpenZITI on OpenWRT"
+ZT_BVER="20230301: NFragale: Install and Setup Helper for OpenZITI on OpenWRT"
 ZT_URL="https://fragale.us/PDATA"
 ZT_DIR="/opt/netfoundry/ziti"
 ZT_ZET=("ziti-edge-tunnel" "gz")
@@ -122,7 +122,7 @@ gzip -d "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
 mv "/tmp/${ZT_ZET[0]}" "${ZT_DIR}" || GTE ${ZT_STEP}
 rm -f "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
 chmod 755 "${ZT_DIR}/${ZT_ZET}" || GTE ${ZT_STEP}
-${ZT_DIR}/${ZT_ZET} version || GTE ${ZT_STEP}
+echo "ZITI EDGE TUNNEL VERSION: $(${ZT_DIR}/${ZT_ZET} version || echo UNKNOWN)" || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
@@ -132,4 +132,4 @@ ${ZT_SERVICES[0]} start || GTE ${ZT_STEP}
 ${ZT_SERVICES[1]} start || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Compile and Build Complete."
+CPrint "Install and Setup Complete."
