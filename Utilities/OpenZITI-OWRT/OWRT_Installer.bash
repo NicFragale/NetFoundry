@@ -103,7 +103,7 @@ while true; do
         else
             echo ">>> FAILED: \${EachJWT}.ENROLLFAIL"
             mv -vf "\${EachJWT}" "\${EachJWT}.ENROLLFAIL"
-        fi        
+        fi
     done < <(find ${ZT_DIR}/identities -name *.jwt)
 
     # Sleep until the next round.
