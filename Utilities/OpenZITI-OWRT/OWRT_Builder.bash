@@ -29,18 +29,15 @@ function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
 CPrint "[${ZT_BVER}]"
 
 ###################################################
-# Create appropriate directory structures.
 CPrint "Begin Step $((++ZT_STEP)): Create Staging Area."
 mkdir -v "${ZT_WORKDIR}" && cd "${ZT_WORKDIR}" || GTE ${ZT_STEP}
 
 ###################################################
-# Acquire additional software required for the build.
 CPrint "Begin Step $((++ZT_STEP)): Acquire Additional Software."
 apt update
 apt install -y build-essential clang flex bison g++ gawk gcc-multilib gettext git libncurses5-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget curl || GTE ${ZT_STEP}
 
 ###################################################
-# Obtain the ZITI EDGE TUNNEL source code.
 CPrint "Begin Step $((++ZT_STEP)): Acquire ZITI EDGE TUNNEL Source [Version ${ZT_TUNVER}]."
 if [[ ${ZT_TUNVER:-latest} == "latest" ]]; then
     ZT_ALLVERSIONS=( $(curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' \
@@ -53,7 +50,6 @@ wget "https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZT_TUNV
 unzip "${ZT_WORKDIR}/ziti-tunnel-sdk-c.zip" || GTE ${ZT_STEP}
 
 ###################################################
-# Obtain the OpenWRT SDK.
 CPrint "Begin Step $((++ZT_STEP)): Acquire OpenWRT SDK."
 wget "${ZT_OWRTSDKURL}" || GTE ${ZT_STEP}
 xz -d "${ZT_OWRTSDK}.tar.xz" || GTE ${ZT_STEP}
