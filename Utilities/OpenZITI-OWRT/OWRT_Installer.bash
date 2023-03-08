@@ -8,7 +8,7 @@
 ZT_BVER="20230301: NFragale: Install and Run Helper for OpenZITI on OpenWRT"
 ZT_URL="https://fragale.us/PDATA"
 ZT_DIR="/opt/netfoundry/ziti"
-ZT_ZET=("ziti-edge-tunnel" "tgz")
+ZT_ZET=("ziti-edge-tunnel" "gz")
 ZT_EW="ziti-enrollwatch"
 ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_enrollwatch-service")
 ZT_PADLINE=""
