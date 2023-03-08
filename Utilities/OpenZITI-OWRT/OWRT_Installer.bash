@@ -12,7 +12,7 @@ ZT_ZET=("ziti-edge-tunnel" "tgz")
 ZT_EW="ziti-enrollwatch"
 ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_enrollwatch-service")
 ZT_PADLINE=""
-ZT_SWIDTH="${COLUMNS:-$(tput cols || echo 80)}"
+ZT_SWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
 for ((i=0;i<(ZT_SWIDTH/2);i++)); do ZT_PADLINE+=' '; done
 function CPrint() { printf "\e[37;41m%-${ZT_SWIDTH}s\e[1;0m\n" "${ZT_PADLINE:0:-$((${#1}/2))}${1}"; }
 function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
@@ -114,7 +114,7 @@ chmod 755 "${ZT_DIR}/${ZT_EW}" || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Obtaining Runtime."
-wget --no-check-certificate "${ZT_URL}/${ZT_ZET}" -O "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
+wget --no-check-certificate "${ZT_URL}/${ZT_ZET[0]}.${ZT_ZET[1]}" -O "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Setup of Runtime."
