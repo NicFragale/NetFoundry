@@ -35,7 +35,7 @@ ZETPATH="${ZT_DIR}"
 ZETIDPATH="${ZT_DIR}/identities"
 ZETAPP="${ZT_ZET}"
 PID_FILE="/var/run/\${ZETAPP}.pid"
-ZETOPTIONS="run -I \${ZTIDPATH}"
+ZETOPTIONS="run -I \${ZETIDPATH}"
 
 start_service() {
     procd_open_instance
