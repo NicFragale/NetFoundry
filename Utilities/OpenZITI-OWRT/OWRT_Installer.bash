@@ -100,6 +100,7 @@ while true; do
         if "${ZT_DIR}/${ZT_ZET[0]}" enroll -j "\${EachJWT}" -i "\${EachJWT/.jwt/.json}"; then
             echo ">>> SUCCESS: \${EachJWT/.jwt/.json}"
             rm -f "\${EachJWT}"
+            ${ZT_SERVICES[0]} restart
         else
             echo ">>> FAILED: \${EachJWT}.ENROLLFAIL"
             mv -vf "\${EachJWT}" "\${EachJWT}.ENROLLFAIL"
