@@ -104,6 +104,7 @@ while true; do
         else
             echo ">>> FAILED: \${EachJWT}.ENROLLFAIL"
             mv -vf "\${EachJWT}" "\${EachJWT}.ENROLLFAIL"
+            rm -f "\${EachJWT/.jwt/.json}"
         fi
     done < <(find ${ZT_DIR}/identities -name *.jwt)
 
