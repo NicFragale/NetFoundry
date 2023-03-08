@@ -21,7 +21,7 @@ ZT_TCGCC="UNSET"
 ZT_TCGPP="UNSET"
 ZT_BINC="UNSET"
 ZT_PADLINE=""
-ZT_SWIDTH="${COLUMNS:-$(tput cols || echo 80)}"
+ZT_SWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
 for ((i=0;i<(ZT_SWIDTH/2);i++)); do ZT_PADLINE+=' '; done
 function CPrint() { printf "\e[37;41m%-${ZT_SWIDTH}s\e[1;0m\n" "${ZT_PADLINE:0:-$((${#1}/2))}${1}"; }
 function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
