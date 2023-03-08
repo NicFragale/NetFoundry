@@ -11,7 +11,6 @@ ZT_OWRTVER="22.03.3"
 ZT_STEP=0
 ZT_WORKDIR="$(pwd)/OpenWRT"
 ZT_OWRTSDK="openwrt-sdk-${ZT_OWRTVER}-ath79-nand_gcc-11.2.0_musl.Linux-x86_64"
-#ZT_OWRTSDKURL="https://fragale.us/PDATA/${ZT_OWRTSDK}.tar.xz"
 ZT_OWRTSDKURL="https://downloads.openwrt.org/releases/${ZT_OWRTVER}/targets/ath79/nand/${ZT_OWRTSDK}.tar.xz"
 ZT_BUILDTARGET="target-mips_24kc_musl"
 ZT_BUILDTARGETDIR="${ZT_WORKDIR}/${ZT_OWRTSDK}/staging_dir/${ZT_BUILDTARGET}"
