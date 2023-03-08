@@ -17,12 +17,9 @@ Modify the header of the file as required, then run the utility.
 Run on the router device as the administrative user (ROOT is assumed in this example).
 
 Once this repo has been cloned to the router device (or the raw script downloaded), change the run permissions of the file for execute rights. 
-> chmod 755 ./OWRT_Installer.sh
+> chmod 755 ./OWRT_Installer.bash
 
-Modify the header of the file as required, then run the utility in install mode.
-> ./OWRT_Installer.sh install
-
-Transfer any JWT files into the identities directory that apply to the router device.
-> ./OWRT_Installer.sh enroll
+Modify the header of the file as required, then run the utility.
+> ./OWRT_Installer.bash
 
 [PS-shield]: https://img.shields.io/badge/Code%20Basis-Linux%20BASH-blue.svg
