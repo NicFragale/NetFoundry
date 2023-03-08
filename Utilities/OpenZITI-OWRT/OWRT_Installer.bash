@@ -118,7 +118,7 @@ wget --no-check-certificate "${ZT_URL}/${ZT_ZET[0]}.${ZT_ZET[1]}" -O "/tmp/${ZT_
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Setup of Runtime."
-gzip -d "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
+gzip -fd "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
 mv "/tmp/${ZT_ZET[0]}" "${ZT_DIR}" || GTE ${ZT_STEP}
 rm -f "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
 chmod 755 "${ZT_DIR}/${ZT_ZET}" || GTE ${ZT_STEP}
