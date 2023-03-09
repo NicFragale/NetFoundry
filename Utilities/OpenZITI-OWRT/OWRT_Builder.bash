@@ -7,13 +7,18 @@
 # Set initial variables/functions.
 ZT_BVER="20230301: NFragale: Compile and Build Helper for OpenZITI on OpenWRT"
 ZT_TUNVER="latest"
-ZT_OWRTVER="22.03.3"
-ZT_STEP=0
 ZT_WORKDIR="$(pwd)/OpenWRT"
-ZT_OWRTSDK="openwrt-sdk-${ZT_OWRTVER}-ath79-nand_gcc-11.2.0_musl.Linux-x86_64"
-ZT_OWRTSDKURL="https://downloads.openwrt.org/releases/${ZT_OWRTVER}/targets/ath79/nand/${ZT_OWRTSDK}.tar.xz"
-ZT_BUILDTARGET="target-mips_24kc_musl"
-ZT_BUILDTARGETDIR="${ZT_WORKDIR}/${ZT_OWRTSDK}/staging_dir/${ZT_BUILDTARGET}"
+ZT_OWRTVER="22.03.3"
+ZT_OWRTTARGET=("ath79" "nand")
+ZT_OWRTMUSLVER="11.2.0_musl"
+
+################################################################################################################
+# DO NOT MODIFY BELOW THIS LINE 
+################################################################################################################
+ZT_OWRTSDK="openwrt-sdk-${ZT_OWRTVER}-${ZT_OWRTTARGET[0]}-${ZT_OWRTTARGET[1]}_gcc-${ZT_OWRTMUSLVER}.Linux-x86_64"
+ZT_OWRTSDKURL="https://downloads.openwrt.org/releases/${ZT_OWRTVER}/targets/${ZT_OWRTTARGET[0]}/${ZT_OWRTTARGET[1]}/${ZT_OWRTSDK}.tar.xz"
+ZT_BUILDSTAGEDIR="${ZT_WORKDIR}/${ZT_OWRTSDK}/staging_dir/"
+ZT_STEP=0
 ZT_TCINFO="UNSET"
 ZT_TCTRIPLE="UNSET"
 ZT_TCGCC="UNSET"
@@ -25,6 +30,7 @@ for ((i=0;i<(ZT_SWIDTH/2);i++)); do ZT_PADLINE+=' '; done
 function CPrint() { printf "\e[37;41m%-${ZT_SWIDTH}s\e[1;0m\n" "${ZT_PADLINE:0:-$((${#1}/2))}${1}"; }
 function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
 
+###################################################
 CPrint "[${ZT_BVER}]"
 
 ###################################################
@@ -53,6 +59,7 @@ CPrint "Begin Step $((++ZT_STEP)): Acquire OpenWRT SDK."
 wget "${ZT_OWRTSDKURL}" || GTE ${ZT_STEP}
 xz -d "${ZT_OWRTSDK}.tar.xz" || GTE ${ZT_STEP}
 tar -xf "${ZT_OWRTSDK}.tar" && rm -f "${ZT_OWRTSDK}.tar" || GTE ${ZT_STEP}
+ZT_BUILDTARGETDIR="$(find "${ZT_BUILDSTAGEDIR}" -maxdepth 1 -name "target-*" || GTE ${ZT_STEP})"
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Setup Build Environment Part One."
