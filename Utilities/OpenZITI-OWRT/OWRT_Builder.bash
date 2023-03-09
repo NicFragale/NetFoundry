@@ -6,14 +6,14 @@ ZT_BVER="20230301: NFragale: Compile and Build Helper for OpenZITI on OpenWRT"
 
 ###################################################
 # Set initial variables/functions.
-ZT_TUNVER="latest"
-ZT_WORKDIR="$(pwd)/OpenWRT"
-ZT_OWRTVER="22.03.3"
-ZT_OWRTTARGET=("ath79" "nand")
+ZT_TUNVER="${1:-latest}"
+ZT_OWRTVER="${2:-22.03.3}"
+ZT_OWRTTARGET=("${3:-ath79}" "${4:-nand}")
 
 ################################################################################################################
 # DO NOT MODIFY BELOW THIS LINE 
 ################################################################################################################
+ZT_WORKDIR="$(pwd)/OpenWRT-${ZT_OWRTVER}-${ZT_OWRTTARGET[0]}_${ZT_OWRTTARGET[1]}"
 ZT_STEP=0
 ZT_TCINFO="UNSET"
 ZT_TCTRIPLE="UNSET"
@@ -28,9 +28,10 @@ function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
 
 ###################################################
 CPrint "[${ZT_BVER}]"
+CPrint "[ZITI EDGE TUNNEL VERSION ${ZT_TUNVER}] [OPENWRT VERSION ${ZT_OWRTVER}] [OPENWRT TARGET ${ZT_OWRTTARGET[0]}/${ZT_OWRTTARGET[1]}]"
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Create Staging Area."
+CPrint "Begin Step $((++ZT_STEP)): Create Staging Area [Location ${ZT_WORKDIR}]."
 mkdir -v "${ZT_WORKDIR}" && cd "${ZT_WORKDIR}" || GTE ${ZT_STEP}
 
 ###################################################
@@ -60,10 +61,11 @@ ZT_BUILDSTAGEDIR="${ZT_WORKDIR}/${ZT_OWRTSDK}/staging_dir/"
 wget "${ZT_OWRTSDKURL}" || GTE ${ZT_STEP}
 xz -d "${ZT_OWRTSDK}.tar.xz" || GTE ${ZT_STEP}
 tar -xf "${ZT_OWRTSDK}.tar" && rm -f "${ZT_OWRTSDK}.tar" || GTE ${ZT_STEP}
-ZT_BUILDTARGETDIR="$(find "${ZT_BUILDSTAGEDIR}" -maxdepth 1 -name "target-*" || GTE ${ZT_STEP})"
+ZT_BUILDTARGET="$(find "${ZT_BUILDSTAGEDIR}" -maxdepth 1 -name "target-*" -printf "%P" || GTE ${ZT_STEP})"
+ZT_BUILDTARGETDIR="${ZT_BUILDSTAGEDIR}/${ZT_BUILDTARGET}"
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Setup Build Environment Part One."
+CPrint "Begin Step $((++ZT_STEP)): Setup Build Environment Part One [Target ${ZT_BUILDTARGET}]."
 source <(find "${ZT_WORKDIR}" -type f -name info.mk -exec cat {} \;) || GTE ${ZT_STEP}
 ZT_TCINFO=(${TARGET_CROSS//-/ })
 ZT_TCTRIPLE="${ZT_TCINFO[0]}-${ZT_TCINFO[1]}-${ZT_TCINFO[2]}"
@@ -88,7 +90,7 @@ EOFEOF
 cat toolchain.cmake || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Setup Build Environment Part Two."
+CPrint "Begin Step $((++ZT_STEP)): Setup Build Environment Part Two [Target ${ZT_BUILDTARGET}]."
 ZT_CMAKE_OPTS="-DDISABLE_LIBSYSTEMD_FEATURE=on -DCMAKE_C_FLAGS=-I${ZT_BINC}"
 [[ -x /usr/bin/ninja ]] && ZT_CMAKE_OPTS="${ZT_CMAKE_OPTS} -G Ninja"
 [[ -f "${ZT_BUILDTARGETDIR}/usr/include/openssl/opensslv.h" ]] && ZT_CMAKE_OPTS="${ZT_CMAKE_OPTS} -DUSE_OPENSSL=on"
@@ -98,17 +100,17 @@ ZT_CMAKE_OPTS="${ZT_CMAKE_OPTS} -DCMAKE_TOOLCHAIN_FILE=${ZT_WORKDIR}/toolchain.c
 echo "CMAKE OPTIONS: [${ZT_CMAKE_OPTS}]."
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Compile."
+CPrint "Begin Step $((++ZT_STEP)): Compile [Target ${ZT_BUILDTARGET}]."
 export STAGING_DIR="${ZT_WORKDIR}/${ZT_OWRTSDK}/staging_dir"
 cmake ${ZT_CMAKE_OPTS} "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}" || GTE ${ZT_STEP}
 sed -i '/# if ! __GNUC_PREREQ(4,9)/,+2d' "${ZT_WORKDIR}/_deps/ziti-sdk-c-src/inc_internal/metrics.h" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Build."
+CPrint "Begin Step $((++ZT_STEP)): Build [Target ${ZT_BUILDTARGET}]."
 cmake --build "${ZT_WORKDIR}" --target "ziti-edge-tunnel" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Compress."
+CPrint "Begin Step $((++ZT_STEP)): Compress Binary."
 gzip -k9 programs/ziti-edge-tunnel/ziti-edge-tunnel || GTE ${ZT_STEP}
 
 ###################################################
