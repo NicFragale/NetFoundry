@@ -6,7 +6,7 @@
 ###################################################
 # Set initial variables/functions.
 ZT_BVER="20230301: NFragale: Install and Setup Helper for OpenZITI on OpenWRT"
-ZT_URL="https://fragale.us/PDATA"
+ZT_URL="https://github.com/NicFragale/NetFoundry/raw/main/Utilities/OpenZITI-OWRT/Sample_Builds/mips_24kc_musl"
 ZT_DIR="/opt/netfoundry/ziti"
 ZT_IDDIR="${ZT_DIR}/identities"
 ZT_IDMANIFEST="manifest.info"
