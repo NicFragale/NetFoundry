@@ -1,11 +1,11 @@
 #!/bin/bash
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the build server as a BUILD CAPABLE USER (ROOT is assumed in this example).
+ZT_BVER="20230301: NFragale: Compile and Build Helper for OpenZITI on OpenWRT"
 ################################################################################################################
 
 ###################################################
 # Set initial variables/functions.
-ZT_BVER="20230301: NFragale: Compile and Build Helper for OpenZITI on OpenWRT"
 ZT_TUNVER="latest"
 ZT_WORKDIR="$(pwd)/OpenWRT"
 ZT_OWRTVER="22.03.3"
