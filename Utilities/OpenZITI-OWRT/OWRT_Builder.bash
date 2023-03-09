@@ -51,7 +51,7 @@ wget "https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZT_TUNV
 unzip "${ZT_WORKDIR}/ziti-tunnel-sdk-c.zip" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Acquire OpenWRT SDK."
+CPrint "Begin Step $((++ZT_STEP)): Acquire OpenWRT SDK [Version ${ZT_OWRTVER}] [Target ${ZT_OWRTTARGET[0]}/${ZT_OWRTTARGET[1]}]."
 ZT_OWRTMUSLVER="$(wget -q "https://downloads.openwrt.org/releases/${ZT_OWRTVER}/targets/${ZT_OWRTTARGET[0]}/${ZT_OWRTTARGET[1]}" -O- | \
     awk '/musl/{match($0,/([0-9]+\.){1,}[0-9]+_musl/);print substr($0,RSTART,RLENGTH)}')"
 ZT_OWRTSDK="openwrt-sdk-${ZT_OWRTVER}-${ZT_OWRTTARGET[0]}-${ZT_OWRTTARGET[1]}_gcc-${ZT_OWRTMUSLVER:-ERROR}.Linux-x86_64"
