@@ -23,6 +23,7 @@ for ((i=0;i<(ZT_SWIDTH/2);i++)); do ZT_PADLINE+=' '; done
 function CPrint() { printf "\e[37;41m%-${ZT_SWIDTH}s\e[1;0m\n" "${ZT_PADLINE:0:-$((${#1}/2))}${1}"; }
 function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
 
+###################################################
 CPrint "[${ZT_BVER}]"f
 
 ###################################################
@@ -124,8 +125,12 @@ EOFEOF
 chmod 755 "${ZT_DIR}/${ZT_EW}" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Obtaining Runtime."
-wget "${ZT_URL}/${ZT_ZET[0]}.${ZT_ZET[1]}" -O "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
+if [[ ! -f "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" ]]; then
+    CPrint "Begin Step $((++ZT_STEP)): Obtaining Runtime."
+    wget "${ZT_URL}/${ZT_ZET[0]}.${ZT_ZET[1]}" -O "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
+else
+    CPrint "Skipping Step $((++ZT_STEP)): Runtime already present [Location /tmp/${ZT_ZET[0]}.${ZT_ZET[1]}]."
+fi
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Setup of Runtime."

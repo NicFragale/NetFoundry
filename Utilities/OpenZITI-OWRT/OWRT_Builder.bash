@@ -29,6 +29,7 @@ function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
 ###################################################
 CPrint "[${ZT_BVER}]"
 CPrint "[ZITI EDGE TUNNEL VERSION ${ZT_TUNVER}] [OPENWRT VERSION ${ZT_OWRTVER}] [OPENWRT TARGET ${ZT_OWRTTARGET[0]}/${ZT_OWRTTARGET[1]}]"
+sleep 5
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Create Staging Area [Location ${ZT_WORKDIR}]."
