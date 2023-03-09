@@ -8,6 +8,8 @@
 ZT_BVER="20230301: NFragale: Install and Setup Helper for OpenZITI on OpenWRT"
 ZT_URL="https://fragale.us/PDATA"
 ZT_DIR="/opt/netfoundry/ziti"
+ZT_IDDIR="${ZT_DIR}/identities"
+ZT_IDMANIFEST="manifest.info"
 ZT_ZET=("ziti-edge-tunnel" "gz")
 ZT_EW="ziti-enrollwatch"
 ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_enrollwatch-service")
@@ -20,8 +22,9 @@ function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
 CPrint "[${ZT_BVER}]"
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Create Directory Structures."
+CPrint "Begin Step $((++ZT_STEP)): Create Directory Structures and Files."
 mkdir -vp "${ZT_DIR}" || GTE ${ZT_STEP}
+echo -e "# ZITI EDGE TUNNEL IDENTITY MANIFEST - DO NOT DELETE\n# Initialized on $(date -u)" > "${ZT_IDDIR}/${ZT_IDMANIFEST}"
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Create Runtime Service."
@@ -32,15 +35,17 @@ USE_PROCD=1
 START=85
 STOP=01
 ZETPATH="${ZT_DIR}"
-ZETIDPATH="${ZT_DIR}/identities"
-ZETAPP="${ZT_ZET}"
+ZETIDPATH="${ZT_IDDIR}"
+ZETAPP="${ZT_ZET[0]}"
 PID_FILE="/var/run/\${ZETAPP}.pid"
 ZETOPTIONS="run -I \${ZETIDPATH}"
+ZETMANIFEST="\${ZETIDPATH}/manifest.info"
 
 start_service() {
     procd_open_instance
     procd_set_param command "\${ZETPATH}/\${ZETAPP}" \${ZETOPTIONS}
     procd_set_param respawn 600 5 5
+    procd_set_param file \${ZETIDPATH}
     procd_set_param \${PID_FILE}
     procd_set_param limits core="unlimited"
     procd_set_param stdout 1
@@ -65,7 +70,7 @@ START=86
 STOP=01
 ZETEWPATH="${ZT_DIR}"
 ZETEWAPP="${ZT_EW}"
-PID_FILE="/var/run/${ZT_EW}.pid"
+PID_FILE="/var/run/\${ZETEWAPP}.pid"
 ZETEWOPTIONS="60"
 
 start_service() {
@@ -99,8 +104,8 @@ while true; do
         echo ">> ENROLLING: \${EachJWT}"
         if "${ZT_DIR}/${ZT_ZET[0]}" enroll -j "\${EachJWT}" -i "\${EachJWT/.jwt/.json}"; then
             echo ">>> SUCCESS: \${EachJWT/.jwt/.json}"
+            echo "[$(date -u)] ADDED \${EachJWT/.jwt/}" >> "${ZT_IDDIR}/${ZT_IDMANIFEST}"
             rm -f "\${EachJWT}"
-            ${ZT_SERVICES[0]} restart
         else
             echo ">>> FAILED: \${EachJWT}.ENROLLFAIL"
             mv -vf "\${EachJWT}" "\${EachJWT}.ENROLLFAIL"
@@ -116,7 +121,7 @@ chmod 755 "${ZT_DIR}/${ZT_EW}" || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Obtaining Runtime."
-wget --no-check-certificate "${ZT_URL}/${ZT_ZET[0]}.${ZT_ZET[1]}" -O "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
+wget "${ZT_URL}/${ZT_ZET[0]}.${ZT_ZET[1]}" -O "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Setup of Runtime."
