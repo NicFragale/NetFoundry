@@ -1,16 +1,20 @@
 #!/bin/bash
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the router via SSH as ROOT.
+ZT_BVER="20230301: NFragale: Install and Setup Helper for OpenZITI on OpenWRT"
 ################################################################################################################
 
 ###################################################
 # Set initial variables/functions.
-ZT_BVER="20230301: NFragale: Install and Setup Helper for OpenZITI on OpenWRT"
 ZT_URL="https://github.com/NicFragale/NetFoundry/raw/main/Utilities/OpenZITI-OWRT/Sample_Builds/mips_24kc_musl"
 ZT_DIR="/opt/netfoundry/ziti"
 ZT_IDDIR="${ZT_DIR}/identities"
-ZT_IDMANIFEST="manifest.info"
 ZT_ZET=("ziti-edge-tunnel" "gz")
+
+################################################################################################################
+# DO NOT MODIFY BELOW THIS LINE 
+################################################################################################################
+ZT_IDMANIFEST="manifest.info"
 ZT_EW="ziti-enrollwatch"
 ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_enrollwatch-service")
 ZT_PADLINE=""
@@ -19,7 +23,7 @@ for ((i=0;i<(ZT_SWIDTH/2);i++)); do ZT_PADLINE+=' '; done
 function CPrint() { printf "\e[37;41m%-${ZT_SWIDTH}s\e[1;0m\n" "${ZT_PADLINE:0:-$((${#1}/2))}${1}"; }
 function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
 
-CPrint "[${ZT_BVER}]"
+CPrint "[${ZT_BVER}]"f
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Create Directory Structures and Files."
@@ -39,7 +43,7 @@ ZETIDPATH="${ZT_IDDIR}"
 ZETAPP="${ZT_ZET[0]}"
 PID_FILE="/var/run/\${ZETAPP}.pid"
 ZETOPTIONS="run -I \${ZETIDPATH}"
-ZETMANIFEST="\${ZETIDPATH}/manifest.info"
+ZETMANIFEST="\${ZETIDPATH}/manifest.info"00
 
 start_service() {
     procd_open_instance
