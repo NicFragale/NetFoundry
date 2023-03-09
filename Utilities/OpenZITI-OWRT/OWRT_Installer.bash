@@ -6,7 +6,7 @@ ZT_BVER="20230301: NFragale: Install and Setup Helper for OpenZITI on OpenWRT"
 
 ###################################################
 # Set initial variables/functions.
-ZT_URL="https://github.com/NicFragale/NetFoundry/raw/main/Utilities/OpenZITI-OWRT/Sample_Builds/mips_24kc_musl"
+ZT_URL="${1:-https://github.com/NicFragale/NetFoundry/raw/main/Utilities/OpenZITI-OWRT/Sample_Builds/mips_24kc_musl}"
 ZT_DIR="/opt/netfoundry/ziti"
 ZT_IDDIR="${ZT_DIR}/identities"
 ZT_ZET=("ziti-edge-tunnel" "gz")
@@ -24,7 +24,7 @@ function CPrint() { printf "\e[37;41m%-${ZT_SWIDTH}s\e[1;0m\n" "${ZT_PADLINE:0:-
 function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
 
 ###################################################
-CPrint "[${ZT_BVER}]"f
+CPrint "[${ZT_BVER}]"
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Create Directory Structures and Files."
