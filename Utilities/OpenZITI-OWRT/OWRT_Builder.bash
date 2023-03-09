@@ -110,7 +110,10 @@ cmake --build "${ZT_WORKDIR}" --target "ziti-edge-tunnel" || GTE ${ZT_STEP}
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Compress."
 gzip -k9 programs/ziti-edge-tunnel/ziti-edge-tunnel || GTE ${ZT_STEP}
-mv -vf programs/ziti-edge-tunnel/ziti-edge-tunnel.gz ../ || GTE ${ZT_STEP}
+
+###################################################
+CPrint "Begin Step $((++ZT_STEP)): Move Compressed Binary [Location $(pwd)]."
+mv -vf programs/ziti-edge-tunnel/ziti-edge-tunnel.gz ./ || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Compile and Build Complete."
