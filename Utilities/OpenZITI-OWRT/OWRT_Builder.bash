@@ -10,7 +10,6 @@ ZT_TUNVER="latest"
 ZT_WORKDIR="$(pwd)/OpenWRT"
 ZT_OWRTVER="22.03.3"
 ZT_OWRTTARGET=("ath79" "nand")
-ZT_OWRTMUSLVER="11.2.0_musl"
 
 ################################################################################################################
 # DO NOT MODIFY BELOW THIS LINE 
