@@ -14,10 +14,10 @@ Once this repo has been cloned to the building server (or the raw utility downlo
 * Example: ./OWRT_Builder.bash "22.03.03" "ipq806x" "generic" "latest"
 * Example: ./OWRT_Builder.bash "22.03.03" "ipq806x" "generic" "0.20.03"
 
-* [OpenWRT_Version]: The OpenWRT version you wish to use [https://downloads.openwrt.org/releases].
-* [Target_Part_A]: The first part of the target platform from within the version to use.
-* [Target_Part_B]: The second part of the target platform from within the version to use. 
-* [OpenZITI_Tunnel_Version]: The OpenZITI Tunnel version you wish to use [https://github.com/openziti/ziti-tunnel-sdk-c/releases].
+- [OpenWRT_Version]: The OpenWRT version you wish to use [https://downloads.openwrt.org/releases].
+- [Target_Part_A]: The first part of the target platform from within the version to use.
+- [Target_Part_B]: The second part of the target platform from within the version to use. 
+- [OpenZITI_Tunnel_Version]: The OpenZITI Tunnel version you wish to use [https://github.com/openziti/ziti-tunnel-sdk-c/releases].
 
 ### (Router Device) Running the Installer and Setup "OWRT_Installer.bash"
 Run on the router device as the administrative user (ROOT is assumed in this example).
@@ -26,5 +26,8 @@ Once this repo has been cloned to the router device (or the raw utility download
 > chmod 755 ./OWRT_Installer.bash
 >> ./OWRT_Installer.bash [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download]
 * Example: ./OWRT_Installer.bash "OpenWRT-22.03.3-ath79_nand.gz" "https://github.com/NicFragale/NetFoundry/raw/main/Utilities/OpenZITI-OWRT/Sample_Builds"
+
+- [OpenZITI_Tunnel_Compressed_Build]: The compressed build of the OpenZITI binary built by the first step.
+- [URL_To_Download]: The URL location of the compressed build.
 
 [PS-shield]: https://img.shields.io/badge/Code%20Basis-Linux%20BASH-blue.svg
