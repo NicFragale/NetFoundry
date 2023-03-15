@@ -62,7 +62,7 @@ start_service() {
     procd_open_instance
     procd_set_param command "\${ZETPATH}/\${ZETAPP}" \${ZETOPTIONS}
     procd_set_param respawn 600 5 5
-    procd_set_param file \${ZETIDPATH}/\${ZETMANIFEST}
+    procd_set_param file "\${ZETIDPATH}/\${ZETMANIFEST}"
     procd_set_param \${PID_FILE}
     procd_set_param limits core="unlimited"
     procd_set_param stdout 1
