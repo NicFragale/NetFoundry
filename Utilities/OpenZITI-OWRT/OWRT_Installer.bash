@@ -56,13 +56,13 @@ ZETIDPATH="${ZT_IDDIR}"
 ZETAPP="${ZT_ZET[1]}"
 PID_FILE="/var/run/\${ZETAPP}.pid"
 ZETOPTIONS="run -I \${ZETIDPATH}"
-ZETMANIFEST="\${ZETIDPATH}/manifest.info"00
+ZETMANIFEST="manifest.info"
 
 start_service() {
     procd_open_instance
     procd_set_param command "\${ZETPATH}/\${ZETAPP}" \${ZETOPTIONS}
     procd_set_param respawn 600 5 5
-    procd_set_param file \${ZETIDPATH}
+    procd_set_param file \${ZETIDPATH}/\${ZETMANIFEST}
     procd_set_param \${PID_FILE}
     procd_set_param limits core="unlimited"
     procd_set_param stdout 1
