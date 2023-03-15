@@ -6,10 +6,11 @@ ZT_BVER="20230301: NFragale: Install and Setup Helper for OpenZITI on OpenWRT"
 
 ###################################################
 # Set initial variables/functions.
-ZT_URL="${1:-https://github.com/NicFragale/NetFoundry/raw/main/Utilities/OpenZITI-OWRT/Sample_Builds/mips_24kc_musl}"
+ZT_WORKDIR="/tmp"
+ZT_URL="${1}"
+ZT_ZET=("${2}" "ziti-edge-tunnel")
 ZT_DIR="/opt/netfoundry/ziti"
 ZT_IDDIR="${ZT_DIR}/identities"
-ZT_ZET=("ziti-edge-tunnel" "gz")
 
 ################################################################################################################
 # DO NOT MODIFY BELOW THIS LINE 
@@ -41,7 +42,7 @@ START=85
 STOP=01
 ZETPATH="${ZT_DIR}"
 ZETIDPATH="${ZT_IDDIR}"
-ZETAPP="${ZT_ZET[0]}"
+ZETAPP="${ZT_ZET[1]}"
 PID_FILE="/var/run/\${ZETAPP}.pid"
 ZETOPTIONS="run -I \${ZETIDPATH}"
 ZETMANIFEST="\${ZETIDPATH}/manifest.info"00
@@ -107,7 +108,7 @@ while true; do
     echo "> ENROLLLWATCH CYCLE [\$((++EW_ITR))]"
     while IFS=$'\n' read -r EachJWT; do
         echo ">> ENROLLING: \${EachJWT}"
-        if "${ZT_DIR}/${ZT_ZET[0]}" enroll -j "\${EachJWT}" -i "\${EachJWT/.jwt/.json}"; then
+        if "${ZT_DIR}/${ZT_ZET[1]}" enroll -j "\${EachJWT}" -i "\${EachJWT/.jwt/.json}"; then
             echo ">>> SUCCESS: \${EachJWT/.jwt/.json}"
             echo "[$(date -u)] ADDED \${EachJWT/.jwt/}" >> "${ZT_IDDIR}/${ZT_IDMANIFEST}"
             rm -f "\${EachJWT}"
@@ -125,18 +126,24 @@ EOFEOF
 chmod 755 "${ZT_DIR}/${ZT_EW}" || GTE ${ZT_STEP}
 
 ###################################################
-if [[ ! -f "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" ]]; then
-    CPrint "Begin Step $((++ZT_STEP)): Obtaining Runtime."
-    wget "${ZT_URL}/${ZT_ZET[0]}.${ZT_ZET[1]}" -O "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
+if [[ -f "${ZT_WORKDIR}/${ZT_ZET[1]}" ]]; then
+    CPrint "Skipping Step $((++ZT_STEP)): Uncompressed Runtime Already Present [Location ${ZT_WORKDIR}/${ZT_ZET[1]}]."
 else
-    CPrint "Skipping Step $((++ZT_STEP)): Runtime already present [Location /tmp/${ZT_ZET[0]}.${ZT_ZET[1]}]."
+    if [[ -f "${ZT_WORKDIR}/${ZT_ZET[0]}" ]]; then
+        CPrint "Skipping Step $((++ZT_STEP)): Compressed Runtime Already Present [Location ${ZT_WORKDIR}/${ZT_ZET[0]}]."
+    else
+        CPrint "Begin Step $((++ZT_STEP)): Obtaining Compressed Runtime [${ZT_ZET[0]}]."
+        wget "${ZT_URL}/${ZT_ZET[0]}" -O "${ZT_WORKDIR}/${ZT_ZET[0]}" || GTE ${ZT_STEP}    
+    fi
+    ###################################################
+    CPrint "Begin Step $((++ZT_STEP)): Decompress Runtime."
+    gzip -fdN "${ZT_WORKDIR}/${ZT_ZET[0]}" || GTE ${ZT_STEP}
 fi
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Setup of Runtime."
-gzip -fd "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
-mv "/tmp/${ZT_ZET[0]}" "${ZT_DIR}" || GTE ${ZT_STEP}
-rm -f "/tmp/${ZT_ZET[0]}.${ZT_ZET[1]}" || GTE ${ZT_STEP}
+CPrint "Begin Step $((++ZT_STEP)): Setup Runtime."
+mv -vf "${ZT_WORKDIR}/${ZT_ZET[1]}" "${ZT_DIR}" || GTE ${ZT_STEP}
+rm -f "${ZT_WORKDIR}/${ZT_ZET[0]}" "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
 chmod 755 "${ZT_DIR}/${ZT_ZET}" || GTE ${ZT_STEP}
 echo "ZITI EDGE TUNNEL VERSION: $(${ZT_DIR}/${ZT_ZET} version || echo UNKNOWN)" || GTE ${ZT_STEP}
 

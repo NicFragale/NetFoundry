@@ -6,9 +6,9 @@ ZT_BVER="20230301: NFragale: Compile and Build Helper for OpenZITI on OpenWRT"
 
 ###################################################
 # Set initial variables/functions.
-ZT_TUNVER="${1:-latest}"
-ZT_OWRTVER="${2:-22.03.3}"
-ZT_OWRTTARGET=("${3:-ath79}" "${4:-nand}")
+ZT_OWRTVER="${1}"
+ZT_OWRTTARGET=("${2}" "${3}")
+ZT_TUNVER="${4:-latest}"
 
 ################################################################################################################
 # DO NOT MODIFY BELOW THIS LINE 
@@ -104,6 +104,9 @@ echo "CMAKE OPTIONS: [${ZT_CMAKE_OPTS}]."
 CPrint "Begin Step $((++ZT_STEP)): Compile [Target ${ZT_BUILDTARGET}]."
 export STAGING_DIR="${ZT_WORKDIR}/${ZT_OWRTSDK}/staging_dir"
 cmake ${ZT_CMAKE_OPTS} "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}" || GTE ${ZT_STEP}
+
+###################################################
+CPrint "Begin Step $((++ZT_STEP)): Pre-Build Modifications."
 sed -i '/# if ! __GNUC_PREREQ(4,9)/,+2d' "${ZT_WORKDIR}/_deps/ziti-sdk-c-src/inc_internal/metrics.h" || GTE ${ZT_STEP}
 
 ###################################################
@@ -111,12 +114,8 @@ CPrint "Begin Step $((++ZT_STEP)): Build [Target ${ZT_BUILDTARGET}]."
 cmake --build "${ZT_WORKDIR}" --target "ziti-edge-tunnel" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Compress Binary."
-gzip -k9 programs/ziti-edge-tunnel/ziti-edge-tunnel || GTE ${ZT_STEP}
-
-###################################################
-CPrint "Begin Step $((++ZT_STEP)): Move Compressed Binary [Location $(pwd)]."
-mv -vf programs/ziti-edge-tunnel/ziti-edge-tunnel.gz ./ || GTE ${ZT_STEP}
+CPrint "Begin Step $((++ZT_STEP)): Compress and Move Binary [Location ${ZT_WORKDIR%\/*}/${ZT_WORKDIR##*\/}.gz]."
+gzip -ck9 programs/ziti-edge-tunnel/ziti-edge-tunnel > "${ZT_WORKDIR%\/*}/${ZT_WORKDIR##*\/}.gz" || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Compile and Build Complete."
