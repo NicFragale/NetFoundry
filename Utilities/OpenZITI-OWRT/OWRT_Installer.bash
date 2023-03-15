@@ -13,7 +13,7 @@ ZT_DIR="/opt/netfoundry/ziti"
 ZT_IDDIR="${ZT_DIR}/identities"
 
 ################################################################################################################
-# DO NOT MODIFY BELOW THIS LINE 
+# DO NOT MODIFY BELOW THIS LINE
 ################################################################################################################
 ZT_IDMANIFEST="manifest.info"
 ZT_EW="ziti-enrollwatch"
@@ -21,11 +21,21 @@ ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_enrollwatch-service")
 ZT_PADLINE=""
 ZT_SWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
 for ((i=0;i<(ZT_SWIDTH/2);i++)); do ZT_PADLINE+=' '; done
-function CPrint() { printf "\e[37;41m%-${ZT_SWIDTH}s\e[1;0m\n" "${ZT_PADLINE:0:-$((${#1}/2))}${1}"; }
+function CPrint() { local INPUT="${1:0:${ZT_SWIDTH}}"; printf "\e[37;41m%-${ZT_SWIDTH}s\e[1;0m\n" "${ZT_PADLINE:0:-$((${#INPUT}/2))}${INPUT}"; }
 function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
 
 ###################################################
 CPrint "[${ZT_BVER}]"
+CPrint "[WORKING DIRECTORY ${ZT_WORKDIR}]"
+CPrint "[URL ${ZT_URL:0:30}...${ZT_ZET[0]}]"
+CPrint "[ZITI DIRECTORY ${ZT_DIR}]"
+CPrint "[ZITI IDENTITY DIRECTORY ${ZT_DIR}]"
+sleep 5
+
+###################################################
+CPrint "Begin Step $((++ZT_STEP)): Update System and Packages."
+opkg update || GTE ${ZT_STEP}
+opkg install libatomic1 kmod-tun sed ip-full bash || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Create Directory Structures and Files."
@@ -110,7 +120,7 @@ while true; do
         echo ">> ENROLLING: \${EachJWT}"
         if "${ZT_DIR}/${ZT_ZET[1]}" enroll -j "\${EachJWT}" -i "\${EachJWT/.jwt/.json}"; then
             echo ">>> SUCCESS: \${EachJWT/.jwt/.json}"
-            echo "[$(date -u)] ADDED \${EachJWT/.jwt/}" >> "${ZT_IDDIR}/${ZT_IDMANIFEST}"
+            echo "[\$(date -u)] ADDED \${EachJWT/.jwt/}" >> "${ZT_IDDIR}/${ZT_IDMANIFEST}"
             rm -f "\${EachJWT}"
         else
             echo ">>> FAILED: \${EachJWT}.ENROLLFAIL"
@@ -133,19 +143,21 @@ else
         CPrint "Skipping Step $((++ZT_STEP)): Compressed Runtime Already Present [Location ${ZT_WORKDIR}/${ZT_ZET[0]}]."
     else
         CPrint "Begin Step $((++ZT_STEP)): Obtaining Compressed Runtime [${ZT_ZET[0]}]."
-        wget "${ZT_URL}/${ZT_ZET[0]}" -O "${ZT_WORKDIR}/${ZT_ZET[0]}" || GTE ${ZT_STEP}    
+        wget "${ZT_URL}/${ZT_ZET[0]}" -O "${ZT_WORKDIR}/${ZT_ZET[0]}" || GTE ${ZT_STEP}
     fi
-    ###################################################
     CPrint "Begin Step $((++ZT_STEP)): Decompress Runtime."
-    gzip -fdN "${ZT_WORKDIR}/${ZT_ZET[0]}" || GTE ${ZT_STEP}
+    gzip -fdc "${ZT_WORKDIR}/${ZT_ZET[0]}" > "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
 fi
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Setup Runtime."
 mv -vf "${ZT_WORKDIR}/${ZT_ZET[1]}" "${ZT_DIR}" || GTE ${ZT_STEP}
 rm -f "${ZT_WORKDIR}/${ZT_ZET[0]}" "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
-chmod 755 "${ZT_DIR}/${ZT_ZET}" || GTE ${ZT_STEP}
-echo "ZITI EDGE TUNNEL VERSION: $(${ZT_DIR}/${ZT_ZET} version || echo UNKNOWN)" || GTE ${ZT_STEP}
+chmod 755 "${ZT_DIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
+ZT_BINARYVER="$(${ZT_DIR}/${ZT_ZET[1]} version || echo UNKNOWN)"
+[[ ${ZT_BINARYVER} == "UNKNOWN" ]] \
+    && GTE ${ZT_STEP} \
+    || echo "ZITI EDGE TUNNEL VERSION: ${ZT_BINARYVER}"
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
