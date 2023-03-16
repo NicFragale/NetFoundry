@@ -27,7 +27,8 @@ function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
 ###################################################
 CPrint "[${MYVER}]"
 CPrint "[WORKING DIRECTORY ${ZT_WORKDIR}]"
-CPrint "[URL ${ZT_URL:0:30}...${ZT_ZET[0]: -30}]"
+CPrint "[URL ${ZT_URL}"
+CPrint "[ZITI RUNTIME ${ZT_ZET[0]}]"
 CPrint "[ZITI DIRECTORY ${ZT_DIR}]"
 CPrint "[ZITI IDENTITY DIRECTORY ${ZT_DIR}]"
 sleep 5
