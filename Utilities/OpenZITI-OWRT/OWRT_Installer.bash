@@ -60,7 +60,7 @@ THIS_RUNOPTIONS="run -I \${THIS_IDPATH}"
 THIS_MANIFEST="manifest.info"
 
 start_service() {
-    echo "Starting \${THIS_APP}."
+    logger -t \${THIS_APP} "Starting \${THIS_APP}."
     THIS_UPSTREAMDNS="-u \$(grep -oEm1 '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' /tmp/resolv.conf.d/resolv.conf.auto || echo 1.1.1.1)"
     procd_open_instance
     procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS} \${THIS_UPSTREAMDNS}
@@ -74,7 +74,7 @@ start_service() {
 }
 
 stop_service() {
-    echo "Stopping \${THIS_APP}."
+    logger -t \${THIS_APP} "Stopping \${THIS_APP}."
     start-stop-daemon -K -p \${THIS_PIDFILE} -s TERM
 }
 EOFEOF
@@ -94,7 +94,7 @@ THIS_PIDFILE="/var/run/\${THIS_APP}.pid"
 THIS_RUNOPTIONS="60"
 
 start_service() {
-    echo "Starting \${THIS_APP}."
+    logger -t \${THIS_APP} "Starting \${THIS_APP}."
     procd_open_instance
     procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS}
     procd_set_param respawn 600 5 5
@@ -106,7 +106,7 @@ start_service() {
 }
 
 stop_service() {
-    echo "Stopping \${THIS_APP}."
+    logger -t \${THIS_APP} "Stopping \${THIS_APP}."
     start-stop-daemon -K -p \${THIS_PIDFILE} -s TERM
 }
 EOFEOF
