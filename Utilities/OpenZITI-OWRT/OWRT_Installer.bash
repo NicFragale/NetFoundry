@@ -120,7 +120,7 @@ cat << EOFEOF > "${ZT_DIR}/${ZT_WATCH}"
 SLEEPTIME=\$1
 while true; do
     # Show a log message every 10 iterations.
-    if [[ \$((++ZW_ITR%10)) -eq 0 ]]; then
+    if [[ \$((++ZW_ITR%10)) -eq 1 ]]; then
         echo "> ZITIWATCH CYCLE [\${ZW_ITR}]"
     fi
     # Cycle any available JWTs.
