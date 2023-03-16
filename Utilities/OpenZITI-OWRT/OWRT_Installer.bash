@@ -118,7 +118,8 @@ cat << EOFEOF > "${ZT_DIR}/${ZT_WATCH}"
 SLEEPTIME=\$1
 while true; do
     # Cycle any available JWTs.
-    echo "> ZITIWATCH CYCLE [\$((++ZW_ITR))]"
+    [[ \$((++ZW_ITR%10)) -eq 0 ]] \
+        echo "> ZITIWATCH CYCLE [\${ZW_ITR}]"
     while IFS=$'\n' read -r EachJWT; do
         echo ">> ENROLLING: \${EachJWT}"
         if "${ZT_DIR}/${ZT_ZET[1]}" enroll -j "\${EachJWT}" -i "\${EachJWT/.jwt/.json}"; then
