@@ -16,8 +16,8 @@ ZT_IDDIR="${ZT_DIR}/identities"
 # DO NOT MODIFY BELOW THIS LINE
 ################################################################################################################
 ZT_IDMANIFEST="manifest.info"
-ZT_EW="ziti-enrollwatch"
-ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_enrollwatch-service")
+ZT_WATCH="ziti-watch"
+ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_watch-service")
 ZT_PADLINE=""
 ZT_SWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
 for ((i=0;i<(ZT_SWIDTH/2);i++)); do ZT_PADLINE+=' '; done
@@ -59,8 +59,9 @@ ZETOPTIONS="run -I \${ZETIDPATH}"
 ZETMANIFEST="manifest.info"
 
 start_service() {
+    ZETUPSTREAMDNS="-u \$(grep -oEm1 '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' /tmp/resolv.conf.d/resolv.conf.auto || echo 1.1.1.1)"
     procd_open_instance
-    procd_set_param command "\${ZETPATH}/\${ZETAPP}" \${ZETOPTIONS}
+    procd_set_param command "\${ZETPATH}/\${ZETAPP}" \${ZETOPTIONS} \${ZETUPSTREAMDNS}
     procd_set_param respawn 600 5 5
     procd_set_param file "\${ZETIDPATH}/\${ZETMANIFEST}"
     procd_set_param \${PID_FILE}
@@ -81,18 +82,18 @@ chmod 755 "${ZT_SERVICES[0]}" || GTE ${ZT_STEP}
 CPrint "Begin Step $((++ZT_STEP)): Create EnrollWatch Service."
 cat << EOFEOF > "${ZT_SERVICES[1]}"
 #!/bin/sh /etc/rc.common
-# Init script for NetFoundry OpenZITI (ENROLL WATCH, OpenWRT version).
+# Init script for NetFoundry OpenZITI (WATCH, OpenWRT version).
 USE_PROCD=1
 START=86
 STOP=01
-ZETEWPATH="${ZT_DIR}"
-ZETEWAPP="${ZT_EW}"
-PID_FILE="/var/run/\${ZETEWAPP}.pid"
-ZETEWOPTIONS="60"
+ZETWPATH="${ZT_DIR}"
+ZETWAPP="${ZT_WATCH}"
+PID_FILE="/var/run/\${ZETWAPP}.pid"
+ZETWOPTIONS="60"
 
 start_service() {
     procd_open_instance
-    procd_set_param command "\${ZETEWPATH}/\${ZETEWAPP}" \${ZETEWOPTIONS}
+    procd_set_param command "\${ZETWPATH}/\${ZETWAPP}" \${ZETWOPTIONS}
     procd_set_param respawn 600 5 5
     procd_set_param \${PID_FILE}
     procd_set_param limits core="unlimited"
@@ -109,20 +110,21 @@ EOFEOF
 chmod 755 "${ZT_SERVICES[1]}" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Create EnrollWatch."
-cat << EOFEOF > "${ZT_DIR}/${ZT_EW}"
+CPrint "Begin Step $((++ZT_STEP)): Create ZITIWatch."
+cat << EOFEOF > "${ZT_DIR}/${ZT_WATCH}"
 #!/bin/bash
-# Enrollment trigger system for NetFoundry OpenZITI.
+# Trigger system for NetFoundry OpenZITI.
 SLEEPTIME=\$1
 while true; do
     # Cycle any available JWTs.
-    echo "> ENROLLLWATCH CYCLE [\$((++EW_ITR))]"
+    echo "> ZITIWATCH CYCLE [\$((++ZW_ITR))]"
     while IFS=$'\n' read -r EachJWT; do
         echo ">> ENROLLING: \${EachJWT}"
         if "${ZT_DIR}/${ZT_ZET[1]}" enroll -j "\${EachJWT}" -i "\${EachJWT/.jwt/.json}"; then
             echo ">>> SUCCESS: \${EachJWT/.jwt/.json}"
             echo "[\$(date -u)] ADDED \${EachJWT/.jwt/}" >> "${ZT_IDDIR}/${ZT_IDMANIFEST}"
             rm -f "\${EachJWT}"
+            "${ZT_SERVICES[1]}" reload
         else
             echo ">>> FAILED: \${EachJWT}.ENROLLFAIL"
             mv -vf "\${EachJWT}" "\${EachJWT}.ENROLLFAIL"
@@ -134,7 +136,7 @@ while true; do
     sleep \${SLEEPTIME:-60}
 done
 EOFEOF
-chmod 755 "${ZT_DIR}/${ZT_EW}" || GTE ${ZT_STEP}
+chmod 755 "${ZT_DIR}/${ZT_WATCH}" || GTE ${ZT_STEP}
 
 ###################################################
 if [[ -f "${ZT_WORKDIR}/${ZT_ZET[1]}" ]]; then
