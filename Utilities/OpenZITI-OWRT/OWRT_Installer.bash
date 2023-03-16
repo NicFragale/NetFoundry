@@ -125,7 +125,7 @@ while true; do
     fi
     # Cycle any available JWTs.
     while IFS=$'\n' read -r EachJWT; do
-        echo ">> ENROLLING: \${EachJWT}"
+        echo "[\${ZW_ITR}] ENROLLING: \${EachJWT}"
         if "${ZT_DIR}/${ZT_ZET[1]}" enroll -j "\${EachJWT}" -i "\${EachJWT/.jwt/.json}"; then
             echo "[\${ZW_ITR}] SUCCESS: \${EachJWT/.jwt/.json}"
             echo "[\$(date -u)] ADDED \${EachJWT/.jwt/}" >> "${ZT_IDDIR}/${ZT_IDMANIFEST}"
