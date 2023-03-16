@@ -121,20 +121,20 @@ SLEEPTIME=\$1
 while true; do
     # Show a log message every 10 iterations.
     if [[ \$((++ZW_ITR%10)) -eq 1 ]]; then
-        echo "> ZITIWATCH CYCLE [\${ZW_ITR}]"
+        echo "ZITIWATCH CYCLE [\${ZW_ITR}]"
     fi
     # Cycle any available JWTs.
     while IFS=$'\n' read -r EachJWT; do
         echo ">> ENROLLING: \${EachJWT}"
         if "${ZT_DIR}/${ZT_ZET[1]}" enroll -j "\${EachJWT}" -i "\${EachJWT/.jwt/.json}"; then
-            echo ">>> SUCCESS: \${EachJWT/.jwt/.json}"
+            echo "[\${ZW_ITR}] SUCCESS: \${EachJWT/.jwt/.json}"
             echo "[\$(date -u)] ADDED \${EachJWT/.jwt/}" >> "${ZT_IDDIR}/${ZT_IDMANIFEST}"
             rm -f "\${EachJWT}"
             sleep 3
             # Reload the daemon if any changes were flagged.
             ${ZT_SERVICES[0]} reload            
         else
-            echo ">>> FAILED: \${EachJWT}.ENROLLFAIL"
+            echo "[\${ZW_ITR}] FAILED: \${EachJWT}.ENROLLFAIL"
             mv -vf "\${EachJWT}" "\${EachJWT}.ENROLLFAIL"
             rm -f "\${EachJWT/.jwt/.json}"
         fi
