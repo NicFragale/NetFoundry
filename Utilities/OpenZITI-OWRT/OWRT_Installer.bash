@@ -120,7 +120,7 @@ while true; do
     # Reload the daemon if any changes were flagged.
     ${ZT_SERVICES[0]} reload
     [[ \$((++ZW_ITR%10)) -eq 0 ]] \
-        echo "> ZITIWATCH CYCLE [\${ZW_ITR}]"
+        && echo "> ZITIWATCH CYCLE [\${ZW_ITR}]"
     # Cycle any available JWTs.
     while IFS=$'\n' read -r EachJWT; do
         echo ">> ENROLLING: \${EachJWT}"
