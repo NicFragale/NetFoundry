@@ -74,7 +74,6 @@ start_service() {
 
 stop_service() {
     start-stop-daemon -K -p \$PID_FILE -s TERM
-    rm -rf \$PID_FILE
 }
 EOFEOF
 chmod 755 "${ZT_SERVICES[0]}" || GTE ${ZT_STEP}
@@ -105,7 +104,6 @@ start_service() {
 
 stop_service() {
     start-stop-daemon -K -p \$PID_FILE -s TERM
-    rm -rf \$PID_FILE
 }
 EOFEOF
 chmod 755 "${ZT_SERVICES[1]}" || GTE ${ZT_STEP}
