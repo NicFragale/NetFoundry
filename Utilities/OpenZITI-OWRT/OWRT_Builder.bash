@@ -11,7 +11,7 @@ ZT_OWRTTARGET=("${2}" "${3}")
 ZT_TUNVER="${4:-latest}"
 
 ################################################################################################################
-# DO NOT MODIFY BELOW THIS LINE 
+# DO NOT MODIFY BELOW THIS LINE
 ################################################################################################################
 ZT_WORKDIR="$(pwd)/OpenWRT-${ZT_OWRTVER}-${ZT_OWRTTARGET[0]}_${ZT_OWRTTARGET[1]}"
 ZT_STEP=0
@@ -28,7 +28,9 @@ function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
 
 ###################################################
 CPrint "[${ZT_BVER}]"
-CPrint "[ZITI EDGE TUNNEL VERSION ${ZT_TUNVER}] [OPENWRT VERSION ${ZT_OWRTVER}] [OPENWRT TARGET ${ZT_OWRTTARGET[0]}/${ZT_OWRTTARGET[1]}]"
+CPrint "[ZITI EDGE TUNNEL VERSION ${ZT_TUNVER}]"
+CPrint "[OPENWRT VERSION ${ZT_OWRTVER}]"
+CPrint "[OPENWRT TARGET ${ZT_OWRTTARGET[0]}/${ZT_OWRTTARGET[1]}]"
 sleep 5
 
 ###################################################
@@ -44,8 +46,8 @@ apt install -y build-essential clang flex bison g++ gawk gcc-multilib gettext gi
 CPrint "Begin Step $((++ZT_STEP)): Acquire ZITI EDGE TUNNEL Source [Version ${ZT_TUNVER}]."
 if [[ ${ZT_TUNVER:-latest} == "latest" ]]; then
     ZT_ALLVERSIONS=( $(curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' \
-	    | awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for(EACHVERSION in ALLVERSIONS){gsub("v","",EACHVERSION);print EACHVERSION}}' \
-	    | sort -rnt '.' -k1,1 -k2,2 -k3,3)
+        | awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for(EACHVERSION in ALLVERSIONS){gsub("v","",EACHVERSION);print EACHVERSION}}' \
+        | sort -rnt '.' -k1,1 -k2,2 -k3,3)
     )
     ZT_TUNVER="${ZT_ALLVERSIONS[0]}"
 fi
