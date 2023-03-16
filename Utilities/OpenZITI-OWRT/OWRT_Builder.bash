@@ -1,7 +1,7 @@
 #!/bin/bash
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the build server as a BUILD CAPABLE USER (ROOT is assumed in this example).
-ZT_BVER="20230301: NFragale: Compile and Build Helper for OpenZITI on OpenWRT"
+MYVER="20230301: NFragale: Compile and Build Helper for OpenZITI on OpenWRT"
 ################################################################################################################
 
 ###################################################
@@ -27,7 +27,7 @@ function CPrint() { local INPUT="${1:0:${ZT_SWIDTH}}"; printf "\e[37;41m%-${ZT_S
 function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
 
 ###################################################
-CPrint "[${ZT_BVER}]"
+CPrint "[${MYVER}]"
 CPrint "[ZITI EDGE TUNNEL VERSION ${ZT_TUNVER}]"
 CPrint "[OPENWRT VERSION ${ZT_OWRTVER}]"
 CPrint "[OPENWRT TARGET ${ZT_OWRTTARGET[0]}/${ZT_OWRTTARGET[1]}]"
