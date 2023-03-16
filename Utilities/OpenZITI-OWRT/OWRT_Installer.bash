@@ -52,21 +52,21 @@ cat << EOFEOF > "${ZT_SERVICES[0]}"
 USE_PROCD=1
 START=85
 STOP=01
-PATH="${ZT_DIR}"
-IDPATH="${ZT_IDDIR}"
-APP="${ZT_ZET[1]}"
-PIDFILE="/var/run/\${APP}.pid"
-OPTIONS="run -I \${IDPATH}"
-MANIFEST="manifest.info"
+THIS_PATH="${ZT_DIR}"
+THIS_IDPATH="${ZT_IDDIR}"
+THIS_APP="${ZT_ZET[1]}"
+THIS_PIDFILE="/var/run/\${THIS_APP}.pid"
+THIS_RUNOPTIONS="run -I \${THIS_IDPATH}"
+THIS_MANIFEST="manifest.info"
 
 start_service() {
-    echo "Starting \${APP}."
-    UPSTREAMDNS="-u \$(grep -oEm1 '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' /tmp/resolv.conf.d/resolv.conf.auto || echo 1.1.1.1)"
+    echo "Starting \${THIS_APP}."
+    THIS_UPSTREAMDNS="-u \$(grep -oEm1 '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' /tmp/resolv.conf.d/resolv.conf.auto || echo 1.1.1.1)"
     procd_open_instance
-    procd_set_param command "\${PATH}/\${APP}" \${OPTIONS} \${UPSTREAMDNS}
+    procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS} \${THIS_UPSTREAMDNS}
     procd_set_param respawn 600 5 5
-    procd_set_param file "\${IDPATH}/\${MANIFEST}"
-    procd_set_param pidfile \${PIDFILE}
+    procd_set_param file "\${THIS_IDPATH}/\${THIS_MANIFEST}"
+    procd_set_param pidfile \${THIS_PIDFILE}
     procd_set_param limits core="unlimited"
     procd_set_param stdout 1
     procd_set_param stderr 1
@@ -74,8 +74,8 @@ start_service() {
 }
 
 stop_service() {
-    echo "Stopping \${APP}."
-    start-stop-daemon -K -p \$PIDFILE -s TERM
+    echo "Stopping \${THIS_APP}."
+    start-stop-daemon -K -p \${THIS_PIDFILE} -s TERM
 }
 EOFEOF
 chmod 755 "${ZT_SERVICES[0]}" || GTE ${ZT_STEP}
@@ -88,17 +88,17 @@ cat << EOFEOF > "${ZT_SERVICES[1]}"
 USE_PROCD=1
 START=86
 STOP=01
-PATH="${ZT_DIR}"
-APP="${ZT_WATCH}"
-PIDFILE="/var/run/\${APP}.pid"
-WOPTIONS="60"
+THIS_PATH="${ZT_DIR}"
+THIS_APP="${ZT_WATCH}"
+THIS_PIDFILE="/var/run/\${THIS_APP}.pid"
+THIS_RUNOPTIONS="60"
 
 start_service() {
-    echo "Starting \${APP}."
+    echo "Starting \${THIS_APP}."
     procd_open_instance
-    procd_set_param command "\${PATH}/\${APP}" \${OPTIONS}
+    procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS}
     procd_set_param respawn 600 5 5
-    procd_set_param pidfile \${PIDFILE}
+    procd_set_param pidfile \${THIS_PIDFILE}
     procd_set_param limits core="unlimited"
     procd_set_param stdout 1
     procd_set_param stderr 1
@@ -106,8 +106,8 @@ start_service() {
 }
 
 stop_service() {
-    echo "Stopping \${APP}."
-    start-stop-daemon -K -p \$PIDFILE -s TERM
+    echo "Stopping \${THIS_APP}."
+    start-stop-daemon -K -p \${THIS_PIDFILE} -s TERM
 }
 EOFEOF
 chmod 755 "${ZT_SERVICES[1]}" || GTE ${ZT_STEP}
