@@ -81,7 +81,7 @@ EOFEOF
 chmod 755 "${ZT_SERVICES[0]}" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Create EnrollWatch Service."
+CPrint "Begin Step $((++ZT_STEP)): Create ZITI Watch Service."
 cat << EOFEOF > "${ZT_SERVICES[1]}"
 #!/bin/sh /etc/rc.common
 # Init script for NetFoundry OpenZITI (WATCH, OpenWRT version).
@@ -113,7 +113,7 @@ EOFEOF
 chmod 755 "${ZT_SERVICES[1]}" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Create ZITIWatch."
+CPrint "Begin Step $((++ZT_STEP)): Create ZITI Watch."
 cat << EOFEOF > "${ZT_DIR}/${ZT_WATCH}"
 #!/bin/bash
 # Trigger system for NetFoundry OpenZITI.
