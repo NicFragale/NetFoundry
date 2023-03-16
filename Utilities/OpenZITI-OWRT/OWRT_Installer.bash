@@ -41,7 +41,8 @@ opkg install libatomic1 kmod-tun sed ip-full bash || GTE ${ZT_STEP}
 CPrint "Begin Step $((++ZT_STEP)): Create Directory Structures and Files."
 mkdir -vp "${ZT_DIR}" || GTE ${ZT_STEP}
 mkdir -vp "${ZT_IDDIR}" || GTE ${ZT_STEP}
-echo -e "# ZITI EDGE TUNNEL IDENTITY MANIFEST - DO NOT DELETE\n# Initialized on $(date -u)" > "${ZT_IDDIR}/${ZT_IDMANIFEST}"
+[[ ! -f "${ZT_IDDIR}/${ZT_IDMANIFEST}"  ]] \
+    && echo  -e "# ZITI EDGE TUNNEL IDENTITY MANIFEST - DO NOT DELETE\n# Initialized on $(date -u)" > "${ZT_IDDIR}/${ZT_IDMANIFEST}"
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Create Runtime Service."
@@ -124,7 +125,7 @@ while true; do
             echo ">>> SUCCESS: \${EachJWT/.jwt/.json}"
             echo "[\$(date -u)] ADDED \${EachJWT/.jwt/}" >> "${ZT_IDDIR}/${ZT_IDMANIFEST}"
             rm -f "\${EachJWT}"
-            "${ZT_SERVICES[1]}" reload
+            ${ZT_SERVICES[0]} reload
         else
             echo ">>> FAILED: \${EachJWT}.ENROLLFAIL"
             mv -vf "\${EachJWT}" "\${EachJWT}.ENROLLFAIL"
