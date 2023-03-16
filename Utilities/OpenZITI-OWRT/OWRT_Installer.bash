@@ -35,7 +35,7 @@ sleep 5
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Update System and Packages."
 opkg update || GTE ${ZT_STEP}
-opkg install libatomic1 kmod-tun sed ip-full bash || GTE ${ZT_STEP}
+opkg install libatomic1 kmod-tun sed ip-full || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "Begin Step $((++ZT_STEP)): Create Directory Structures and Files."
