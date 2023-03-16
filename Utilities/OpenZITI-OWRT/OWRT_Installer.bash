@@ -65,7 +65,7 @@ start_service() {
     procd_set_param command "\${ZETPATH}/\${ZETAPP}" \${ZETOPTIONS} \${ZETUPSTREAMDNS}
     procd_set_param respawn 600 5 5
     procd_set_param file "\${ZETIDPATH}/\${ZETMANIFEST}"
-    procd_set_param \${PID_FILE}
+    procd_set_param pidfile \${PID_FILE}
     procd_set_param limits core="unlimited"
     procd_set_param stdout 1
     procd_set_param stderr 1
@@ -96,7 +96,7 @@ start_service() {
     procd_open_instance
     procd_set_param command "\${ZETWPATH}/\${ZETWAPP}" \${ZETWOPTIONS}
     procd_set_param respawn 600 5 5
-    procd_set_param \${PID_FILE}
+    procd_set_param pidfile \${PID_FILE}
     procd_set_param limits core="unlimited"
     procd_set_param stdout 1
     procd_set_param stderr 1
