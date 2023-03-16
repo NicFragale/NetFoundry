@@ -60,7 +60,7 @@ THIS_RUNOPTIONS="run -I \${THIS_IDPATH}"
 THIS_MANIFEST="manifest.info"
 
 start_service() {
-    echo "Starting \${THIS_APP}."
+    logger -t \${THIS_APP} "Starting \${THIS_APP}."
     THIS_UPSTREAMDNS="-u \$(grep -oEm1 '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' /tmp/resolv.conf.d/resolv.conf.auto || echo 1.1.1.1)"
     procd_open_instance
     procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS} \${THIS_UPSTREAMDNS}
@@ -94,7 +94,7 @@ THIS_PIDFILE="/var/run/\${THIS_APP}.pid"
 THIS_RUNOPTIONS="60"
 
 start_service() {
-    echo "Starting \${THIS_APP}."
+    logger -t \${THIS_APP} "Starting \${THIS_APP}."
     procd_open_instance
     procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS}
     procd_set_param respawn 600 5 5
@@ -123,8 +123,6 @@ while true; do
     if [[ \$((++ZW_ITR%10)) -eq 0 ]]; then
         echo "> ZITIWATCH CYCLE [\${ZW_ITR}]"
     fi
-    # Reload the daemon if any changes were flagged.
-    ${ZT_SERVICES[0]} reload
     # Cycle any available JWTs.
     while IFS=$'\n' read -r EachJWT; do
         echo ">> ENROLLING: \${EachJWT}"
@@ -132,6 +130,9 @@ while true; do
             echo ">>> SUCCESS: \${EachJWT/.jwt/.json}"
             echo "[\$(date -u)] ADDED \${EachJWT/.jwt/}" >> "${ZT_IDDIR}/${ZT_IDMANIFEST}"
             rm -f "\${EachJWT}"
+            sleep 3
+            # Reload the daemon if any changes were flagged.
+            ${ZT_SERVICES[0]} reload            
         else
             echo ">>> FAILED: \${EachJWT}.ENROLLFAIL"
             mv -vf "\${EachJWT}" "\${EachJWT}.ENROLLFAIL"
