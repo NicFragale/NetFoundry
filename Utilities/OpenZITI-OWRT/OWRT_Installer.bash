@@ -117,10 +117,12 @@ cat << EOFEOF > "${ZT_DIR}/${ZT_WATCH}"
 # Trigger system for NetFoundry OpenZITI.
 SLEEPTIME=\$1
 while true; do
+    # Show a log message every 10 iterations.
+    if [[ \$((++ZW_ITR%10)) -eq 0 ]]; then
+        echo "> ZITIWATCH CYCLE [\${ZW_ITR}]"
+    fi
     # Reload the daemon if any changes were flagged.
     ${ZT_SERVICES[0]} reload
-    [[ \$((++ZW_ITR%10)) -eq 0 ]] \
-        && echo "> ZITIWATCH CYCLE [\${ZW_ITR}]"
     # Cycle any available JWTs.
     while IFS=$'\n' read -r EachJWT; do
         echo ">> ENROLLING: \${EachJWT}"
