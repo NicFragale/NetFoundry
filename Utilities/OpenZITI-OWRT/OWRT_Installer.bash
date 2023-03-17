@@ -18,6 +18,8 @@ ZT_IDDIR="${ZT_DIR}/identities"
 ZT_IDMANIFEST="manifest.info"
 ZT_WATCH="ziti-watch"
 ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_watch-service")
+ZT_MOUNTSIZE="$(df "${ZT_DIR}" | awk 'NR==2{print $4}')"
+ZT_ISDYNAMIC="false"
 function CPrint() { 
     local OUT_COLOR="${1}" IN_TEXT="${2}" OUT_SCREENWIDTH OUT_PADLEN
     shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";
@@ -51,6 +53,10 @@ if [[ ${ZT_WORKDIR} == "UNKNOWN" ]] \
     || [[ ${ZT_IDDIR} == "UNKNOWN" ]]; then
     CPrint "45" "Input Missing/Error - Please Check."
     GTE ${ZT_STEP}
+fi
+if [[ ${ZT_MOUNTSIZE:-0} -lt 20000 ]]; then
+    ZT_ISDYNAMIC="true"
+    CPrint "44" "LOW STORAGE SPACE DEVICE DETECTED - RUNNING DYNAMICALLY"
 fi
 sleep 5
 
@@ -145,6 +151,18 @@ while true; do
     if [[ \$((++ZW_ITR%10)) -eq 1 ]]; then
         echo "ZITIWATCH CYCLE [\${ZW_ITR}]"
     fi
+    # LOW STORAGE DEVICE FUNCTION: Attempt to obtain the runtime if not present.
+    if ${ZT_ISDYNAMIC} && [[ ! -f ${ZTWORKDIR}/${ZT_ZET[1]} ]]; then
+        echo "[\${ZW_ITR}] DYNAMIC MODE, OBTAINING RUNTIME"
+	    wget "${ZT_URL}/${ZT_ZET[0]}" -O "${ZT_WORKDIR}/${ZT_ZET[0]}" \
+            && gzip -fdc "${ZT_WORKDIR}/${ZT_ZET[0]}" > "${ZT_WORKDIR}/${ZT_ZET[1]}" \
+            && ln -sf "${ZT_WORKDIR}/${ZT_ZET[1]}" "${ZT_DIR}/${ZT_ZET[1]}" \
+            && chmod 755 "${ZT_WORKDIR}/${ZT_ZET[1]}" \
+            && "${ZT_SERVICES[1]}" reload \
+            && rm -f "${ZT_WORKDIR}/${ZT_ZET[0]}" \
+            && echo "[\${ZW_ITR}] SUCCESS: Obtained Runtime" \
+            || echo "[\${ZW_ITR}] FAILED: Could Not Obtain Runtime"
+    fi    
     # Cycle any available JWTs.
     while IFS=$'\n' read -r EachJWT; do
         echo "[\${ZW_ITR}] ENROLLING: \${EachJWT}"
@@ -169,7 +187,9 @@ EOFEOF
 chmod 755 "${ZT_DIR}/${ZT_WATCH}" || GTE ${ZT_STEP}
 
 ###################################################
-if [[ -f "${ZT_WORKDIR}/${ZT_ZET[1]}" ]]; then
+if ${ZT_ISDYNAMIC}; then
+    CPrint "41" "Skipping Step $((++ZT_STEP)): Dynamic Runtime Mode."
+elif [[ -f "${ZT_WORKDIR}/${ZT_ZET[1]}" ]]; then
     CPrint "41" "Skipping Step $((++ZT_STEP)): Uncompressed Runtime Present [Location ${ZT_WORKDIR}/${ZT_ZET[1]}]."
 else
     if [[ -f "${ZT_WORKDIR}/${ZT_ZET[0]}" ]]; then
@@ -183,14 +203,18 @@ else
 fi
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Setup Runtime."
-mv -vf "${ZT_WORKDIR}/${ZT_ZET[1]}" "${ZT_DIR}" || GTE ${ZT_STEP}
-rm -f "${ZT_WORKDIR}/${ZT_ZET[0]}" "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
-chmod 755 "${ZT_DIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
-ZT_BINARYVER="$(${ZT_DIR}/${ZT_ZET[1]} version || echo UNKNOWN)"
-[[ ${ZT_BINARYVER} == "UNKNOWN" ]] \
-    && GTE ${ZT_STEP} \
-    || echo "ZITI EDGE TUNNEL VERSION: ${ZT_BINARYVER}"
+if ${ZT_ISDYNAMIC}; then
+    CPrint "41" "Skipping Step $((++ZT_STEP)): Dynamic Runtime Mode."
+else
+    CPrint "41" "Begin Step $((++ZT_STEP)): Setup Runtime."
+    mv -vf "${ZT_WORKDIR}/${ZT_ZET[1]}" "${ZT_DIR}" || GTE ${ZT_STEP}
+    rm -f "${ZT_WORKDIR}/${ZT_ZET[0]}" "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
+    chmod 755 "${ZT_DIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
+    ZT_BINARYVER="$(${ZT_DIR}/${ZT_ZET[1]} version || echo UNKNOWN)"
+    [[ ${ZT_BINARYVER} == "UNKNOWN" ]] \
+        && GTE ${ZT_STEP} \
+        || echo "ZITI EDGE TUNNEL VERSION: ${ZT_BINARYVER}"
+fi
 
 ###################################################
 CPrint "41" "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
