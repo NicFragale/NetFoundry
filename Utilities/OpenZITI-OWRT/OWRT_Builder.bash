@@ -32,10 +32,20 @@ function GTE() {
 }
 
 ###################################################
-CPrint "44" "[${MYVER}]"
-CPrint "44" "ZITI EDGE TUNNEL VERSION: ${ZT_TUNVER}"
-CPrint "44" "OPENWRT VERSION: ${ZT_OWRTVER}"
-CPrint "44" "OPENWRT TARGET: ${ZT_OWRTTARGET[0]}/${ZT_OWRTTARGET[1]}"
+CPrint "44" "[${MYVER:-UNSET VERSION}]"
+CPrint "44" "ZITI EDGE TUNNEL VERSION: ${ZT_TUNVER:=UNKNOWN}"
+CPrint "44" "OPENWRT VERSION: ${ZT_OWRTVER:=UNKNOWN}"
+CPrint "44" "OPENWRT TARGET: ${ZT_OWRTTARGET[0]:=UNKNOWN}/${ZT_OWRTTARGET[1]:=UNKNOWN}"
+
+###################################################
+CPrint "41" "Begin Step $((++ZT_STEP)): Input Checking."
+if [[ ${ZT_TUNVER} == "UNKNOWN" ]] \
+    || [[ ${ZT_OWRTVER} == "UNKNOWN" ]] \
+    || [[ ${ZT_OWRTTARGET[0]} == "UNKNOWN" ]] \
+    || [[ ${ZT_OWRTTARGET[1]} == "UNKNOWN" ]]; then
+    CPrint "45" "Input Missing/Error - Please Check."
+    GTE ${ZT_STEP}
+fi
 sleep 5
 
 ###################################################
