@@ -28,14 +28,30 @@ function GTE() {
     CPrint "45" "ERROR: Early Exit at Step ${1}."
     exit ${1}
 }
+if [[ ${ZT_ZET[0]} == "" ]] && [[ -f /etc/os-release ]]; then
+    . /etc/os-release 2>/dev/null
+    ZT_ZET[0]="OpenWRT-${VERSION}-${OPENWRT_BOARD/\//_}.gz"
+fi
 
 ###################################################
-CPrint "44" "[${MYVER}]"
-CPrint "44" "WORK DIRECTORY: ${ZT_WORKDIR}"
-CPrint "44" "BUILD URL: ${ZT_URL}"
-CPrint "44" "BUILD RUNTIME: ${ZT_ZET[0]}"
-CPrint "44" "INSTALL DIRECTORY: ${ZT_DIR}"
-CPrint "44" "IDENTITY DIRECTORY: ${ZT_IDDIR}"
+CPrint "44" "[${MYVER:-UNSET VERSION}]"
+CPrint "44" "WORK DIRECTORY: ${ZT_WORKDIR:=UNKNOWN}"
+CPrint "44" "BUILD URL: ${ZT_URL:=UNKNOWN}"
+CPrint "44" "BUILD RUNTIME: ${ZT_ZET[0]:=UNKNOWN}->${ZT_ZET[1]:=UNKNOWN}"
+CPrint "44" "INSTALL DIRECTORY: ${ZT_DIR:=UNKNOWN}"
+CPrint "44" "IDENTITY DIRECTORY: ${ZT_IDDIR:=UNKNOWN}"
+
+###################################################
+CPrint "41" "Begin Step $((++ZT_STEP)): Input Checking."
+if [[ ${ZT_WORKDIR} == "UNKNOWN" ]] \
+    || [[ ${ZT_URL} == "UNKNOWN" ]] \
+    || [[ ${ZT_ZET[0]} == "UNKNOWN" ]] \
+    || [[ ${ZT_ZET[1]} == "UNKNOWN" ]] \
+    || [[ ${ZT_DIR} == "UNKNOWN" ]] \
+    || [[ ${ZT_IDDIR} == "UNKNOWN" ]]; then
+    CPrint "45" "Input Missing/Error - Please Check."
+    GTE ${ZT_STEP}
+fi
 sleep 5
 
 ###################################################
