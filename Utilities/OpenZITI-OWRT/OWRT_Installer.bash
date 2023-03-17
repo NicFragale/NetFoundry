@@ -1,7 +1,7 @@
 #!/bin/bash
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the router via SSH as ROOT.
-MYVER="20230301: NFragale: Install and Setup Helper for OpenZITI on OpenWRT"
+MYVER="20230317: NFragale: Install and Setup Helper for OpenZITI on OpenWRT"
 ################################################################################################################
 
 ###################################################
@@ -18,35 +18,40 @@ ZT_IDDIR="${ZT_DIR}/identities"
 ZT_IDMANIFEST="manifest.info"
 ZT_WATCH="ziti-watch"
 ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_watch-service")
-ZT_PADLINE=""
-ZT_SWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
-for ((i=0;i<(ZT_SWIDTH/2);i++)); do ZT_PADLINE+=' '; done
-function CPrint() { local INPUT="${1:0:${ZT_SWIDTH}}"; printf "\e[37;41m%-${ZT_SWIDTH}s\e[1;0m\n" "${ZT_PADLINE:0:-$((${#INPUT}/2))}${INPUT}"; }
-function GTE() { CPrint "ERROR: Early Exit at Step ${1}." && exit ${1}; }
+function CPrint() { 
+    local OUT_COLOR="${1}" IN_TEXT="${2}" OUT_SCREENWIDTH OUT_PADLEN
+    shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";
+    for ((i=0;i<(OUT_SCREENWIDTH/2);i++)); do OUT_PADLEN+=' '; done    
+    printf "\e[37;${OUT_COLOR}m%-${OUT_SCREENWIDTH}s\e[1;0m\n" "${OUT_PADLEN:0:-$((${#IN_TEXT}/2))}${IN_TEXT}"
+}
+function GTE() { 
+    CPrint "45" "ERROR: Early Exit at Step ${1}."
+    exit ${1}
+}
 
 ###################################################
-CPrint "[${MYVER}]"
-CPrint "[WORKING DIRECTORY ${ZT_WORKDIR}]"
-CPrint "[URL ${ZT_URL}"
-CPrint "[ZITI RUNTIME ${ZT_ZET[0]}]"
-CPrint "[ZITI DIRECTORY ${ZT_DIR}]"
-CPrint "[ZITI IDENTITY DIRECTORY ${ZT_DIR}]"
+CPrint "44" "[${MYVER}]"
+CPrint "44" "WORK DIRECTORY: ${ZT_WORKDIR}"
+CPrint "44" "BUILD URL: ${ZT_URL}"
+CPrint "44" "BUILD RUNTIME: ${ZT_ZET[0]}"
+CPrint "44" "INSTALL DIRECTORY: ${ZT_DIR}"
+CPrint "44" "IDENTITY DIRECTORY: ${ZT_IDDIR}"
 sleep 5
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Update System and Packages."
+CPrint "41" "Begin Step $((++ZT_STEP)): Update System and Packages."
 opkg update || GTE ${ZT_STEP}
 opkg install libatomic1 kmod-tun sed ip-full || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Create Directory Structures and Files."
+CPrint "41" "Begin Step $((++ZT_STEP)): Create Directory Structures and Files."
 mkdir -vp "${ZT_DIR}" || GTE ${ZT_STEP}
 mkdir -vp "${ZT_IDDIR}" || GTE ${ZT_STEP}
 [[ ! -f "${ZT_IDDIR}/${ZT_IDMANIFEST}"  ]] \
     && echo  -e "# ZITI EDGE TUNNEL IDENTITY MANIFEST - DO NOT DELETE\n# Initialized on $(date -u)" > "${ZT_IDDIR}/${ZT_IDMANIFEST}"
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Create Runtime Service."
+CPrint "41" "Begin Step $((++ZT_STEP)): Create Runtime Service."
 cat << EOFEOF > "${ZT_SERVICES[0]}"
 #!/bin/sh /etc/rc.common
 # Init script for NetFoundry OpenZITI (ZITI EDGE TUNNEL, OpenWRT version).
@@ -82,7 +87,7 @@ EOFEOF
 chmod 755 "${ZT_SERVICES[0]}" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Create ZITI Watch Service."
+CPrint "41" "Begin Step $((++ZT_STEP)): Create ZITI Watch Service."
 cat << EOFEOF > "${ZT_SERVICES[1]}"
 #!/bin/sh /etc/rc.common
 # Init script for NetFoundry OpenZITI (WATCH, OpenWRT version).
@@ -114,7 +119,7 @@ EOFEOF
 chmod 755 "${ZT_SERVICES[1]}" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Create ZITI Watch."
+CPrint "41" "Begin Step $((++ZT_STEP)): Create ZITI Watch."
 cat << EOFEOF > "${ZT_DIR}/${ZT_WATCH}"
 #!/bin/bash
 # Trigger system for NetFoundry OpenZITI.
@@ -149,20 +154,20 @@ chmod 755 "${ZT_DIR}/${ZT_WATCH}" || GTE ${ZT_STEP}
 
 ###################################################
 if [[ -f "${ZT_WORKDIR}/${ZT_ZET[1]}" ]]; then
-    CPrint "Skipping Step $((++ZT_STEP)): Uncompressed Runtime Already Present [Location ${ZT_WORKDIR}/${ZT_ZET[1]}]."
+    CPrint "41" "Skipping Step $((++ZT_STEP)): Uncompressed Runtime Present [Location ${ZT_WORKDIR}/${ZT_ZET[1]}]."
 else
     if [[ -f "${ZT_WORKDIR}/${ZT_ZET[0]}" ]]; then
-        CPrint "Skipping Step $((++ZT_STEP)): Compressed Runtime Already Present [Location ${ZT_WORKDIR}/${ZT_ZET[0]}]."
+        CPrint "41" "Skipping Step $((++ZT_STEP)): Compressed Runtime Present [Location ${ZT_WORKDIR}/${ZT_ZET[0]}]."
     else
-        CPrint "Begin Step $((++ZT_STEP)): Obtaining Compressed Runtime [${ZT_ZET[0]}]."
+        CPrint "41" "Begin Step $((++ZT_STEP)): Obtaining Compressed Runtime [${ZT_ZET[0]}]."
         wget "${ZT_URL}/${ZT_ZET[0]}" -O "${ZT_WORKDIR}/${ZT_ZET[0]}" || GTE ${ZT_STEP}
     fi
-    CPrint "Begin Step $((++ZT_STEP)): Decompress Runtime."
+    CPrint "41" "Begin Step $((++ZT_STEP)): Decompress Runtime."
     gzip -fdc "${ZT_WORKDIR}/${ZT_ZET[0]}" > "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
 fi
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Setup Runtime."
+CPrint "41" "Begin Step $((++ZT_STEP)): Setup Runtime."
 mv -vf "${ZT_WORKDIR}/${ZT_ZET[1]}" "${ZT_DIR}" || GTE ${ZT_STEP}
 rm -f "${ZT_WORKDIR}/${ZT_ZET[0]}" "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
 chmod 755 "${ZT_DIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
@@ -172,11 +177,11 @@ ZT_BINARYVER="$(${ZT_DIR}/${ZT_ZET[1]} version || echo UNKNOWN)"
     || echo "ZITI EDGE TUNNEL VERSION: ${ZT_BINARYVER}"
 
 ###################################################
-CPrint "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
+CPrint "41" "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
 ${ZT_SERVICES[0]} enable || GTE ${ZT_STEP}
 ${ZT_SERVICES[1]} enable || GTE ${ZT_STEP}
 ${ZT_SERVICES[0]} start || GTE ${ZT_STEP}
 ${ZT_SERVICES[1]} start || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "Install and Setup Complete."
+CPrint "44" "Install and Setup Complete."
