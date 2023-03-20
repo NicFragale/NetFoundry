@@ -18,8 +18,16 @@ ZT_IDDIR="${ZT_DIR}/identities"
 ZT_IDMANIFEST="manifest.info"
 ZT_WATCH="ziti-watch"
 ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_watch-service")
-ZT_MOUNTSIZE="$(df "${ZT_DIR}" | awk 'NR==2{print $4}')"
-ZT_ISDYNAMIC="false"
+function GetDirSize() {
+    local EachDir="/${1}"
+    while [[ ${EachDir} != "" ]]; do 
+        [[ -d ${EachDir} ]] \
+            && df ${EachDir} | awk 'NR==2{print $4}' \
+            && return \
+            || EachDir=${EachDir%\/*}
+    done
+    echo "0"
+}
 function CPrint() { 
     local OUT_COLOR="${1}" IN_TEXT="${2}" OUT_SCREENWIDTH OUT_PADLEN
     shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";
@@ -54,9 +62,11 @@ if [[ ${ZT_WORKDIR} == "UNKNOWN" ]] \
     CPrint "45" "Input Missing/Error - Please Check."
     GTE ${ZT_STEP}
 fi
-if [[ ${ZT_MOUNTSIZE:-0} -lt 20000 ]]; then
+if [[ $(GetDirSize "${ZT_DIR}") -lt 20000 ]]; then
     ZT_ISDYNAMIC="true"
     CPrint "44" "LOW STORAGE SPACE DEVICE DETECTED - RUNNING DYNAMICALLY"
+else
+    ZT_ISDYNAMIC="false"
 fi
 sleep 5
 
