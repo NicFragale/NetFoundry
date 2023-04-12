@@ -2,6 +2,8 @@
 
 ![OpenZITI_OpenWRT][PS-shield]
 
+This is a helper utility which turns on the inactive WiFi, enables it as an Access Point, and permits access to the router for a period of time before the WiFi is shutdown.  
+
 ## WARNING
 Supports only GL.iNet GL-AR300M16 router.  Possibly works on others, but has not been tested as such.
 
