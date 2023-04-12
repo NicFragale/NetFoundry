@@ -7,6 +7,7 @@ MYVER="20230412: NFragale: Manipulates WiFi as an access point.  WARNING: Suppor
 ###################################################
 # Set initial variables/functions.
 ZT_DIR="/opt/netfoundry/ziti"
+ZT_WIFI_NAME="Router Config AP"
 ZT_WIFI_PASS="MAINT-NET-ENTRY"
 
 ################################################################################################################
@@ -89,7 +90,7 @@ function SetupWiFi() {
     uci set wireless.default_radio0.device='radio0'
     uci set wireless.default_radio0.network='lan'
     uci set wireless.default_radio0.mode='ap'
-    uci set wireless.default_radio0.ssid='Router Config AP'
+    uci set wireless.default_radio0.ssid='${ZT_WIFI_NAME}'
     uci set wireless.default_radio0.isolate='1'
     uci set wireless.default_radio0.encryption='psk2'
     uci set wireless.default_radio0.key='${ZT_WIFI_PASS}'
