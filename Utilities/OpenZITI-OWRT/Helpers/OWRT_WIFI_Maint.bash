@@ -6,7 +6,6 @@ MYVER="20230412: NFragale: Manipulates WiFi as an access point.  WARNING: Suppor
 
 ###################################################
 # Set initial variables/functions.
-ZT_WORKDIR="/tmp"
 ZT_DIR="/opt/netfoundry/ziti"
 ZT_WIFI_PASS="MAINT-NET-ENTRY"
 
@@ -28,7 +27,6 @@ function GTE() {
 
 ###################################################
 CPrint "44" "[${MYVER:-UNSET VERSION}]"
-CPrint "44" "WORK DIRECTORY: ${ZT_WORKDIR:=UNKNOWN}"
 CPrint "44" "INSTALL DIRECTORY: ${ZT_DIR:=UNKNOWN}"
 
 ###################################################
