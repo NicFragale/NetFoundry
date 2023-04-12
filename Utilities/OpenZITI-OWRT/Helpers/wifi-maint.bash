@@ -1,5 +1,28 @@
 #!/bin/bash
-SLEEPTIME=$1
+################################################## ATTENTION ###################################################
+# Instruction: Run on the router via SSH as ROOT.
+MYVER="20230412: NFragale: Manipulates WiFi as maint access point.  WARNING: Supports only GL.iNet GL-AR300M16"
+################################################################################################################
+
+###################################################
+# Set initial variables/functions.
+ZT_DIR="/opt/netfoundry/ziti"
+
+################################################################################################################
+# DO NOT MODIFY BELOW THIS LINE
+################################################################################################################
+HARDWARENAME="GL.iNet GL-AR300M16"
+SLEEPTIME="${1}"
+
+function CheckHardware() {
+    if grep -q "${HARDWARENAME}" 2>/dev/null /etc/board.json; then
+        echo "> Hardware matches requirement to run [${HARDWARENAME}]"
+        return 0
+    else
+        echo "> ERROR: Hardware does not match requirement to run [${HARDWARENAME}]"
+        exit 1
+    fi
+}
 
 function SetupWiFi() {
     uci set wireless.radio0=wifi-device
@@ -36,7 +59,7 @@ cat << EOFEOF > "/etc/init.d/wifi-maint"
 USE_PROCD=1
 START=99
 STOP=01
-THIS_PATH="/opt/netfoundry/ziti"
+THIS_PATH="${ZT_DIR}"
 THIS_APP="wifi-maint"
 THIS_PIDFILE="/var/run/\${THIS_APP}.pid"
 THIS_RUNOPTIONS="300"
@@ -66,6 +89,7 @@ EOFEOF
 }
 
 # Setup and checking.
+CheckHardware
 SetupService 
 SetupWiFi
 
