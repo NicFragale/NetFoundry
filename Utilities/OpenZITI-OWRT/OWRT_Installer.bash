@@ -155,40 +155,46 @@ CPrint "41" "Begin Step $((++ZT_STEP)): Create ZITI Watch."
 cat << EOFEOF > "${ZT_DIR}/${ZT_WATCH}"
 #!/bin/bash
 # Trigger system for NetFoundry OpenZITI.
-SLEEPTIME=\$1
+SLEEPTIME="\${1}"
+ZT_URL="${ZT_URL}"
+ZT_ZET=("${ZT_ZET[0]}" "${ZT_ZET[1]}")
+ZT_WORKDIR="${ZT_WORKDIR}"
+ZT_IDDIR="${ZT_IDDIR}"
+ZT_IDMANIFEST="${ZT_IDMANIFEST}"
+ZT_SERVICES=("${ZT_SERVICES[0]}" "${ZT_SERVICES[1]}")
 while true; do
     # Show a log message every 10 iterations.
     if [[ \$((++ZW_ITR%10)) -eq 1 ]]; then
         echo "ZITIWATCH CYCLE [\${ZW_ITR}]"
     fi
     # LOW STORAGE DEVICE FUNCTION: Attempt to obtain the runtime if not present.
-    if ${ZT_ISDYNAMIC} && [[ ! -f ${ZTWORKDIR}/${ZT_ZET[1]} ]]; then
+    if ${ZT_ISDYNAMIC} && [[ ! -f \${ZTWORKDIR}/\${ZT_ZET[1]} ]]; then
         echo "[\${ZW_ITR}] DYNAMIC MODE, OBTAINING RUNTIME"
-	    wget "${ZT_URL}/${ZT_ZET[0]}" -O "${ZT_WORKDIR}/${ZT_ZET[0]}" \
-            && gzip -fdc "${ZT_WORKDIR}/${ZT_ZET[0]}" > "${ZT_WORKDIR}/${ZT_ZET[1]}" \
-            && ln -sf "${ZT_WORKDIR}/${ZT_ZET[1]}" "${ZT_DIR}/${ZT_ZET[1]}" \
-            && chmod 755 "${ZT_WORKDIR}/${ZT_ZET[1]}" \
-            && "${ZT_SERVICES[1]}" reload \
-            && rm -f "${ZT_WORKDIR}/${ZT_ZET[0]}" \
+	    wget "\${ZT_URL}/\${ZT_ZET[0]}" -O "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
+            && gzip -fdc "\${ZT_WORKDIR}/\${ZT_ZET[0]}" > "\${ZT_WORKDIR}/\${ZT_ZET[1]}" \
+            && ln -sf "\${ZT_WORKDIR}/\${ZT_ZET[1]}" "\${ZT_DIR}/\${ZT_ZET[1]}" \
+            && chmod 755 "\${ZT_WORKDIR}/\${ZT_ZET[1]}" \
+            && "\${ZT_SERVICES[1]}" reload \
+            && rm -f "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
             && echo "[\${ZW_ITR}] SUCCESS: Obtained Runtime" \
             || echo "[\${ZW_ITR}] FAILED: Could Not Obtain Runtime"
     fi    
     # Cycle any available JWTs.
     while IFS=$'\n' read -r EachJWT; do
         echo "[\${ZW_ITR}] ENROLLING: \${EachJWT}"
-        if "${ZT_DIR}/${ZT_ZET[1]}" enroll -j "\${EachJWT}" -i "\${EachJWT/.jwt/.json}"; then
+        if "\${ZT_DIR}/\${ZT_ZET[1]}" enroll -j "\${EachJWT}" -i "\${EachJWT/.jwt/.json}"; then
             echo "[\${ZW_ITR}] SUCCESS: \${EachJWT/.jwt/.json}"
-            echo "[\$(date -u)] ADDED \${EachJWT/.jwt/}" >> "${ZT_IDDIR}/${ZT_IDMANIFEST}"
+            echo "[\$(date -u)] ADDED \${EachJWT/.jwt/}" >> "\${ZT_IDDIR}/\${ZT_IDMANIFEST}"
             rm -f "\${EachJWT}"
             sleep 3
             # Reload the daemon if any changes were flagged.
-            ${ZT_SERVICES[0]} reload            
+            \${ZT_SERVICES[0]} reload            
         else
             echo "[\${ZW_ITR}] FAILED: \${EachJWT}.ENROLLFAIL"
             mv -vf "\${EachJWT}" "\${EachJWT}.ENROLLFAIL"
             rm -f "\${EachJWT/.jwt/.json}"
         fi
-    done < <(find ${ZT_DIR}/identities -name *.jwt)
+    done < <(find \${ZT_DIR}/identities -name *.jwt)
 
     # Sleep until the next round.
     sleep \${SLEEPTIME:-60}
