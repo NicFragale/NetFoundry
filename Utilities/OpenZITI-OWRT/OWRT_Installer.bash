@@ -233,6 +233,12 @@ else
 fi
 
 ###################################################
+CPrint "41" "Begin Step $((++ZT_STEP)): Permit of Sockets."
+if [[ -f "/etc/group" ]] && ! grep -q "ziti"; then
+    echo 'ziti:x:99:' >> /etc/group
+fi
+
+###################################################
 CPrint "41" "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
 ${ZT_SERVICES[0]} enable || GTE ${ZT_STEP}
 ${ZT_SERVICES[1]} enable || GTE ${ZT_STEP}
