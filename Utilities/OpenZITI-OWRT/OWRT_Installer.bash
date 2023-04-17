@@ -62,7 +62,7 @@ if [[ ${ZT_WORKDIR} == "UNKNOWN" ]] \
     CPrint "45" "Input Missing/Error - Please Check."
     GTE ${ZT_STEP}
 fi
-if [[ $(GetDirSize "${ZT_DIR}") -lt 20000 ]]; then
+if [[ $(GetDirSize "${ZT_DIR}") -lt 8000 ]]; then
     ZT_ISDYNAMIC="true"
     CPrint "44" "LOW STORAGE SPACE DEVICE DETECTED - RUNNING DYNAMICALLY"
 else
@@ -234,7 +234,7 @@ fi
 
 ###################################################
 CPrint "41" "Begin Step $((++ZT_STEP)): Permit of Sockets."
-if [[ -f "/etc/group" ]] && ! grep -q "ziti"; then
+if [[ -f "/etc/group" ]] && ! grep -q "ziti" "/etc/group"; then
     echo 'ziti:x:99:' >> /etc/group
 fi
 
