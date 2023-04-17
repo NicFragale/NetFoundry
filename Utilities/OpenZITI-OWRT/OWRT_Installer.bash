@@ -194,7 +194,7 @@ while true; do
             mv -vf "\${EachJWT}" "\${EachJWT}.ENROLLFAIL"
             rm -f "\${EachJWT/.jwt/.json}"
         fi
-    done < <(find \${ZT_DIR}/identities -name *.jwt)
+    done < <(find \${ZT_IDDIR} -name *.jwt)
 
     # Sleep until the next round.
     sleep \${SLEEPTIME:-60}
