@@ -38,7 +38,7 @@ function CPrint() {
     printf "\e[${OUT_COLOR[0]};${OUT_COLOR[1]}m%-${OUT_MAXWIDTH}s\e[1;0m${NL_INCLUDE}" "${OUT_PADLEN:0:-$((${#IN_TEXT}/2))}${IN_TEXT}"
 }
 function GTE() {
-    CPrint "1:45" "ERROR: Early Exit at Step ${1}."
+    CPrint "8:45" "ERROR: Early Exit at Step ${1}."
     exit ${1}
 }
 if [[ ${ZT_ZET[0]} == "" ]] && [[ -f /etc/os-release ]]; then
@@ -62,7 +62,7 @@ if [[ ${ZT_WORKDIR} == "UNKNOWN" ]] \
     || [[ ${ZT_ZET[1]} == "UNKNOWN" ]] \
     || [[ ${ZT_DIR} == "UNKNOWN" ]] \
     || [[ ${ZT_IDDIR} == "UNKNOWN" ]]; then
-    CPrint "1:45" "Input Missing/Error - Please Check."
+    CPrint "8:45" "Input Missing/Error - Please Check."
     GTE ${ZT_STEP}
 fi
 if [[ $(GetDirSize "${ZT_DIR}") -lt 8000 ]]; then
