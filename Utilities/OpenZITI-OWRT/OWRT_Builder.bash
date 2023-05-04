@@ -1,7 +1,9 @@
 #!/bin/bash
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the build server as a BUILD CAPABLE USER (ROOT is assumed in this example).
-MYVER="20230317: NFragale: Compile and Build Helper for OpenZITI on OpenWRT"
+MY_NAME="OWRT_Builder"
+MY_VERSION="20230504"
+MY_DESCRIPTION="NFragale: Compile and Build Helper for OpenZITI on OpenWRT"
 ################################################################################################################
 
 ###################################################
@@ -32,7 +34,8 @@ function GTE() {
 }
 
 ###################################################
-CPrint "44" "[${MYVER:-UNSET VERSION}]"
+CPrint "44" "${MY_NAME:-UNSET NAME} - v${MY_VERSION:-UNSET VERSION}"
+CPrint "44" "DESCRIPTION: ${MY_DESCRIPTION:-UNSET DESCRIPTION}"
 CPrint "44" "ZITI EDGE TUNNEL VERSION: ${ZT_TUNVER:=UNKNOWN}"
 CPrint "44" "OPENWRT VERSION: ${ZT_OWRTVER:=UNKNOWN}"
 CPrint "44" "OPENWRT TARGET: ${ZT_OWRTTARGET[0]:=UNKNOWN}/${ZT_OWRTTARGET[1]:=UNKNOWN}"

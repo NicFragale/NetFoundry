@@ -1,7 +1,9 @@
 #!/bin/bash
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the router via SSH as ROOT.
-MYVER="20230317: NFragale: Install and Setup Helper for OpenZITI on OpenWRT"
+MY_NAME="OWRT_Installer"
+MY_VERSION="20230504"
+MY_DESCRIPTION="NFragale: Installer and Runtime Helper for OpenZITI on OpenWRT"
 ################################################################################################################
 
 ###################################################
@@ -44,7 +46,8 @@ if [[ ${ZT_ZET[0]} == "" ]] && [[ -f /etc/os-release ]]; then
 fi
 
 ###################################################
-CPrint "44" "[${MYVER:-UNSET VERSION}]"
+CPrint "44" "${MY_NAME:-UNSET NAME} - v${MY_VERSION:-UNSET VERSION}"
+CPrint "44" "DESCRIPTION: ${MY_DESCRIPTION:-UNSET DESCRIPTION}"
 CPrint "44" "WORK DIRECTORY: ${ZT_WORKDIR:=UNKNOWN}"
 CPrint "44" "BUILD URL: ${ZT_URL:=UNKNOWN}"
 CPrint "44" "BUILD RUNTIME: ${ZT_ZET[0]:=UNKNOWN}->${ZT_ZET[1]:=UNKNOWN}"
