@@ -30,7 +30,7 @@ function CPrint() {
     printf "\e[${OUT_COLOR[0]};${OUT_COLOR[1]}m%-${OUT_MAXWIDTH}s\e[1;0m${NL_INCLUDE}" "${OUT_PADLEN:0:-$((${#IN_TEXT}/2))}${IN_TEXT}"
 }
 function GTE() { 
-    CPrint "1:45" "ERROR: Early Exit at Step ${1}."
+    CPrint "8:45" "ERROR: Early Exit at Step ${1}."
     exit ${1}
 }
 
@@ -47,7 +47,7 @@ if [[ ${ZT_TUNVER} == "UNKNOWN" ]] \
     || [[ ${ZT_OWRTVER} == "UNKNOWN" ]] \
     || [[ ${ZT_OWRTTARGET[0]} == "UNKNOWN" ]] \
     || [[ ${ZT_OWRTTARGET[1]} == "UNKNOWN" ]]; then
-    CPrint "1:45" "Input Missing/Error - Please Check."
+    CPrint "8:45" "Input Missing/Error - Please Check."
     GTE ${ZT_STEP}
 fi
 sleep 5
