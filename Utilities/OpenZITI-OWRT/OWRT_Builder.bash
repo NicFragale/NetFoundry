@@ -22,46 +22,47 @@ ZT_TCTRIPLE="UNSET"
 ZT_TCGCC="UNSET"
 ZT_TCGPP="UNSET"
 ZT_BINC="UNSET"
-function CPrint() { 
-    local OUT_COLOR="${1}" IN_TEXT="${2}" OUT_SCREENWIDTH OUT_PADLEN
-    shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";
-    for ((i=0;i<(OUT_SCREENWIDTH/2);i++)); do OUT_PADLEN+=' '; done    
-    printf "\e[37;${OUT_COLOR}m%-${OUT_SCREENWIDTH}s\e[1;0m\n" "${OUT_PADLEN:0:-$((${#IN_TEXT}/2))}${IN_TEXT}"
+function CPrint() {
+    local OUT_COLOR=(${1/:/ }) IN_TEXT="${2}" OUT_MAXWIDTH OUT_SCREENWIDTH OUT_PADLEN NL_INCLUDE i 
+    shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";  
+    OUT_MAXWIDTH="${3:-${OUT_SCREENWIDTH}}" 
+    for ((i=0;i<(OUT_MAXWIDTH/2);i++)); do OUT_PADLEN+=' '; done
+    printf "\e[${OUT_COLOR[0]};${OUT_COLOR[1]}m%-${OUT_MAXWIDTH}s\e[1;0m${NL_INCLUDE}" "${OUT_PADLEN:0:-$((${#IN_TEXT}/2))}${IN_TEXT}"
 }
 function GTE() { 
-    CPrint "45" "ERROR: Early Exit at Step ${1}."
+    CPrint "1:45" "ERROR: Early Exit at Step ${1}."
     exit ${1}
 }
 
 ###################################################
-CPrint "44" "${MY_NAME:-UNSET NAME} - v${MY_VERSION:-UNSET VERSION}"
-CPrint "44" "DESCRIPTION: ${MY_DESCRIPTION:-UNSET DESCRIPTION}"
-CPrint "44" "ZITI EDGE TUNNEL VERSION: ${ZT_TUNVER:=UNKNOWN}"
-CPrint "44" "OPENWRT VERSION: ${ZT_OWRTVER:=UNKNOWN}"
-CPrint "44" "OPENWRT TARGET: ${ZT_OWRTTARGET[0]:=UNKNOWN}/${ZT_OWRTTARGET[1]:=UNKNOWN}"
+CPrint "1:44" "${MY_NAME:-UNSET NAME} - v${MY_VERSION:-UNSET VERSION} - ${MY_DESCRIPTION:-UNSET DESCRIPTION}"
+CPrint "8:44" "DESCRIPTION: ${MY_DESCRIPTION:-UNSET DESCRIPTION}"
+CPrint "8:44" "ZITI EDGE TUNNEL VERSION: ${ZT_TUNVER:=UNKNOWN}"
+CPrint "8:44" "OPENWRT VERSION: ${ZT_OWRTVER:=UNKNOWN}"
+CPrint "8:44" "OPENWRT TARGET: ${ZT_OWRTTARGET[0]:=UNKNOWN}/${ZT_OWRTTARGET[1]:=UNKNOWN}"
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Input Checking."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Input Checking."
 if [[ ${ZT_TUNVER} == "UNKNOWN" ]] \
     || [[ ${ZT_OWRTVER} == "UNKNOWN" ]] \
     || [[ ${ZT_OWRTTARGET[0]} == "UNKNOWN" ]] \
     || [[ ${ZT_OWRTTARGET[1]} == "UNKNOWN" ]]; then
-    CPrint "45" "Input Missing/Error - Please Check."
+    CPrint "1:45" "Input Missing/Error - Please Check."
     GTE ${ZT_STEP}
 fi
 sleep 5
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Create Staging Area [Location ${ZT_WORKDIR}]."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Create Staging Area [Location ${ZT_WORKDIR}]."
 mkdir -v "${ZT_WORKDIR}" && cd "${ZT_WORKDIR}" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Acquire Additional Software."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Acquire Additional Software."
 apt update
 apt install -y build-essential clang flex bison g++ gawk gcc-multilib gettext git libncurses5-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget curl || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Acquire ZITI EDGE TUNNEL Source [Version ${ZT_TUNVER}]."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Acquire ZITI EDGE TUNNEL Source [Version ${ZT_TUNVER}]."
 if [[ ${ZT_TUNVER:-latest} == "latest" ]]; then
     ZT_ALLVERSIONS=( $(curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' \
         | awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for(EACHVERSION in ALLVERSIONS){gsub("v","",EACHVERSION);print EACHVERSION}}' \
@@ -73,7 +74,7 @@ wget "https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZT_TUNV
 unzip "${ZT_WORKDIR}/ziti-tunnel-sdk-c.zip" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Acquire OpenWRT SDK [Version ${ZT_OWRTVER}] [Target ${ZT_OWRTTARGET[0]}/${ZT_OWRTTARGET[1]}]."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Acquire OpenWRT SDK [Version ${ZT_OWRTVER}] [Target ${ZT_OWRTTARGET[0]}/${ZT_OWRTTARGET[1]}]."
 ZT_OWRTMUSLVER="$(wget -q "https://downloads.openwrt.org/releases/${ZT_OWRTVER}/targets/${ZT_OWRTTARGET[0]}/${ZT_OWRTTARGET[1]}" -O- | \
     awk -F'-' '{for(i=1;i<=NF;i++) if(match($i,"musl")){print $i;exit}}')"
 ZT_OWRTSDK="openwrt-sdk-${ZT_OWRTVER}-${ZT_OWRTTARGET[0]}-${ZT_OWRTTARGET[1]}_gcc-${ZT_OWRTMUSLVER:-ERROR}-x86_64"
@@ -86,7 +87,7 @@ ZT_BUILDTARGET="$(find "${ZT_BUILDSTAGEDIR}" -maxdepth 1 -name "target-*" -print
 ZT_BUILDTARGETDIR="${ZT_BUILDSTAGEDIR}/${ZT_BUILDTARGET}"
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Setup Build Environment Part One [Target ${ZT_BUILDTARGET}]."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Setup Build Environment Part One [Target ${ZT_BUILDTARGET}]."
 source <(find "${ZT_WORKDIR}" -type f -name info.mk -exec cat {} \;) || GTE ${ZT_STEP}
 ZT_TCINFO=(${TARGET_CROSS//-/ })
 ZT_TCTRIPLE="${ZT_TCINFO[0]}-${ZT_TCINFO[1]}-${ZT_TCINFO[2]}"
@@ -111,7 +112,7 @@ EOFEOF
 cat toolchain.cmake || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Setup Build Environment Part Two [Target ${ZT_BUILDTARGET}]."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Setup Build Environment Part Two [Target ${ZT_BUILDTARGET}]."
 ZT_CMAKE_OPTS="-DDISABLE_LIBSYSTEMD_FEATURE=on -DCMAKE_C_FLAGS=-I${ZT_BINC}"
 [[ -x /usr/bin/ninja ]] && ZT_CMAKE_OPTS="${ZT_CMAKE_OPTS} -G Ninja"
 [[ -f "${ZT_BUILDTARGETDIR}/usr/include/openssl/opensslv.h" ]] && ZT_CMAKE_OPTS="${ZT_CMAKE_OPTS} -DUSE_OPENSSL=on"
@@ -121,21 +122,21 @@ ZT_CMAKE_OPTS="${ZT_CMAKE_OPTS} -DCMAKE_TOOLCHAIN_FILE=${ZT_WORKDIR}/toolchain.c
 echo "CMAKE OPTIONS: [${ZT_CMAKE_OPTS}]."
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Compile [Target ${ZT_BUILDTARGET}]."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Compile [Target ${ZT_BUILDTARGET}]."
 export STAGING_DIR="${ZT_WORKDIR}/${ZT_OWRTSDK}/staging_dir"
 cmake ${ZT_CMAKE_OPTS} "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Pre-Build Modifications."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Pre-Build Modifications."
 sed -i '/# if ! __GNUC_PREREQ(4,9)/,+2d' "${ZT_WORKDIR}/_deps/ziti-sdk-c-src/inc_internal/metrics.h" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Build [Target ${ZT_BUILDTARGET}]."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Build [Target ${ZT_BUILDTARGET}]."
 cmake --build "${ZT_WORKDIR}" --target "ziti-edge-tunnel" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Compress and Move Binary [Location ${ZT_WORKDIR%\/*}/${ZT_WORKDIR##*\/}.gz]."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Compress and Move Binary [Location ${ZT_WORKDIR%\/*}/${ZT_WORKDIR##*\/}.gz]."
 gzip -ck9 programs/ziti-edge-tunnel/ziti-edge-tunnel > "${ZT_WORKDIR%\/*}/${ZT_WORKDIR##*\/}.gz" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "44" "Compile and Build Complete."
+CPrint "8:44" "Compile and Build Complete."

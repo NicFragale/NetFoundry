@@ -22,7 +22,7 @@ ZT_WATCH="ziti-watch"
 ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_watch-service")
 function GetDirSize() {
     local EachDir="/${1}"
-    while [[ ${EachDir} != "" ]]; do 
+    while [[ ${EachDir} != "" ]]; do
         [[ -d ${EachDir} ]] \
             && df ${EachDir} | awk 'NR==2{print $4}' \
             && return \
@@ -30,14 +30,15 @@ function GetDirSize() {
     done
     echo "0"
 }
-function CPrint() { 
-    local OUT_COLOR="${1}" IN_TEXT="${2}" OUT_SCREENWIDTH OUT_PADLEN
-    shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";
-    for ((i=0;i<(OUT_SCREENWIDTH/2);i++)); do OUT_PADLEN+=' '; done    
-    printf "\e[37;${OUT_COLOR}m%-${OUT_SCREENWIDTH}s\e[1;0m\n" "${OUT_PADLEN:0:-$((${#IN_TEXT}/2))}${IN_TEXT}"
+function CPrint() {
+    local OUT_COLOR=(${1/:/ }) IN_TEXT="${2}" OUT_MAXWIDTH OUT_SCREENWIDTH OUT_PADLEN NL_INCLUDE i 
+    shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";  
+    OUT_MAXWIDTH="${3:-${OUT_SCREENWIDTH}}" 
+    for ((i=0;i<(OUT_MAXWIDTH/2);i++)); do OUT_PADLEN+=' '; done
+    printf "\e[${OUT_COLOR[0]};${OUT_COLOR[1]}m%-${OUT_MAXWIDTH}s\e[1;0m${NL_INCLUDE}" "${OUT_PADLEN:0:-$((${#IN_TEXT}/2))}${IN_TEXT}"
 }
-function GTE() { 
-    CPrint "45" "ERROR: Early Exit at Step ${1}."
+function GTE() {
+    CPrint "1:45" "ERROR: Early Exit at Step ${1}."
     exit ${1}
 }
 if [[ ${ZT_ZET[0]} == "" ]] && [[ -f /etc/os-release ]]; then
@@ -46,47 +47,46 @@ if [[ ${ZT_ZET[0]} == "" ]] && [[ -f /etc/os-release ]]; then
 fi
 
 ###################################################
-CPrint "44" "${MY_NAME:-UNSET NAME} - v${MY_VERSION:-UNSET VERSION}"
-CPrint "44" "DESCRIPTION: ${MY_DESCRIPTION:-UNSET DESCRIPTION}"
-CPrint "44" "WORK DIRECTORY: ${ZT_WORKDIR:=UNKNOWN}"
-CPrint "44" "BUILD URL: ${ZT_URL:=UNKNOWN}"
-CPrint "44" "BUILD RUNTIME: ${ZT_ZET[0]:=UNKNOWN}->${ZT_ZET[1]:=UNKNOWN}"
-CPrint "44" "INSTALL DIRECTORY: ${ZT_DIR:=UNKNOWN}"
-CPrint "44" "IDENTITY DIRECTORY: ${ZT_IDDIR:=UNKNOWN}"
+CPrint "1:44" "${MY_NAME:-UNSET NAME} - v${MY_VERSION:-UNSET VERSION} - ${MY_DESCRIPTION:-UNSET DESCRIPTION}"
+CPrint "8:44" "WORK DIRECTORY: ${ZT_WORKDIR:=UNKNOWN}"
+CPrint "8:44" "BUILD URL: ${ZT_URL:=UNKNOWN}"
+CPrint "8:44" "BUILD RUNTIME: ${ZT_ZET[0]:=UNKNOWN}->${ZT_ZET[1]:=UNKNOWN}"
+CPrint "8:44" "INSTALL DIRECTORY: ${ZT_DIR:=UNKNOWN}"
+CPrint "8:44" "IDENTITY DIRECTORY: ${ZT_IDDIR:=UNKNOWN}"
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Input Checking."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Input Checking."
 if [[ ${ZT_WORKDIR} == "UNKNOWN" ]] \
     || [[ ${ZT_URL} == "UNKNOWN" ]] \
     || [[ ${ZT_ZET[0]} == "UNKNOWN" ]] \
     || [[ ${ZT_ZET[1]} == "UNKNOWN" ]] \
     || [[ ${ZT_DIR} == "UNKNOWN" ]] \
     || [[ ${ZT_IDDIR} == "UNKNOWN" ]]; then
-    CPrint "45" "Input Missing/Error - Please Check."
+    CPrint "1:45" "Input Missing/Error - Please Check."
     GTE ${ZT_STEP}
 fi
 if [[ $(GetDirSize "${ZT_DIR}") -lt 8000 ]]; then
     ZT_ISDYNAMIC="true"
-    CPrint "44" "LOW STORAGE SPACE DEVICE DETECTED - RUNNING DYNAMICALLY"
+    CPrint "8:44" "LOW STORAGE SPACE DEVICE DETECTED - RUNNING DYNAMICALLY"
 else
     ZT_ISDYNAMIC="false"
 fi
 sleep 5
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Update System and Packages."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Update System and Packages."
 opkg update || GTE ${ZT_STEP}
 opkg install libatomic1 kmod-tun sed ip-full || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Create Directory Structures and Files."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Create Directory Structures and Files."
 mkdir -vp "${ZT_DIR}" || GTE ${ZT_STEP}
 mkdir -vp "${ZT_IDDIR}" || GTE ${ZT_STEP}
 [[ ! -f "${ZT_IDDIR}/${ZT_IDMANIFEST}"  ]] \
     && echo  -e "# ZITI EDGE TUNNEL IDENTITY MANIFEST - DO NOT DELETE\n# Initialized on $(date -u)" > "${ZT_IDDIR}/${ZT_IDMANIFEST}"
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Create Runtime Service."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Create Runtime Service."
 cat << EOFEOF > "${ZT_SERVICES[0]}"
 #!/bin/sh /etc/rc.common
 # Init script for NetFoundry OpenZITI (ZITI EDGE TUNNEL, OpenWRT version).
@@ -122,7 +122,7 @@ EOFEOF
 chmod 755 "${ZT_SERVICES[0]}" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Create ZITI Watch Service."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Create ZITI Watch Service."
 cat << EOFEOF > "${ZT_SERVICES[1]}"
 #!/bin/sh /etc/rc.common
 # Init script for NetFoundry OpenZITI (WATCH, OpenWRT version).
@@ -154,7 +154,7 @@ EOFEOF
 chmod 755 "${ZT_SERVICES[1]}" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Create ZITI Watch."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Create ZITI Watch."
 cat << EOFEOF > "${ZT_DIR}/${ZT_WATCH}"
 #!/bin/bash
 # Trigger system for NetFoundry OpenZITI.
@@ -182,7 +182,7 @@ while true; do
             && rm -f "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
             && echo "[\${ZW_ITR}] SUCCESS: Obtained Runtime" \
             || echo "[\${ZW_ITR}] FAILED: Could Not Obtain Runtime"
-    fi    
+    fi
     # Cycle any available JWTs.
     while IFS=$'\n' read -r EachJWT; do
         echo "[\${ZW_ITR}] ENROLLING: \${EachJWT}"
@@ -192,7 +192,7 @@ while true; do
             rm -f "\${EachJWT}"
             sleep 3
             # Reload the daemon if any changes were flagged.
-            \${ZT_SERVICES[0]} reload            
+            \${ZT_SERVICES[0]} reload
         else
             echo "[\${ZW_ITR}] FAILED: \${EachJWT}.ENROLLFAIL"
             mv -vf "\${EachJWT}" "\${EachJWT}.ENROLLFAIL"
@@ -208,25 +208,25 @@ chmod 755 "${ZT_DIR}/${ZT_WATCH}" || GTE ${ZT_STEP}
 
 ###################################################
 if ${ZT_ISDYNAMIC}; then
-    CPrint "41" "Skipping Step $((++ZT_STEP)): Dynamic Runtime Mode."
+    CPrint "8:41" "Skipping Step $((++ZT_STEP)): Dynamic Runtime Mode."
 elif [[ -f "${ZT_WORKDIR}/${ZT_ZET[1]}" ]]; then
-    CPrint "41" "Skipping Step $((++ZT_STEP)): Uncompressed Runtime Present [Location ${ZT_WORKDIR}/${ZT_ZET[1]}]."
+    CPrint "8:41" "Skipping Step $((++ZT_STEP)): Uncompressed Runtime Present [Location ${ZT_WORKDIR}/${ZT_ZET[1]}]."
 else
     if [[ -f "${ZT_WORKDIR}/${ZT_ZET[0]}" ]]; then
-        CPrint "41" "Skipping Step $((++ZT_STEP)): Compressed Runtime Present [Location ${ZT_WORKDIR}/${ZT_ZET[0]}]."
+        CPrint "8:41" "Skipping Step $((++ZT_STEP)): Compressed Runtime Present [Location ${ZT_WORKDIR}/${ZT_ZET[0]}]."
     else
-        CPrint "41" "Begin Step $((++ZT_STEP)): Obtaining Compressed Runtime [${ZT_ZET[0]}]."
+        CPrint "8:41" "Begin Step $((++ZT_STEP)): Obtaining Compressed Runtime [${ZT_ZET[0]}]."
         wget "${ZT_URL}/${ZT_ZET[0]}" -O "${ZT_WORKDIR}/${ZT_ZET[0]}" || GTE ${ZT_STEP}
     fi
-    CPrint "41" "Begin Step $((++ZT_STEP)): Decompress Runtime."
+    CPrint "8:41" "Begin Step $((++ZT_STEP)): Decompress Runtime."
     gzip -fdc "${ZT_WORKDIR}/${ZT_ZET[0]}" > "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
 fi
 
 ###################################################
 if ${ZT_ISDYNAMIC}; then
-    CPrint "41" "Skipping Step $((++ZT_STEP)): Dynamic Runtime Mode."
+    CPrint "8:41" "Skipping Step $((++ZT_STEP)): Dynamic Runtime Mode."
 else
-    CPrint "41" "Begin Step $((++ZT_STEP)): Setup Runtime."
+    CPrint "8:41" "Begin Step $((++ZT_STEP)): Setup Runtime."
     mv -vf "${ZT_WORKDIR}/${ZT_ZET[1]}" "${ZT_DIR}" || GTE ${ZT_STEP}
     rm -f "${ZT_WORKDIR}/${ZT_ZET[0]}" "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
     chmod 755 "${ZT_DIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
@@ -237,17 +237,17 @@ else
 fi
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Permit of Sockets."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Permit of Sockets."
 if [[ -f "/etc/group" ]] && ! grep -q "ziti" "/etc/group"; then
     echo 'ziti:x:99:' >> /etc/group
 fi
 
 ###################################################
-CPrint "41" "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
+CPrint "8:41" "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
 ${ZT_SERVICES[0]} enable || GTE ${ZT_STEP}
 ${ZT_SERVICES[1]} enable || GTE ${ZT_STEP}
 ${ZT_SERVICES[0]} start || GTE ${ZT_STEP}
 ${ZT_SERVICES[1]} start || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "44" "Install and Setup Complete."
+CPrint "8:44" "Install and Setup Complete."
