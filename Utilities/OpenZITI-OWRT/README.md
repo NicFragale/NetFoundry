@@ -11,13 +11,13 @@ Once this repo has been cloned to the building server (or the raw utility downlo
 > chmod 755 ./OWRT_Builder.bash
 >> ./OWRT_Builder.bash [OpenWRT_Version] [Target_Part_A] [Target_Part_B] [OpenZITI_Tunnel_Version]
 * Example: ./OWRT_Builder.bash "22.03.03" "ath79" "nand" "latest"
-* Example: ./OWRT_Builder.bash "22.03.03" "ipq806x" "generic" "latest"
+* Example: ./OWRT_Builder.bash "22.03.03" "ipq806x" "generic" 
 * Example: ./OWRT_Builder.bash "22.03.03" "ipq806x" "generic" "0.20.03"
 
 - [OpenWRT_Version]: The OpenWRT version you wish to use [https://downloads.openwrt.org/releases].
 - [Target_Part_A]: The first part of the target platform from within the version to use.
 - [Target_Part_B]: The second part of the target platform from within the version to use. 
-- [OpenZITI_Tunnel_Version]: The OpenZITI Tunnel version you wish to use [https://github.com/openziti/ziti-tunnel-sdk-c/releases].
+- [OpenZITI_Tunnel_Version]: The OpenZITI Tunnel version you wish to use [https://github.com/openziti/ziti-tunnel-sdk-c/releases].  If not present, assumes "latest".
 
 ### (Router Device) Running the Installer and Setup "OWRT_Installer.bash"
 Run on the router device as the administrative user (ROOT is assumed in this example).
