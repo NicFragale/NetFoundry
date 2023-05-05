@@ -31,14 +31,27 @@ function GetDirSize() {
     echo "0"
 }
 function CPrint() {
-    local OUT_COLOR=(${1/:/ }) IN_TEXT="${2}" OUT_MAXWIDTH OUT_SCREENWIDTH OUT_PADLEN NL_INCLUDE i 
-    shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";  
-    OUT_MAXWIDTH="${3:-${OUT_SCREENWIDTH}}" 
-    for ((i=0;i<(OUT_MAXWIDTH/2);i++)); do OUT_PADLEN+=' '; done
-    printf "\e[${OUT_COLOR[0]};${OUT_COLOR[1]}m%-${OUT_MAXWIDTH}s\e[1;0m${NL_INCLUDE}" "${OUT_PADLEN:0:-$((${#IN_TEXT}/2))}${IN_TEXT}"
+    local OUT_COLOR=(${1/:/ }) IN_TEXT="${2}" OUT_MAXWIDTH OUT_SCREENWIDTH OUT_PADLEN NL_INCLUDE i x z
+    shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";      
+    OUT_MAXWIDTH="${3:-${OUT_SCREENWIDTH}}"
+    for ((i=0;i<${OUT_MAXWIDTH};i++)); do OUT_PADLEN+=' '; done
+    [[ ${OUT_MAXWIDTH} -eq ${OUT_SCREENWIDTH} ]] && NL_INCLUDE='\n'    
+    if [[ ${OUT_COLOR} == "COLORTEST" ]]; then
+        OUT_MAXWIDTH="10"
+        for i in {1..107}; do 
+            for x in {1..107}; do
+                [[ $((++z%(OUT_SCREENWIDTH/OUT_MAXWIDTH))) -eq 0 ]] && echo
+                IN_TEXT="${i}:${x}"
+                printf "\e[${i};${x}m%-${OUT_MAXWIDTH}s\e[1;0m" "${OUT_PADLEN:0:$(((OUT_MAXWIDTH/2)-${#IN_TEXT}/2))}${IN_TEXT}"
+            done
+        done
+        echo
+    else
+        printf "\e[${OUT_COLOR[0]};${OUT_COLOR[1]}m%-${OUT_MAXWIDTH}s\e[1;0m${NL_INCLUDE}" "${OUT_PADLEN:0:$(((OUT_MAXWIDTH/2)-${#IN_TEXT}/2))}${IN_TEXT}"
+    fi
 }
 function GTE() {
-    CPrint "8:45" "ERROR: Early Exit at Step ${1}."
+    CPrint "30:101" "ERROR: Early Exit at Step ${1}."
     exit ${1}
 }
 if [[ ${ZT_ZET[0]} == "" ]] && [[ -f /etc/os-release ]]; then
@@ -62,7 +75,7 @@ if [[ ${ZT_WORKDIR} == "UNKNOWN" ]] \
     || [[ ${ZT_ZET[1]} == "UNKNOWN" ]] \
     || [[ ${ZT_DIR} == "UNKNOWN" ]] \
     || [[ ${ZT_IDDIR} == "UNKNOWN" ]]; then
-    CPrint "8:45" "Input Missing/Error - Please Check."
+    CPrint "30:101" "Input Missing/Error - Please Check."
     GTE ${ZT_STEP}
 fi
 if [[ $(GetDirSize "${ZT_DIR}") -lt 6000 ]]; then
