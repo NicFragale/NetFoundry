@@ -53,7 +53,8 @@ sleep 5
 
 ###################################################
 CPrint "8:41" "Begin Step $((++ZT_STEP)): Create Staging Area [Location ${ZT_WORKDIR}]."
-mkdir -v "${ZT_WORKDIR}" && cd "${ZT_WORKDIR}" || GTE ${ZT_STEP}
+mkdir -vp "${ZT_WORKDIR}" || GTE ${ZT_STEP}
+cd "${ZT_WORKDIR}" || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "8:41" "Begin Step $((++ZT_STEP)): Acquire Additional Software."
