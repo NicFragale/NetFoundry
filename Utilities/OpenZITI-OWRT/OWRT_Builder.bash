@@ -11,11 +11,12 @@ MY_DESCRIPTION="NFragale: Compile and Build Helper for OpenZITI on OpenWRT"
 ZT_OWRTVER="${1}"
 ZT_OWRTTARGET=("${2}" "${3}")
 ZT_TUNVER="${4:-latest}"
+ZT_WORKDIR="/tmp"
 
 ################################################################################################################
 # DO NOT MODIFY BELOW THIS LINE
 ################################################################################################################
-ZT_WORKDIR="$(pwd)/OpenWRT-${ZT_OWRTVER}-${ZT_OWRTTARGET[0]}_${ZT_OWRTTARGET[1]}"
+ZT_WORKDIR="${ZT_WORKDIR}/OpenWRT-${ZT_OWRTVER}-${ZT_OWRTTARGET[0]}_${ZT_OWRTTARGET[1]}"
 ZT_STEP="0"
 ZT_TCINFO="UNSET"
 ZT_TCTRIPLE="UNSET"
@@ -72,7 +73,7 @@ cd "${ZT_WORKDIR}" || GTE ${ZT_STEP}
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Acquire Additional Software."
 apt update
-apt install -y build-essential clang flex bison g++ gawk gcc-multilib gettext git libncurses5-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget curl || GTE ${ZT_STEP}
+apt install -y build-essential clang cmake flex bison g++ gawk gcc-multilib gettext git libncurses5-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget curl || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Acquire ZITI EDGE TUNNEL Source [Version ${ZT_TUNVER}]."
