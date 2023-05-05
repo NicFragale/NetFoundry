@@ -65,7 +65,7 @@ if [[ ${ZT_WORKDIR} == "UNKNOWN" ]] \
     CPrint "8:45" "Input Missing/Error - Please Check."
     GTE ${ZT_STEP}
 fi
-if [[ $(GetDirSize "${ZT_DIR}") -lt 8000 ]]; then
+if [[ $(GetDirSize "${ZT_DIR}") -lt 6000 ]]; then
     ZT_ISDYNAMIC="true"
     CPrint "8:44" "LOW STORAGE SPACE DEVICE DETECTED - RUNNING DYNAMICALLY"
 else
