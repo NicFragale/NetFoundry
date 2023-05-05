@@ -2,17 +2,18 @@
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the router via SSH as ROOT.
 MY_NAME="OWRT_Installer"
-MY_VERSION="20230504"
+MY_VERSION="20230505"
 MY_DESCRIPTION="NFragale: Installer and Runtime Helper for OpenZITI on OpenWRT"
 ################################################################################################################
 
 ###################################################
 # Set initial variables/functions.
 ZT_WORKDIR="/tmp"
-ZT_URL="${1}"
-ZT_ZET=("${2}" "ziti-edge-tunnel")
+ZT_ZET=("${1}" "ziti-edge-tunnel") # File name in GZ compressed format.  EX: OpenWRT-22.03.3-ath79_nand.gz
+ZT_URL="${2}" # URL Basis for obtaining the runtime.  EX: https://myserver.com/somefolder
 ZT_DIR="/opt/netfoundry/ziti"
 ZT_IDDIR="${ZT_DIR}/identities"
+ZT_DIR_MIN_SIZE="7000" # KBytes. 7000KB strongly recommended.
 
 ################################################################################################################
 # DO NOT MODIFY BELOW THIS LINE
@@ -51,55 +52,91 @@ function CPrint() {
     fi
 }
 function GTE() {
-    CPrint "30:101" "ERROR: Early Exit at Step ${1}."
+    CPrint "30:42" "ERROR: Early Exit at Step ${1}."
     exit ${1}
 }
+
+###################################################
+# Check for OpenWRT info from input or system.
 if [[ ${ZT_ZET[0]} == "" ]] && [[ -f /etc/os-release ]]; then
     . /etc/os-release 2>/dev/null
     ZT_ZET[0]="OpenWRT-${VERSION}-${OPENWRT_BOARD/\//_}.gz"
 fi
 
 ###################################################
-CPrint "1:44" "${MY_NAME:-UNSET NAME} - v${MY_VERSION:-UNSET VERSION} - ${MY_DESCRIPTION:-UNSET DESCRIPTION}"
-CPrint "8:44" "WORK DIRECTORY: ${ZT_WORKDIR:=UNKNOWN}"
-CPrint "8:44" "BUILD URL: ${ZT_URL:=UNKNOWN}"
-CPrint "8:44" "BUILD RUNTIME: ${ZT_ZET[0]:=UNKNOWN}->${ZT_ZET[1]:=UNKNOWN}"
-CPrint "8:44" "INSTALL DIRECTORY: ${ZT_DIR:=UNKNOWN}"
-CPrint "8:44" "IDENTITY DIRECTORY: ${ZT_IDDIR:=UNKNOWN}"
+CPrint "30:46" "${MY_NAME:-UNSET NAME} - v${MY_VERSION:-UNSET VERSION} - ${MY_DESCRIPTION:-UNSET DESCRIPTION}"
+CPrint "30:42" "WORK DIRECTORY: ${ZT_WORKDIR:=UNKNOWN}"
+CPrint "30:42" "BUILD URL: ${ZT_URL:=UNKNOWN}"
+CPrint "30:42" "BUILD RUNTIME: ${ZT_ZET[0]:=UNKNOWN}->${ZT_ZET[1]:=UNKNOWN}"
+CPrint "30:42" "INSTALL DIRECTORY: ${ZT_DIR:=UNKNOWN}"
+CPrint "30:42" "IDENTITY DIRECTORY: ${ZT_IDDIR:=UNKNOWN}"
 
 ###################################################
-CPrint "8:41" "Begin Step $((++ZT_STEP)): Input Checking."
+CPrint "30:43" "Begin Step $((++ZT_STEP)): System Checking."
+ZT_DIR_SIZE="$(GetDirSize "${ZT_DIR}")"
+if [[ ${ZT_DIR_SIZE} -lt ${ZT_DIR_MIN_SIZE} ]]; then
+    ZT_ISDYNAMIC="true"
+    CPrint "30:45" "LOW STORAGE SPACE DEVICE DETECTED [${ZT_DIR}: ${ZT_DIR_SIZE} < ${ZT_DIR_MIN_SIZE}] - RUNNING DYNAMICALLY FROM INPUT URL."  
+else
+    ZT_ISDYNAMIC="false"
+fi
+
+###################################################
+CPrint "30:43" "Begin Step $((++ZT_STEP)): Input Checking."
 if [[ ${ZT_WORKDIR} == "UNKNOWN" ]] \
-    || [[ ${ZT_URL} == "UNKNOWN" ]] \
     || [[ ${ZT_ZET[0]} == "UNKNOWN" ]] \
     || [[ ${ZT_ZET[1]} == "UNKNOWN" ]] \
     || [[ ${ZT_DIR} == "UNKNOWN" ]] \
     || [[ ${ZT_IDDIR} == "UNKNOWN" ]]; then
-    CPrint "30:101" "Input Missing/Error - Please Check."
+    CPrint "30:42" "Input Missing/Error - Please Check."
     GTE ${ZT_STEP}
 fi
-if [[ $(GetDirSize "${ZT_DIR}") -lt 6000 ]]; then
-    ZT_ISDYNAMIC="true"
-    CPrint "8:44" "LOW STORAGE SPACE DEVICE DETECTED - RUNNING DYNAMICALLY"
-else
-    ZT_ISDYNAMIC="false"
+if [[ ${ZT_ISDYNAMIC} == "true" ]] && [[ ${ZT_URL} == "UNKNOWN" ]]; then
+    CPrint "30:41" "ERROR: DYNAMIC RUNTIME REQUIRES COMPRESSED FILE NAME INPUT AND URL INPUT."
+    GTE ${ZT_STEP}   
+elif [[ ${ZT_ISDYNAMIC} == "false" ]]; then
+    if [[ ${ZT_URL} == "UNKNOWN" ]] && [[ ! -f "${ZT_WORKDIR}/${ZT_ZET[0]}" ]] && [[ ! -f "${ZT_WORKDIR}/${ZT_ZET[1]}" ]] && [[ ! -f "${ZT_DIR}/${ZT_ZET[1]}" ]]; then
+        CPrint "30:41" "ERROR: COMPRESSED [${ZT_ZET[0]}] OR UNCOMPRESSED [${ZT_ZET[1]}] RUNTIME FILE COULD NOT BE FOUND AND NO URL INPUT WAS SPECIFIED."
+        GTE ${ZT_STEP}
+    elif [[ ${ZT_URL} != "UNKNOWN" ]] && [[ ${ZT_ZET[0]} == "UNKNOWN" ]]; then
+        CPrint "30:41" "ERROR: URL INPUT WAS SPECIFIED HOWEVER COMPRESSED RUNTIME FILE WAS NOT."
+        GTE ${ZT_STEP}
+    fi
 fi
 sleep 5
 
 ###################################################
-CPrint "8:41" "Begin Step $((++ZT_STEP)): Update System and Packages."
+CPrint "30:43" "Begin Step $((++ZT_STEP)): Update System and Packages."
 opkg update || GTE ${ZT_STEP}
 opkg install libatomic1 kmod-tun sed ip-full || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "8:41" "Begin Step $((++ZT_STEP)): Create Directory Structures and Files."
+CPrint "30:43" "Begin Step $((++ZT_STEP)): Create Directory Structures and Files."
 mkdir -vp "${ZT_DIR}" || GTE ${ZT_STEP}
 mkdir -vp "${ZT_IDDIR}" || GTE ${ZT_STEP}
 [[ ! -f "${ZT_IDDIR}/${ZT_IDMANIFEST}"  ]] \
     && echo  -e "# ZITI EDGE TUNNEL IDENTITY MANIFEST - DO NOT DELETE\n# Initialized on $(date -u)" > "${ZT_IDDIR}/${ZT_IDMANIFEST}"
 
 ###################################################
-CPrint "8:41" "Begin Step $((++ZT_STEP)): Create Runtime Service."
+if ${ZT_ISDYNAMIC}; then
+    CPrint "30:43" "Skipping Step $((++ZT_STEP)): Dynamic Runtime Mode."
+elif [[ -f "${ZT_WORKDIR}/${ZT_ZET[1]}" ]]; then
+    CPrint "30:43" "Skipping Step $((++ZT_STEP)): Uncompressed Runtime Present [Location ${ZT_WORKDIR}/${ZT_ZET[1]}]."
+elif  [[ -f "${ZT_DIR}/${ZT_ZET[1]}" ]]; then
+    CPrint "30:43" "Skipping Step $((++ZT_STEP)): Uncompressed Runtime Present [Location ${ZT_DIR}/${ZT_ZET[1]}]."
+else
+    if [[ -f "${ZT_WORKDIR}/${ZT_ZET[0]}" ]]; then
+        CPrint "30:43" "Skipping Step $((++ZT_STEP)): Compressed Runtime Present [Location ${ZT_WORKDIR}/${ZT_ZET[0]}]."
+    else
+        CPrint "30:43" "Begin Step $((++ZT_STEP)): Obtaining Compressed Runtime [${ZT_ZET[0]}]."
+        wget "${ZT_URL}/${ZT_ZET[0]}" -O "${ZT_WORKDIR}/${ZT_ZET[0]}" || GTE ${ZT_STEP}
+    fi
+    CPrint "30:43" "Begin Step $((++ZT_STEP)): Decompress Runtime."
+    gzip -fdc "${ZT_WORKDIR}/${ZT_ZET[0]}" > "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
+fi
+
+###################################################
+CPrint "30:43" "Begin Step $((++ZT_STEP)): Create Runtime Service."
 cat << EOFEOF > "${ZT_SERVICES[0]}"
 #!/bin/sh /etc/rc.common
 # Init script for NetFoundry OpenZITI (ZITI EDGE TUNNEL, OpenWRT version).
@@ -135,7 +172,7 @@ EOFEOF
 chmod 755 "${ZT_SERVICES[0]}" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "8:41" "Begin Step $((++ZT_STEP)): Create ZITI Watch Service."
+CPrint "30:43" "Begin Step $((++ZT_STEP)): Create ZITI Watch Service."
 cat << EOFEOF > "${ZT_SERVICES[1]}"
 #!/bin/sh /etc/rc.common
 # Init script for NetFoundry OpenZITI (WATCH, OpenWRT version).
@@ -167,7 +204,7 @@ EOFEOF
 chmod 755 "${ZT_SERVICES[1]}" || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "8:41" "Begin Step $((++ZT_STEP)): Create ZITI Watch."
+CPrint "30:43" "Begin Step $((++ZT_STEP)): Create ZITI Watch."
 cat << EOFEOF > "${ZT_DIR}/${ZT_WATCH}"
 #!/bin/bash
 # Trigger system for NetFoundry OpenZITI.
@@ -221,25 +258,9 @@ chmod 755 "${ZT_DIR}/${ZT_WATCH}" || GTE ${ZT_STEP}
 
 ###################################################
 if ${ZT_ISDYNAMIC}; then
-    CPrint "8:41" "Skipping Step $((++ZT_STEP)): Dynamic Runtime Mode."
-elif [[ -f "${ZT_WORKDIR}/${ZT_ZET[1]}" ]]; then
-    CPrint "8:41" "Skipping Step $((++ZT_STEP)): Uncompressed Runtime Present [Location ${ZT_WORKDIR}/${ZT_ZET[1]}]."
+    CPrint "30:43" "Skipping Step $((++ZT_STEP)): Dynamic Runtime Mode."
 else
-    if [[ -f "${ZT_WORKDIR}/${ZT_ZET[0]}" ]]; then
-        CPrint "8:41" "Skipping Step $((++ZT_STEP)): Compressed Runtime Present [Location ${ZT_WORKDIR}/${ZT_ZET[0]}]."
-    else
-        CPrint "8:41" "Begin Step $((++ZT_STEP)): Obtaining Compressed Runtime [${ZT_ZET[0]}]."
-        wget "${ZT_URL}/${ZT_ZET[0]}" -O "${ZT_WORKDIR}/${ZT_ZET[0]}" || GTE ${ZT_STEP}
-    fi
-    CPrint "8:41" "Begin Step $((++ZT_STEP)): Decompress Runtime."
-    gzip -fdc "${ZT_WORKDIR}/${ZT_ZET[0]}" > "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
-fi
-
-###################################################
-if ${ZT_ISDYNAMIC}; then
-    CPrint "8:41" "Skipping Step $((++ZT_STEP)): Dynamic Runtime Mode."
-else
-    CPrint "8:41" "Begin Step $((++ZT_STEP)): Setup Runtime."
+    CPrint "30:43" "Begin Step $((++ZT_STEP)): Setup Runtime."
     mv -vf "${ZT_WORKDIR}/${ZT_ZET[1]}" "${ZT_DIR}" || GTE ${ZT_STEP}
     rm -f "${ZT_WORKDIR}/${ZT_ZET[0]}" "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
     chmod 755 "${ZT_DIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
@@ -250,17 +271,17 @@ else
 fi
 
 ###################################################
-CPrint "8:41" "Begin Step $((++ZT_STEP)): Permit of Sockets."
+CPrint "30:43" "Begin Step $((++ZT_STEP)): Permit of Sockets."
 if [[ -f "/etc/group" ]] && ! grep -q "ziti" "/etc/group"; then
     echo 'ziti:x:99:' >> /etc/group
 fi
 
 ###################################################
-CPrint "8:41" "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
+CPrint "30:43" "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
 ${ZT_SERVICES[0]} enable || GTE ${ZT_STEP}
 ${ZT_SERVICES[1]} enable || GTE ${ZT_STEP}
 ${ZT_SERVICES[0]} start || GTE ${ZT_STEP}
 ${ZT_SERVICES[1]} start || GTE ${ZT_STEP}
 
 ###################################################
-CPrint "8:44" "Install and Setup Complete."
+CPrint "30:42" "Install and Setup Complete."
