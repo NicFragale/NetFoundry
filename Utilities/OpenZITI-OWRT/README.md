@@ -10,7 +10,9 @@ This utility was written for Ubuntu 22.04+.  Though it may work on other environ
 Once this repo has been cloned to the building server (or the raw utility downloaded), change the run permissions of the file for execute rights, modify the header of the file as required, then run the utility.  Alternatively, you can run directly in a shell so long as you have BASH available.
 > chmod 755 ./OWRT_Builder.bash
 >> ./OWRT_Builder.bash [OpenWRT_Version] [Target_Part_A] [Target_Part_B] [OpenZITI_Tunnel_Version]
+
 -OR-
+
 > bash <(curl -Ls https://owrtbuilder.fragale.us [OpenWRT_Version] [Target_Part_A] [Target_Part_B] [OpenZITI_Tunnel_Version])
 * Example: ./OWRT_Builder.bash "22.03.03" "ath79" "nand" "latest"
 * Example: ./OWRT_Builder.bash "22.03.03" "ipq806x" "generic" 
@@ -27,7 +29,9 @@ Run on the router device as the administrative user (ROOT is assumed in this exa
 Once this repo has been cloned to the router device (or the raw utility downloaded), change the run permissions of the file for execute rights, modify the header of the file as required, then run the utility.  Alternatively, you can run directly in a shell so long as you have BASH available.
 > chmod 755 ./OWRT_Installer.bash
 >> ./OWRT_Installer.bash [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download]
+
 -OR-
+
 > bash <(curl -Ls https://owrtbuilder.fragale.us [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download])
 * Example: ./OWRT_Installer.bash "OpenWRT-22.03.3-ath79_nand.gz" "https://github.com/NicFragale/NetFoundry/raw/main/Utilities/OpenZITI-OWRT/Sample_Builds"
 
