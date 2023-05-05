@@ -32,7 +32,7 @@ Once this repo has been cloned to the router device (or the raw utility download
 
 -OR-
 
-> bash <(curl -Ls https://owrtbuilder.fragale.us [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download])
+> bash <(curl -Ls https://owrtinstaller.fragale.us [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download])
 * Example: ./OWRT_Installer.bash "OpenWRT-22.03.3-ath79_nand.gz" "https://github.com/NicFragale/NetFoundry/raw/main/Utilities/OpenZITI-OWRT/Sample_Builds"
 
 - [OpenZITI_Tunnel_Compressed_Build]: The compressed build of the OpenZITI binary built by the first step.
