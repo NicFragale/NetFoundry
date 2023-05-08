@@ -42,7 +42,7 @@ Once this repo has been cloned to the router device (or the raw utility download
 -OR-
 
 > bash <(curl -Ls https://owrtinstaller.fragale.us [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download])
-* Example, expecting to find the compressed file at the URL folder specified: bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ath79_nand.gz" "https://github.com/NicFragale/NetFoundry/raw/main/Utilities/OpenZITI-OWRT/Sample_Builds"
+* Example, expecting to find the compressed file at the URL folder specified: bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ath79_nand.gz" "https://github.com/NicFragale/NetFoundry/raw/main/Utilities/OpenZITI-OWRT/Builds/0.21.0"
 * Example, expecting to find the compressed file in (/tmp): bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ipq806x_generic.gz"
 * Example, expecting to figure out what compressed file should be found in (/tmp) based on (/etc/os-release) info: bash <(curl -Ls https://owrtinstaller.fragale.us)
 
