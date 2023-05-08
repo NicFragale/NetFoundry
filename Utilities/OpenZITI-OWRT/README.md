@@ -42,15 +42,13 @@ Once this repo has been cloned to the router device (or the raw utility download
 -OR-
 
 > bash <(curl -Ls https://owrtinstaller.fragale.us [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download])
-* Example: bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ath79_nand.gz" "https://github.com/NicFragale/NetFoundry/raw/main/Utilities/OpenZITI-OWRT/Sample_Builds"
-* Example: bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ipq806x_generic.gz"
-* Example: bash <(curl -Ls https://owrtinstaller.fragale.us)
+* Example, expecting to find the compressed file at the URL folder specified: bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ath79_nand.gz" "https://github.com/NicFragale/NetFoundry/raw/main/Utilities/OpenZITI-OWRT/Sample_Builds"
+* Example, expecting to find the compressed file in (/tmp): bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ipq806x_generic.gz"
+* Example, expecting to figure out what compressed file should be found in (/tmp) based on (/etc/os-release) info: bash <(curl -Ls https://owrtinstaller.fragale.us)
 
-- [OpenZITI_Tunnel_Compressed_Build]: The compressed build of the OpenZITI binary built by the first step in format "OpenWRT-[OWRT_VERSION]-[TARGETA]_[TARGETB].gz".
 - [URL_To_Download]: The URL location of the compressed build - folder path only.
+- [OpenZITI_Tunnel_Compressed_Build]: The compressed build of the OpenZITI binary built by the first step in format "OpenWRT-[OWRT_VERSION]-[TARGETA]_[TARGETB].gz".
 
-HINT: If you specify the compressed file name without specifying a URL, the utility will seek to find it locally in (/tmp).
-HINT: If you run the utility without any syntax, it will be assumed that the compressed file (format as above) or uncompressed file (format as ziti-edge-tunnel) exists locally in (/tmp).  To find the appropriate compressed file name, the utility will build the name from the components of the file (/etc/os-release) if it can.
 HINT: The utility will setup the runtime if spaces allows, however, if less than 7MB is available to install, it will attempt to run DYNAMICALLY.  In this mode of operation, all services are created to launch the runtime, except the runtime itself it will be downloaded at boottime - every time.  This allows a limited space device to run OpenZITI even when space is available.  Ideally, the download location is within a private LAN (NOT INTERNET), uses HTTPS as the protocol, and is located on a server that you control for security reasons.  Note that in this mode you MUST specify the compressed file name (format as above) AND URL where it can be obtained or this operation will fail.  
 
 [PS-shield]: https://img.shields.io/badge/Code%20Basis-Linux%20BASH-blue.svg
