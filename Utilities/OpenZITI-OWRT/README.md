@@ -47,16 +47,27 @@ chmod 755 ./OWRT_Builder.bash
 ```
 bash <(curl -Ls https://owrtbuilder.fragale.us [OpenWRT_Version]) [Target_Part_A] [Target_Part_B] [OpenZITI_Tunnel_Version]
 ```
-* EXAMPLES:
-    * bash <(curl -Ls https://owrtbuilder.fragale.us) "22.03.03" "ath79" "nand" "latest"
-    * bash <(curl -Ls https://owrtbuilder.fragale.us) "22.03.03" "ipq806x" "generic"
-    * bash <(curl -Ls https://owrtbuilder.fragale.us) "22.03.03" "ipq806x" "generic" "0.20.03"
+WHERE: 
+* `[OpenWRT_Version]` is the OpenWRT version you wish to use [https://downloads.openwrt.org/releases].
+* `[Target_Part_A]` is the first part of the target platform from within the version to use.
+* `[Target_Part_B]` is the second part of the target platform from within the version to use.
+* `[OpenZITI_Tunnel_Version]` is the OpenZITI Tunnel version you wish to use [https://github.com/openziti/ziti-tunnel-sdk-c/releases].  If not present, assumes "latest".
 
-* WHERE: 
-    * `[OpenWRT_Version]` is the OpenWRT version you wish to use [https://downloads.openwrt.org/releases].
-    * `[Target_Part_A]` is the first part of the target platform from within the version to use.
-    * `[Target_Part_B]` is the second part of the target platform from within the version to use.
-    * `[OpenZITI_Tunnel_Version]` is the OpenZITI Tunnel version you wish to use [https://github.com/openziti/ziti-tunnel-sdk-c/releases].  If not, * present, assumes "latest".
+EXAMPLES:
+```
+# Run the builder with OpenWRT version "22.03.3", platform "ath79/nand", using OpenZITI version "latest".
+bash <(curl -Ls https://owrtbuilder.fragale.us) "22.03.3" "ath79" "nand" "latest"   
+```
+```
+# Run the builder with OpenWRT version "22.03.3", platform "ipq806x/generic", assume OpenZITI version "latest".
+bash <(curl -Ls https://owrtbuilder.fragale.us) "22.03.3" "ipq806x" "generic"
+```
+
+```
+# Run the builder with OpenWRT version "22.03.3", platform "ath79/nand", using OpenZITI version "0.21.0".
+bash <(curl -Ls https://owrtbuilder.fragale.us) "22.03.3" "ipq806x" "generic" "0.21.0"
+```
+
 
 <br>
 
@@ -75,17 +86,26 @@ chmod 755 ./OWRT_Installer.bash
 ```
 -OR-
 ```
-bash <(curl -Ls https://owrtinstaller.fragale.us [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download])
+bash <(curl -Ls https://owrtinstaller.fragale.us) [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download]
 ```
-* Example: bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ath79_nand.gz" "https://owrtbuilds.fragale.us/0.21.0/"<br>
-* Example: bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ipq806x_generic.gz"<br>
-* Example: bash <(curl -Ls https://owrtinstaller.fragale.us)<br>
+WHERE: 
+* `[OpenZITI_Tunnel_Compressed_Build]` is the name of the compressed build of the OpenZITI binary built by the first step in format "OpenWRT-[OWRT_VERSION]-[TARGETA]_[TARGETB].gz".
+* `[URL_To_Download]` is the URL location of the compressed build - folder path only.
 
-- [OpenZITI_Tunnel_Compressed_Build]: The compressed build of the OpenZITI binary built by the first step in format "OpenWRT-[OWRT_VERSION]-[TARGETA]_[TARGETB].gz".
-- [URL_To_Download]: The URL location of the compressed build - folder path only.
+EXAMPLES:
+```
+# Run the installer with compressed file "OpenWRT-22.03.3-ath79_nand.gz" which is located at "https://owrtbuilds.fragale.us/0.21.0/".
+bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ath79_nand.gz" "https://owrtbuilds.fragale.us/0.21.0/"
+```
+```
+# Run the installer with compressed file "OpenWRT-22.03.3-ipq806x_generic.gz" which is located locally in (/tmp).
+bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ipq806x_generic.gz"
+```
+```
+# Run the installer and review the system to determine the name of the compressed file which is located locally in (/tmp) OR locate the uncompressed file (ziti-edge-tunnel) in (/tmp) if it exists instead. 
+bash <(curl -Ls https://owrtinstaller.fragale.us)
+```
 
-HINT: If you specify the compressed file name without specifying a URL, the utility will seek to find it locally in (/tmp).
-HINT: If you run the utility without any syntax, it will be assumed that the compressed file (format as above) or uncompressed file (format as ziti-edge-tunnel) exists locally in (/tmp).  To find the appropriate compressed file name, the utility will build the name from the components of the file (/etc/os-release) if it can.
-HINT: The utility will setup the runtime if spaces allows, however, if less than 7MB is available to install, it will attempt to run DYNAMICALLY.  In this mode of operation, all services are created to launch the runtime, except the runtime itself it will be downloaded at boottime - every time.  This allows a limited space device to run OpenZITI even when space is available.  Ideally, the download location is within a private LAN (NOT INTERNET), uses HTTPS as the protocol, and is located on a server that you control for security reasons.  Note that in this mode you MUST specify the compressed file name (format as above) AND URL where it can be obtained or this operation will fail.  
+> HINT: The utility will setup the runtime if spaces allows, however, if less than 7MB is available to install, it will attempt to run DYNAMICALLY.  In this mode of operation, all services are created to launch the runtime, except the runtime itself it will be downloaded at boottime - every time.  This allows a limited space device to run OpenZITI even when space is limited.  Ideally, the download location is within a private LAN (NOT INTERNET), uses HTTPS as the protocol, and is located on a server that you control for security reasons.  Note that in this mode you MUST specify the compressed file name (format as above) AND URL where it can be obtained or this operation will fail.  
 
 [PS-shield]: https://img.shields.io/badge/Code%20Basis-Linux%20BASH-blue.svg
