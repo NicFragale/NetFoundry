@@ -52,7 +52,7 @@ function CPrint() {
     fi
 }
 function GTE() {
-    CPrint "30:42" "ERROR: Early Exit at Step ${1}."
+    CPrint "30:41" "ERROR: Early Exit at Step ${1}."
     exit ${1}
 }
 

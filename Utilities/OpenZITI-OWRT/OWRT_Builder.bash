@@ -44,7 +44,7 @@ function CPrint() {
     fi
 }
 function GTE() { 
-    CPrint "30:42" "ERROR: Early Exit at Step ${1}."
+    CPrint "30:41" "ERROR: Early Exit at Step ${1}."
     exit ${1}
 }
 
@@ -60,7 +60,7 @@ if [[ ${ZT_TUNVER} == "UNKNOWN" ]] \
     || [[ ${ZT_OWRTVER} == "UNKNOWN" ]] \
     || [[ ${ZT_OWRTTARGET[0]} == "UNKNOWN" ]] \
     || [[ ${ZT_OWRTTARGET[1]} == "UNKNOWN" ]]; then
-    CPrint "30:42" "Input Missing/Error - Please Check."
+    CPrint "30:41" "Input Missing/Error - Please Check."
     GTE ${ZT_STEP}
 fi
 sleep 5
