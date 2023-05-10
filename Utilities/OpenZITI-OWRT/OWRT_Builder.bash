@@ -23,11 +23,11 @@ ZT_TCTRIPLE="UNSET"
 ZT_TCGCC="UNSET"
 ZT_TCGPP="UNSET"
 ZT_BINC="UNSET"
+for ((i=0;i<100;i++)); do PRINT_PADDING+='          '; done
 function CPrint() {
-    local OUT_COLOR=(${1/:/ }) IN_TEXT="${2}" OUT_MAXWIDTH OUT_SCREENWIDTH OUT_PADLEN NL_INCLUDE i x z
+    local OUT_COLOR=(${1/:/ }) IN_TEXT="${2}" OUT_MAXWIDTH OUT_SCREENWIDTH NL_INCLUDE i x z
     shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";      
     OUT_MAXWIDTH="${3:-${OUT_SCREENWIDTH:-80}}"
-    for ((i=0;i<${OUT_MAXWIDTH};i++)); do OUT_PADLEN+=' '; done
     [[ ${OUT_MAXWIDTH} -eq ${OUT_SCREENWIDTH} ]] && NL_INCLUDE='\n'    
     if [[ ${OUT_COLOR} == "COLORTEST" ]]; then
         OUT_MAXWIDTH="10"
@@ -35,12 +35,12 @@ function CPrint() {
             for x in {1..107}; do
                 [[ $((++z%(OUT_SCREENWIDTH/OUT_MAXWIDTH))) -eq 0 ]] && echo
                 IN_TEXT="${i}:${x}"
-                printf "\e[${i};${x}m%-${OUT_MAXWIDTH}s\e[1;0m" "${OUT_PADLEN:0:$(((OUT_MAXWIDTH/2)-${#IN_TEXT}/2))}${IN_TEXT}"
+                printf "\e[${i};${x}m%-${OUT_MAXWIDTH}s\e[1;0m" "${PRINT_PADDING:0:$(((OUT_MAXWIDTH/2)-${#IN_TEXT}/2))}${IN_TEXT}"
             done
         done
         echo
     else
-        printf "\e[${OUT_COLOR[0]};${OUT_COLOR[1]}m%-${OUT_MAXWIDTH}s\e[1;0m${NL_INCLUDE}" "${OUT_PADLEN:0:$(((OUT_MAXWIDTH/2)-${#IN_TEXT}/2))}${IN_TEXT}"
+        printf "\e[${OUT_COLOR[0]};${OUT_COLOR[1]}m%-${OUT_MAXWIDTH}s\e[1;0m${NL_INCLUDE}" "${PRINT_PADDING:0:$(((OUT_MAXWIDTH/2)-${#IN_TEXT}/2))}${IN_TEXT}"
     fi
 }
 function GTE() { 
