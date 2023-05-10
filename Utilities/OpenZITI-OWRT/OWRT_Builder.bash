@@ -26,7 +26,7 @@ ZT_BINC="UNSET"
 function CPrint() {
     local OUT_COLOR=(${1/:/ }) IN_TEXT="${2}" OUT_MAXWIDTH OUT_SCREENWIDTH OUT_PADLEN NL_INCLUDE i x z
     shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";      
-    OUT_MAXWIDTH="${3:-${OUT_SCREENWIDTH}}"
+    OUT_MAXWIDTH="${3:-${OUT_SCREENWIDTH:-80}}"
     for ((i=0;i<${OUT_MAXWIDTH};i++)); do OUT_PADLEN+=' '; done
     [[ ${OUT_MAXWIDTH} -eq ${OUT_SCREENWIDTH} ]] && NL_INCLUDE='\n'    
     if [[ ${OUT_COLOR} == "COLORTEST" ]]; then
