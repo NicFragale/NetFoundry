@@ -40,7 +40,7 @@ function CPrint() {
         done
         echo
     else
-        printf "\e[${OUT_COLOR[0]};${OUT_COLOR[1]}m%-${OUT_MAXWIDTH}s\e[1;0m${NL_INCLUDE}" "${OUT_PADLEN:0:$(((OUT_MAXWIDTH/2)-${#IN_TEXT}/2))}${IN_TEXT}"
+        printf "\e[${OUT_COLOR[0]};${OUT_COLOR[1]}m%.${OUT_MAXWIDTH}s\e[1;0m${NL_INCLUDE}" "${OUT_PADLEN:0:$(((OUT_MAXWIDTH/2)-${#IN_TEXT}/2))}${IN_TEXT}"
     fi
 }
 function GTE() { 
