@@ -43,7 +43,7 @@ function CPrint() {
             for x in {1..107}; do
                 [[ $((++z%(OUT_SCREENWIDTH/OUT_MAXWIDTH))) -eq 0 ]] && echo
                 IN_TEXT="${i}:${x}"
-                printf "\e[${i};${x}m%.${OUT_MAXWIDTH}s\e[1;0m" "${OUT_PADLEN:0:$(((OUT_MAXWIDTH/2)-${#IN_TEXT}/2))}${IN_TEXT}"
+                printf "\e[${i};${x}m%-${OUT_MAXWIDTH}s\e[1;0m" "${OUT_PADLEN:0:$(((OUT_MAXWIDTH/2)-${#IN_TEXT}/2))}${IN_TEXT}"
             done
         done
         echo
