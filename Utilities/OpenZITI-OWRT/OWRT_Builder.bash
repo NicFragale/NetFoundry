@@ -216,8 +216,8 @@ echo "CMAKE OPTIONS: [${ZT_OWRT_CMAKEOPTS[@]}]."
 if [[ ${ZT_USEVCPKG} == "TRUE" ]]; then
     CPrint "30:43" "Begin Step $((++ZT_STEP)): Build Dependencies via VCPKG [Target ${ZT_OWRT_BUILDTARGET}]."
     cd "${VCPKG_ROOT}"
-    ./vcpkg install zlib:${ZT_OWRT_TCINFO[0]}-linux --overlay-triplets=custom-triplets || GTE ${ZT_STEP}
-    ./vcpkg install mbedtls:${ZT_OWRT_TCINFO[0]}-linux --overlay-triplets=custom-triplets || GTE ${ZT_STEP}
+    ./vcpkg install zlib --triplet ${ZT_OWRT_TCINFO[0]}-linux --overlay-triplets=custom-triplets || GTE ${ZT_STEP}
+    ./vcpkg install mbedtls --triplet ${ZT_OWRT_TCINFO[0]}-linux --overlay-triplets=custom-triplets || GTE ${ZT_STEP}
     cp -vr "installed/${ZT_OWRT_TCINFO[0]}-linux"/* "${ZT_OWRT_BUILDTOOLCHAIN[1]}" || GTE ${ZT_STEP}
     cd -
 else
