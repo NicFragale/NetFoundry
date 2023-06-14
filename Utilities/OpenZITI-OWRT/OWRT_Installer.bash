@@ -24,12 +24,13 @@ ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_watch-service")
 for ((i=0;i<100;i++)); do PRINT_PADDING+='          '; done
 function CPrint() {
     local OUT_COLOR=(${1/:/ }) IN_TEXT="${2}" OUT_MAXWIDTH OUT_SCREENWIDTH NL_INCLUDE i x z
-    shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";      
+    shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";
     OUT_MAXWIDTH="${3:-${OUT_SCREENWIDTH:-80}}"
-    [[ ${OUT_MAXWIDTH} -eq ${OUT_SCREENWIDTH} ]] && NL_INCLUDE='\n'    
+    [[ ${OUT_MAXWIDTH} -eq ${OUT_SCREENWIDTH} ]] && NL_INCLUDE='\n'
+    [[ ${#IN_TEXT} -gt ${OUT_MAXWIDTH} ]] && IN_TEXT="${IN_TEXT:0:${OUT_MAXWIDTH}}"
     if [[ ${OUT_COLOR} == "COLORTEST" ]]; then
         OUT_MAXWIDTH="10"
-        for i in {1..107}; do 
+        for i in {1..107}; do
             for x in {1..107}; do
                 [[ $((++z%(OUT_SCREENWIDTH/OUT_MAXWIDTH))) -eq 0 ]] && echo
                 IN_TEXT="${i}:${x}"
@@ -76,7 +77,7 @@ CPrint "30:43" "Begin Step $((++ZT_STEP)): System Checking."
 ZT_DIR_SIZE="$(GetDirSize "${ZT_DIR}")"
 if [[ ${ZT_DIR_SIZE} -lt ${ZT_DIR_MIN_SIZE} ]]; then
     ZT_ISDYNAMIC="true"
-    CPrint "30:45" "LOW STORAGE SPACE DEVICE DETECTED [${ZT_DIR}: ${ZT_DIR_SIZE} < ${ZT_DIR_MIN_SIZE}] - RUNNING DYNAMICALLY FROM INPUT URL."  
+    CPrint "30:45" "LOW STORAGE SPACE DEVICE DETECTED [${ZT_DIR}: ${ZT_DIR_SIZE} < ${ZT_DIR_MIN_SIZE}] - RUNNING DYNAMICALLY FROM INPUT URL."
 else
     ZT_ISDYNAMIC="false"
 fi
@@ -93,7 +94,7 @@ if [[ ${ZT_WORKDIR} == "UNKNOWN" ]] \
 fi
 if [[ ${ZT_ISDYNAMIC} == "true" ]] && [[ ${ZT_URL} == "UNKNOWN" ]]; then
     CPrint "30:41" "ERROR: DYNAMIC RUNTIME REQUIRES COMPRESSED FILE NAME INPUT AND URL INPUT."
-    GTE ${ZT_STEP}   
+    GTE ${ZT_STEP}
 elif [[ ${ZT_ISDYNAMIC} == "false" ]]; then
     if [[ ${ZT_URL} == "UNKNOWN" ]] && [[ ! -f "${ZT_WORKDIR}/${ZT_ZET[0]}" ]] && [[ ! -f "${ZT_WORKDIR}/${ZT_ZET[1]}" ]] && [[ ! -f "${ZT_DIR}/${ZT_ZET[1]}" ]]; then
         CPrint "30:41" "ERROR: COMPRESSED [${ZT_ZET[0]}] OR UNCOMPRESSED [${ZT_ZET[1]}] RUNTIME FILE COULD NOT BE FOUND AND NO URL INPUT WAS SPECIFIED."
