@@ -25,7 +25,7 @@ ZT_CMAKEVER="0.0.0"
 ZT_WORKDIR="${ZT_WORKDIR}/OpenWRT-${ZT_OWRT_VER}-${ZT_OWRT_TARGET[0]}_${ZT_OWRT_TARGET[1]}"
 VCPKG_ROOT="${ZT_WORKDIR}/vcpkg"
 ZT_STEP="0"
-ZT_ADDLPKG=("gawk" "git" "zip" "unzip" "wget" "curl")
+ZT_ADDLPKG=("gawk" "sed" "git" "zip" "unzip" "wget")
 for ((i=0;i<100;i++)); do PRINT_PADDING+='          '; done
 function CPrint() {
     local OUT_COLOR=(${1/:/ }) IN_TEXT="${2}" OUT_MAXWIDTH OUT_SCREENWIDTH NL_INCLUDE i x z
@@ -103,7 +103,7 @@ fi
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Acquire ZITI EDGE TUNNEL Source [Version ${ZT_TUNVER}]."
 if [[ ${ZT_TUNVER:-latest} == "latest" ]]; then
     IFS=$'\n' read -r -d '' -a ZT_ALLVERSIONS < <(\
-        curl -Ls "${ZT_CLONEURL}/tags" \
+        wget "${ZT_CLONEURL}/tags" -O- 2>/dev/null \
         | awk '/tags/ {
             if (match($0,/v[0-9].[0-9]+.[0-9]+/)) {
                 ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}
@@ -156,15 +156,14 @@ ZT_OWRT_MUSLVER="$(wget -q "${ZT_OWRT_URL}/releases/${ZT_OWRT_VER}/targets/${ZT_
 )"
 ZT_OWRT_SDK[0]="openwrt-sdk-${ZT_OWRT_VER}-${ZT_OWRT_TARGET[0]}-${ZT_OWRT_TARGET[1]}_gcc-${ZT_OWRT_MUSLVER}-x86_64"
 ZT_OWRT_SDK[1]="${ZT_OWRT_URL}/releases/${ZT_OWRT_VER}/targets/${ZT_OWRT_TARGET[0]}/${ZT_OWRT_TARGET[1]}/${ZT_OWRT_SDK}.tar.xz"
-ZT_OWRT_DIRS[0]="${ZT_WORKDIR}/${ZT_OWRT_SDK[0]}/build_dir"
-ZT_OWRT_DIRS[1]="${ZT_WORKDIR}/${ZT_OWRT_SDK[0]}/staging_dir"
+STAGING_DIR="${ZT_WORKDIR}/${ZT_OWRT_SDK[0]}/staging_dir"
 wget "${ZT_OWRT_SDK[1]}" -O ${ZT_OWRT_SDK[0]}.tar.xz || GTE ${ZT_STEP}
 xz -d "${ZT_OWRT_SDK[0]}.tar.xz" || GTE ${ZT_STEP}
 tar -xf "${ZT_OWRT_SDK[0]}.tar" && rm -f "${ZT_OWRT_SDK[0]}.tar" || GTE ${ZT_STEP}
-ZT_OWRT_BUILDTARGET="$(find "${ZT_OWRT_DIRS[1]}" -maxdepth 1 -name "target-*" -printf "%P" || GTE ${ZT_STEP})"
-ZT_OWRT_BUILDTOOLCHAIN[0]="$(find "${ZT_OWRT_DIRS[1]}" -maxdepth 1 -name "toolchain-*" -printf "%P" || GTE ${ZT_STEP})"
-ZT_OWRT_BUILDTOOLCHAIN[1]="${ZT_OWRT_DIRS[1]}/${ZT_OWRT_BUILDTOOLCHAIN[0]}"
-export STAGING_DIR="${ZT_OWRT_DIRS[1]}"
+ZT_OWRT_BUILDTARGET="$(find "${STAGING_DIR}" -maxdepth 1 -name "target-*" -printf "%P" || GTE ${ZT_STEP})"
+ZT_OWRT_BUILDTOOLCHAIN[0]="$(find "${STAGING_DIR}" -maxdepth 1 -name "toolchain-*" -printf "%P" || GTE ${ZT_STEP})"
+ZT_OWRT_BUILDTOOLCHAIN[1]="${STAGING_DIR}/${ZT_OWRT_BUILDTOOLCHAIN[0]}"
+export STAGING_DIR
 
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Setup Build Environment Part One [Target ${ZT_OWRT_BUILDTARGET}]."
