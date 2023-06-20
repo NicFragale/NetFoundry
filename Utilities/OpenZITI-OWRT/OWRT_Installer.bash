@@ -240,7 +240,7 @@ while true; do
         "\${ZT_SERVICES[0]}" stop
 	    wget "\${ZT_URL}/\${ZT_ZET[0]}" -O "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
             && gzip -fdc "\${ZT_WORKDIR}/\${ZT_ZET[0]}" > "\${ZT_DIR}/\${ZT_ZET[1]}" \
-            && chmod 755 "\${ZT_WORKDIR}/\${ZT_ZET[1]}" \
+            && chmod 755 "\${ZT_DIR}/\${ZT_ZET[1]}" \
             && "\${ZT_SERVICES[1]}" reload \
             && rm -f "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
             && echo "[\${ZW_ITR}] SUCCESS: Obtained Runtime" \
