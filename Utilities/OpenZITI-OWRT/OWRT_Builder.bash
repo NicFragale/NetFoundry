@@ -2,7 +2,7 @@
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the build server as a BUILD CAPABLE USER (ROOT is assumed in this example).
 MY_NAME="OWRT_Builder"
-MY_VERSION="20230614"
+MY_VERSION="20230620"
 MY_DESCRIPTION="NFragale: Compile/Build Helper for OpenZITI/OpenWRT"
 ################################################################################################################
 
@@ -120,13 +120,13 @@ fi
 ZT_TUNVERARR=( ${ZT_TUNVER//\./ } )
 # VCPKG support began with ZITI-TUNNEL-SDK-C version 0.21.1.
 if [[ ${ZT_TUNVERARR[0]} -gt 0 ]]; then
-    ZT_USEVCPKG="TRUE" 
+    ZT_USEVCPKG="TRUE"
 elif [[ ${ZT_TUNVERARR[0]} -eq 0 ]] && [[ ${ZT_TUNVERARR[1]} -gt 21 ]]; then
     ZT_USEVCPKG="TRUE"
 elif [[ ${ZT_TUNVERARR[0]} -eq 0 ]] && [[ ${ZT_TUNVERARR[1]} -eq 21 ]] && [[ ${ZT_TUNVERARR[2]} -ge 1 ]]; then
-    ZT_USEVCPKG="TRUE" 
+    ZT_USEVCPKG="TRUE"
 else
-    ZT_USEVCPKG="FALSE" 
+    ZT_USEVCPKG="FALSE"
 fi
 git clone --single-branch --branch "${ZT_CLONEBRANCH}" "${ZT_CLONEURL}"  "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}" || GTE ${ZT_STEP}
 mkdir -vp "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build" || GTE ${ZT_STEP}

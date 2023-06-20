@@ -2,7 +2,7 @@
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the router via SSH as ROOT.
 MY_NAME="OWRT_Installer"
-MY_VERSION="20230505"
+MY_VERSION="20230620"
 MY_DESCRIPTION="NFragale: Install/Run Helper for OpenZITI/OpenWRT"
 ################################################################################################################
 
@@ -75,7 +75,10 @@ CPrint "30:42" "IDENTITY DIRECTORY: ${ZT_IDDIR:=UNKNOWN}"
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): System Checking."
 ZT_DIR_SIZE="$(GetDirSize "${ZT_DIR}")"
-if [[ ${ZT_DIR_SIZE} -lt ${ZT_DIR_MIN_SIZE} ]]; then
+if [[ ! -f "${ZT_DIR}/${ZT_ZET[1]}" ]]; then
+    ZT_ISDYNAMIC="false"
+    CPrint "30:42" "EXISTING INSTALL DETECTED - BYPASSING SPACE CHECK [${ZT_DIR}: ${ZT_DIR_SIZE} > ${ZT_DIR_MIN_SIZE}] - RUNNING LOCALLY."
+elif [[ ${ZT_DIR_SIZE} -lt ${ZT_DIR_MIN_SIZE} ]]; then
     ZT_ISDYNAMIC="true"
     CPrint "30:45" "LOW STORAGE SPACE DEVICE DETECTED [${ZT_DIR}: ${ZT_DIR_SIZE} < ${ZT_DIR_MIN_SIZE}] - RUNNING DYNAMICALLY FROM INPUT URL."
 else
@@ -226,26 +229,28 @@ while true; do
     # LOW STORAGE DEVICE FUNCTION: Attempt to obtain the runtime if not present.
     if ${ZT_ISDYNAMIC} && [[ ! -f \${ZTWORKDIR}/\${ZT_ZET[1]} ]]; then
         echo "[\${ZW_ITR}] DYNAMIC MODE, OBTAINING RUNTIME"
-	    wget "\${ZT_URL}/\${ZT_ZET[0]}" -O "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
+        "\${ZT_SERVICES[0]}" stop
+        wget "\${ZT_URL}/\${ZT_ZET[0]}" -O "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
             && gzip -fdc "\${ZT_WORKDIR}/\${ZT_ZET[0]}" > "\${ZT_WORKDIR}/\${ZT_ZET[1]}" \
             && ln -sf "\${ZT_WORKDIR}/\${ZT_ZET[1]}" "\${ZT_DIR}/\${ZT_ZET[1]}" \
             && chmod 755 "\${ZT_WORKDIR}/\${ZT_ZET[1]}" \
             && "\${ZT_SERVICES[1]}" reload \
             && rm -f "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
+            && "\${ZT_SERVICES[0]}" restart \
             && echo "[\${ZW_ITR}] SUCCESS: Obtained Runtime" \
             || echo "[\${ZW_ITR}] FAILED: Could Not Obtain Runtime"
-    # RECOVERY OR UPDATE FUNCTION: Attempt to obtain the runtime if not present.            
+    # RECOVERY FUNCTION: Attempt to obtain the runtime if not present.
     elif ! ${ZT_ISDYNAMIC} && [[ ! -f \${ZT_DIR}/\${ZT_ZET[1]} ]]; then
-        echo "[\${ZW_ITR}] RECOVERY/UPDATE MODE, OBTAINING RUNTIME"
+        echo "[\${ZW_ITR}] RECOVERY MODE, OBTAINING RUNTIME"
         "\${ZT_SERVICES[0]}" stop
-	    wget "\${ZT_URL}/\${ZT_ZET[0]}" -O "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
+        wget "\${ZT_URL}/\${ZT_ZET[0]}" -O "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
             && gzip -fdc "\${ZT_WORKDIR}/\${ZT_ZET[0]}" > "\${ZT_DIR}/\${ZT_ZET[1]}" \
             && chmod 755 "\${ZT_DIR}/\${ZT_ZET[1]}" \
             && "\${ZT_SERVICES[1]}" reload \
             && rm -f "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
             && "\${ZT_SERVICES[0]}" restart \
             && echo "[\${ZW_ITR}] SUCCESS: Obtained Runtime" \
-            || echo "[\${ZW_ITR}] FAILED: Could Not Obtain Runtime"    
+            || echo "[\${ZW_ITR}] FAILED: Could Not Obtain Runtime"
     fi
     # Cycle any available JWTs.
     while IFS=$'\n' read -r EachJWT; do
