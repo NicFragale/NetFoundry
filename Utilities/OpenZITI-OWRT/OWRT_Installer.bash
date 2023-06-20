@@ -280,7 +280,8 @@ if ${ZT_ISDYNAMIC}; then
     CPrint "30:43" "Skipping Step $((++ZT_STEP)): Dynamic Runtime Mode."
 else
     CPrint "30:43" "Begin Step $((++ZT_STEP)): Setup Runtime."
-    mv -vf "${ZT_WORKDIR}/${ZT_ZET[1]}" "${ZT_DIR}" || GTE ${ZT_STEP}
+    [[ ! -f "${ZT_DIR}/${ZT_ZET[1]}" ]] \
+        && mv -vf "${ZT_WORKDIR}/${ZT_ZET[1]}" "${ZT_DIR}" || GTE ${ZT_STEP}
     rm -f "${ZT_WORKDIR}/${ZT_ZET[0]}" "${ZT_WORKDIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
     chmod 755 "${ZT_DIR}/${ZT_ZET[1]}" || GTE ${ZT_STEP}
     ZT_BINARYVER="$(${ZT_DIR}/${ZT_ZET[1]} version || echo UNKNOWN)"
