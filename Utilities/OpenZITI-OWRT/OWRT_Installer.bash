@@ -243,6 +243,7 @@ while true; do
             && chmod 755 "\${ZT_DIR}/\${ZT_ZET[1]}" \
             && "\${ZT_SERVICES[1]}" reload \
             && rm -f "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
+            && "\${ZT_SERVICES[0]}" restart \
             && echo "[\${ZW_ITR}] SUCCESS: Obtained Runtime" \
             || echo "[\${ZW_ITR}] FAILED: Could Not Obtain Runtime"    
     fi
