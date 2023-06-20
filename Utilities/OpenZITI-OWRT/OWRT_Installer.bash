@@ -9,8 +9,8 @@ MY_DESCRIPTION="NFragale: Install/Run Helper for OpenZITI/OpenWRT"
 ###################################################
 # Set initial variables/functions.
 ZT_WORKDIR="/tmp"
-ZT_ZET=("${1}" "ziti-edge-tunnel") # File name in GZ compressed format.  EX: OpenWRT-22.03.3-ath79_nand.gz
-ZT_URL="${2}" # URL Basis for obtaining the runtime.  EX: https://myserver.com/somefolder
+ZT_ZET=("${1}" "ziti-edge-tunnel") # File name in GZ compressed format.  EX: OpenWRT-22.03.3-ath79_generic.gz
+ZT_URL="${2}" # URL basis for obtaining the runtime.  EX: https://myserver.com/somefolder
 ZT_DIR="/opt/netfoundry/ziti"
 ZT_IDDIR="${ZT_DIR}/identities"
 ZT_DIR_MIN_SIZE="7000" # KBytes. 7000KB strongly recommended.
@@ -80,6 +80,7 @@ if [[ ${ZT_DIR_SIZE} -lt ${ZT_DIR_MIN_SIZE} ]]; then
     CPrint "30:45" "LOW STORAGE SPACE DEVICE DETECTED [${ZT_DIR}: ${ZT_DIR_SIZE} < ${ZT_DIR_MIN_SIZE}] - RUNNING DYNAMICALLY FROM INPUT URL."
 else
     ZT_ISDYNAMIC="false"
+    CPrint "30:42" "SUFFICIENT STORAGE SPACE DEVICE DETECTED [${ZT_DIR}: ${ZT_DIR_SIZE} > ${ZT_DIR_MIN_SIZE}] - RUNNING LOCALLY."
 fi
 
 ###################################################
@@ -233,6 +234,17 @@ while true; do
             && rm -f "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
             && echo "[\${ZW_ITR}] SUCCESS: Obtained Runtime" \
             || echo "[\${ZW_ITR}] FAILED: Could Not Obtain Runtime"
+    # RECOVERY OR UPDATE FUNCTION: Attempt to obtain the runtime if not present.            
+    elif ! ${ZT_ISDYNAMIC} && [[ ! -f \${ZT_DIR}/\${ZT_ZET[1]} ]]; then
+        echo "[\${ZW_ITR}] RECOVERY/UPDATE MODE, OBTAINING RUNTIME"
+        "\${ZT_SERVICES[1]}" stop
+	    wget "\${ZT_URL}/\${ZT_ZET[0]}" -O "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
+            && gzip -fdc "\${ZT_WORKDIR}/\${ZT_ZET[0]}" > "\${ZT_DIR}/\${ZT_ZET[1]}" \
+            && chmod 755 "\${ZT_WORKDIR}/\${ZT_ZET[1]}" \
+            && "\${ZT_SERVICES[1]}" reload \
+            && rm -f "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
+            && echo "[\${ZW_ITR}] SUCCESS: Obtained Runtime" \
+            || echo "[\${ZW_ITR}] FAILED: Could Not Obtain Runtime"    
     fi
     # Cycle any available JWTs.
     while IFS=$'\n' read -r EachJWT; do
