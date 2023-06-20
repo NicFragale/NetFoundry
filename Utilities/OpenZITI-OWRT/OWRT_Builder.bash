@@ -72,7 +72,7 @@ sleep 3
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Create Staging Area [Location ${ZT_WORKDIR}]."
 if [[ -d ${ZT_WORKDIR} ]]; then
-    CPrint "30:45" "WARNING: Staging Area Already Exists ."
+    CPrint "30:45" "WARNING: Staging Area Already Exists."
     CPrint "30:45" "WARNING: Stop Program (CTRL+C) to Prevent Overwrite."
     sleep 5
     rm -rf "${ZT_WORKDIR}" || GTE ${ZT_STEP}
@@ -116,17 +116,17 @@ if [[ ${ZT_TUNVER:-latest} == "latest" ]]; then
         | sort -rnt '.' -k1,1 -k2,2 -k3,3
     )
     ZT_TUNVER="${ZT_ALLVERSIONS[0]}"
-    ZT_TUNVERARR=( ${ZT_TUNVER//\./ } )
-    # VCPKG support began with ZITI-TUNNEL-SDK-C version 0.21.1.
-    if [[ ${ZT_TUNVERARR[0]} -gt 0 ]]; then
-        ZT_USEVCPKG="TRUE" 
-    elif [[ ${ZT_TUNVERARR[0]} -eq 0 ]] && [[ ${ZT_TUNVERARR[1]} -gt 21 ]]; then
-        ZT_USEVCPKG="TRUE"
-    elif [[ ${ZT_TUNVERARR[0]} -eq 0 ]] && [[ ${ZT_TUNVERARR[1]} -eq 21 ]] && [[ ${ZT_TUNVERARR[2]} -ge 1 ]]; then
-        ZT_USEVCPKG="TRUE" 
-    else
-        ZT_USEVCPKG="FALSE" 
-    fi
+fi
+ZT_TUNVERARR=( ${ZT_TUNVER//\./ } )
+# VCPKG support began with ZITI-TUNNEL-SDK-C version 0.21.1.
+if [[ ${ZT_TUNVERARR[0]} -gt 0 ]]; then
+    ZT_USEVCPKG="TRUE" 
+elif [[ ${ZT_TUNVERARR[0]} -eq 0 ]] && [[ ${ZT_TUNVERARR[1]} -gt 21 ]]; then
+    ZT_USEVCPKG="TRUE"
+elif [[ ${ZT_TUNVERARR[0]} -eq 0 ]] && [[ ${ZT_TUNVERARR[1]} -eq 21 ]] && [[ ${ZT_TUNVERARR[2]} -ge 1 ]]; then
+    ZT_USEVCPKG="TRUE" 
+else
+    ZT_USEVCPKG="FALSE" 
 fi
 git clone --single-branch --branch "${ZT_CLONEBRANCH}" "${ZT_CLONEURL}"  "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}" || GTE ${ZT_STEP}
 mkdir -vp "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build" || GTE ${ZT_STEP}
