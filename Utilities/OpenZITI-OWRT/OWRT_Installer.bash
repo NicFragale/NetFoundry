@@ -237,7 +237,7 @@ while true; do
     # RECOVERY OR UPDATE FUNCTION: Attempt to obtain the runtime if not present.            
     elif ! ${ZT_ISDYNAMIC} && [[ ! -f \${ZT_DIR}/\${ZT_ZET[1]} ]]; then
         echo "[\${ZW_ITR}] RECOVERY/UPDATE MODE, OBTAINING RUNTIME"
-        "\${ZT_SERVICES[1]}" stop
+        "\${ZT_SERVICES[0]}" stop
 	    wget "\${ZT_URL}/\${ZT_ZET[0]}" -O "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
             && gzip -fdc "\${ZT_WORKDIR}/\${ZT_ZET[0]}" > "\${ZT_DIR}/\${ZT_ZET[1]}" \
             && chmod 755 "\${ZT_WORKDIR}/\${ZT_ZET[1]}" \
