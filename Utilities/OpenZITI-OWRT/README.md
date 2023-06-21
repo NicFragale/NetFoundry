@@ -95,11 +95,11 @@ WHERE:
 EXAMPLES:
 ```
 # Run the installer with compressed file "OpenWRT-22.03.3-ath79_nand.gz" which is located at "https://owrtbuilds.fragale.us/0.21.0/".
-bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ath79_nand.gz" "https://owrtbuilds.fragale.us/0.21.0/"
+bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.5-ath79_nand.gz" "https://owrtbuilds.fragale.us/0.21.5"
 ```
 ```
 # Run the installer with compressed file "OpenWRT-22.03.3-ipq806x_generic.gz" which is located locally in (/tmp).
-bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.3-ipq806x_generic.gz"
+bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.5-ipq806x_generic.gz"
 ```
 ```
 # Run the installer and review the system to determine the name of the compressed file which is located locally in (/tmp) OR locate the uncompressed file (ziti-edge-tunnel) in (/tmp) if it exists instead. 
