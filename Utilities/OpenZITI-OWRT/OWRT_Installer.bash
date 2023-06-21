@@ -13,7 +13,7 @@ ZT_ZET=("${1}" "ziti-edge-tunnel") # File name in GZ compressed format.  EX: Ope
 ZT_URL="${2}" # URL basis for obtaining the runtime.  EX: https://myserver.com/somefolder
 ZT_DIR="/opt/netfoundry/ziti"
 ZT_IDDIR="${ZT_DIR}/identities"
-ZT_DIR_MIN_SIZE="7000" # KBytes. 7000KB strongly recommended.
+ZT_DIR_MIN_SIZE="7000" # KBytes. 7000KB+ strongly recommended.
 
 ################################################################################################################
 # DO NOT MODIFY BELOW THIS LINE
@@ -152,14 +152,43 @@ THIS_PATH="${ZT_DIR}"
 THIS_IDPATH="${ZT_IDDIR}"
 THIS_APP="${ZT_ZET[1]}"
 THIS_PIDFILE="/var/run/\${THIS_APP}.pid"
-THIS_RUNOPTIONS="run -I \${THIS_IDPATH}"
 THIS_MANIFEST="manifest.info"
+THIS_IDSAVAIL=( \$(grep -oE "\/.*\.json" \${THIS_IDPATH}/\${THIS_MANIFEST}) )
+THIS_RESOLVFILE=""
+THIS_UPDNSOPTS=""
+THIS_IDOPTS=""
+THIS_RUNOPTIONS=""
 
 start_service() {
     logger -t \${THIS_APP} "Starting \${THIS_APP}."
-    THIS_UPSTREAMDNS="-u \$(grep -oEm1 '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' /tmp/resolv.conf.d/resolv.conf.auto || echo 1.1.1.1)"
+    if [[ -f \${THIS_RESOLVFILE} ]]; then
+        THIS_UPDNSOPTS="\$(grep -oEm1 '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' \${THIS_RESOLVFILE})"
+        if [[ -z \${THIS_UPDNSOPTS} ]]; then
+            THIS_UPDNSOPTS="1.1.1.1"
+            logger -t \${THIS_APP} "WARNING: DNS Resolv INVALID/EMPTY - Upstream Set to Default [\${THIS_UPDNSOPTS}]."
+        else
+            logger -t \${THIS_APP} "INFO: DNS Upstream Set [\${THIS_UPDNSOPTS}]."
+        fi
+    else
+        THIS_UPDNSOPTS="1.1.1.1"
+        logger -t \${THIS_APP} "WARNING: DNS Resolv NOT PRESENT - Upstream Set to Default [\${THIS_UPDNSOPTS}]."
+    fi
+    THIS_UPDNSOPTS="-u \${THIS_UPDNSOPTS}"
+    if [[ \${#THIS_IDSAVAIL[@]} -gt 1 ]]; then
+        for EachID in \${THIS_IDSAVAIL[@]}; do
+            logger -t \${THIS_APP} "INFO: Loading ID [\${EachID}]."
+        done
+        THIS_IDOPTS="-I \${THIS_IDPATH}"
+    elif [[ \${#THIS_IDSAVAIL[@]} -eq 1 ]]; then
+        THIS_IDOPTS="-i \${THIS_IDSAVAIL[0]}"
+    else
+        logger -t \${THIS_APP} "ERROR: No Identities Available in Manifest [\${THIS_IDPATH}/\${THIS_MANIFEST}]."
+        logger -t \${THIS_APP} "Stopping \${THIS_APP}."
+        return 1
+    fi
+    THIS_RUNOPTIONS="run \${THIS_IDOPTS} \${THIS_UPDNSOPTS}"
     procd_open_instance
-    procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS} \${THIS_UPSTREAMDNS}
+    procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS}
     procd_set_param respawn 600 5 5
     procd_set_param file "\${THIS_IDPATH}/\${THIS_MANIFEST}"
     procd_set_param pidfile \${THIS_PIDFILE}
@@ -257,7 +286,7 @@ while true; do
         echo "[\${ZW_ITR}] ENROLLING: \${EachJWT}"
         if "\${ZT_DIR}/\${ZT_ZET[1]}" enroll -j "\${EachJWT}" -i "\${EachJWT/.jwt/.json}"; then
             echo "[\${ZW_ITR}] SUCCESS: \${EachJWT/.jwt/.json}"
-            echo "[\$(date -u)] ADDED \${EachJWT/.jwt/}" >> "\${ZT_IDDIR}/\${ZT_IDMANIFEST}"
+            echo "[\$(date -u)] ADDED \${EachJWT/.jwt/.json}" >> "\${ZT_IDDIR}/\${ZT_IDMANIFEST}"
             rm -f "\${EachJWT}"
             sleep 3
             # Reload the daemon if any changes were flagged.
