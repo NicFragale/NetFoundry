@@ -154,7 +154,7 @@ THIS_APP="${ZT_ZET[1]}"
 THIS_PIDFILE="/var/run/\${THIS_APP}.pid"
 THIS_MANIFEST="manifest.info"
 THIS_IDSAVAIL=""
-THIS_RESOLVFILE=""
+THIS_RESOLVFILE="/tmp/resolv.conf.d/resolv.conf.auto"
 THIS_UPDNSOPTS=""
 THIS_IDOPTS=""
 THIS_RUNOPTIONS=""
@@ -320,9 +320,11 @@ else
 fi
 
 ###################################################
-CPrint "30:43" "Begin Step $((++ZT_STEP)): Permit of Sockets."
 if [[ -f "/etc/group" ]] && ! grep -q "ziti" "/etc/group"; then
+    CPrint "30:43" "Begin Step $((++ZT_STEP)): Permit of Sockets."
     echo 'ziti:x:99:' >> /etc/group
+else
+    CPrint "30:43" "Skipping Step $((++ZT_STEP)): Permit of Sockets."
 fi
 
 ###################################################
