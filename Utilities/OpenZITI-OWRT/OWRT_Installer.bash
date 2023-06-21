@@ -153,7 +153,7 @@ THIS_IDPATH="${ZT_IDDIR}"
 THIS_APP="${ZT_ZET[1]}"
 THIS_PIDFILE="/var/run/\${THIS_APP}.pid"
 THIS_MANIFEST="manifest.info"
-THIS_IDSAVAIL=( \$(grep -oE "\/.*\.json" \${THIS_IDPATH}/\${THIS_MANIFEST}) )
+THIS_IDSAVAIL=""
 THIS_RESOLVFILE=""
 THIS_UPDNSOPTS=""
 THIS_IDOPTS=""
@@ -174,13 +174,13 @@ start_service() {
         logger -t \${THIS_APP} "WARNING: DNS Resolv NOT PRESENT - Upstream Set to Default [\${THIS_UPDNSOPTS}]."
     fi
     THIS_UPDNSOPTS="-u \${THIS_UPDNSOPTS}"
-    if [[ \${#THIS_IDSAVAIL[@]} -gt 1 ]]; then
-        for EachID in \${THIS_IDSAVAIL[@]}; do
-            logger -t \${THIS_APP} "INFO: Loading ID [\${EachID}]."
-        done
+    THIS_IDSAVAIL="\$(grep -coE '\/.*\.json' \${THIS_IDPATH}/\${THIS_MANIFEST})"
+    if [[ \${THIS_IDSAVAIL} -gt 1 ]]; then
         THIS_IDOPTS="-I \${THIS_IDPATH}"
-    elif [[ \${#THIS_IDSAVAIL[@]} -eq 1 ]]; then
-        THIS_IDOPTS="-i \${THIS_IDSAVAIL[0]}"
+        logger -t \${THIS_APP} "INFO: Multiple Identities Available in Manifest - Using Directory Syntax."
+    elif [[ \${THIS_IDSAVAIL} -eq 1 ]]; then
+        THIS_IDOPTS="-i \$(grep -oEm1 '\/.*\.json' \${THIS_IDPATH}/\${THIS_MANIFEST})"
+        logger -t \${THIS_APP} "INFO: Single Identity Available in Manifest - Using File Syntax."
     else
         logger -t \${THIS_APP} "ERROR: No Identities Available in Manifest [\${THIS_IDPATH}/\${THIS_MANIFEST}]."
         logger -t \${THIS_APP} "Stopping \${THIS_APP}."
