@@ -2,7 +2,7 @@
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the build server as a BUILD CAPABLE USER (ROOT is assumed in this example).
 MY_NAME="OWRT_Builder"
-MY_VERSION="20230620"
+MY_VERSION="20230622"
 MY_DESCRIPTION="NFragale: Compile/Build Helper for OpenZITI/OpenWRT"
 ################################################################################################################
 
@@ -229,6 +229,10 @@ CPrint "30:43" "Begin Step $((++ZT_STEP)): Configure Build [Target ${ZT_OWRT_BUI
 cmake ${ZT_OWRT_CMAKEOPTS[@]} || GTE ${ZT_STEP}
 
 ###################################################
+# Note: This is only required on pre-0.21.6 releases of ZET-CSDK.
+#  The prior versions failed to build due to preprocessor error on metrics.h as it was expecting a macro to be present.
+#  In other toolchains the included features.h has the macro, and it seems only OpenWRT doesn't include it.
+#  This will only fire if it exactly matches, which applies only to pre-0.21.6 releases.
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Pre-Build Modifications."
 sed -i '/# if ! __GNUC_PREREQ(4,9)/,+2d' "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/_deps/ziti-sdk-c-src/inc_internal/metrics.h" || GTE ${ZT_STEP}
 
