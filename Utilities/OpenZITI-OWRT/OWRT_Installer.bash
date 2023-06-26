@@ -2,7 +2,7 @@
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the router via SSH as ROOT.
 MY_NAME="OWRT_Installer"
-MY_VERSION="20230620"
+MY_VERSION="20230622"
 MY_DESCRIPTION="NFragale: Install/Run Helper for OpenZITI/OpenWRT"
 ################################################################################################################
 
@@ -147,7 +147,7 @@ cat << EOFEOF > "${ZT_SERVICES[0]}"
 # Init script for NetFoundry OpenZITI (ZITI EDGE TUNNEL, OpenWRT version).
 USE_PROCD=1
 START=85
-STOP=01
+STOP=85
 THIS_PATH="${ZT_DIR}"
 THIS_IDPATH="${ZT_IDDIR}"
 THIS_APP="${ZT_ZET[1]}"
@@ -158,36 +158,35 @@ THIS_RESOLVFILE="/tmp/resolv.conf.d/resolv.conf.auto"
 THIS_UPDNSOPTS=""
 THIS_IDOPTS=""
 THIS_RUNOPTIONS=""
+THIS_LOGGER="logger -s -t \${THIS_APP}"
 
 start_service() {
-    logger -t \${THIS_APP} "Starting \${THIS_APP}."
+    \${THIS_LOGGER} "Starting \${THIS_APP}."
     if [[ -f \${THIS_RESOLVFILE} ]]; then
         THIS_UPDNSOPTS="\$(grep -oEm1 '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' \${THIS_RESOLVFILE})"
         if [[ -z \${THIS_UPDNSOPTS} ]]; then
             THIS_UPDNSOPTS="1.1.1.1"
-            logger -t \${THIS_APP} "WARNING: DNS Resolv INVALID/EMPTY - Upstream Set to Default [\${THIS_UPDNSOPTS}]."
+            \${THIS_LOGGER} "WARNING: DNS Resolv INVALID/EMPTY - Upstream Set to Default [\${THIS_UPDNSOPTS}]."
         else
-            logger -t \${THIS_APP} "INFO: DNS Upstream Set [\${THIS_UPDNSOPTS}]."
+            \${THIS_LOGGER} "INFO: DNS Upstream Set [\${THIS_UPDNSOPTS}]."
         fi
     else
         THIS_UPDNSOPTS="1.1.1.1"
-        logger -t \${THIS_APP} "WARNING: DNS Resolv NOT PRESENT - Upstream Set to Default [\${THIS_UPDNSOPTS}]."
+        \${THIS_LOGGER} "WARNING: DNS Resolv NOT PRESENT - Upstream Set to Default [\${THIS_UPDNSOPTS}]."
     fi
     THIS_UPDNSOPTS="-u \${THIS_UPDNSOPTS}"
     THIS_IDSAVAIL="\$(grep -coE '\/.*\.json' \${THIS_IDPATH}/\${THIS_MANIFEST})"
     if [[ \${THIS_IDSAVAIL} -gt 1 ]]; then
         THIS_IDOPTS="-I \${THIS_IDPATH}"
-        logger -t \${THIS_APP} "INFO: Multiple Identities Available in Manifest - Using Directory Syntax."
+        \${THIS_LOGGER} "INFO: Multiple Identities Available in Manifest - Using Directory Syntax."
     elif [[ \${THIS_IDSAVAIL} -eq 1 ]]; then
         THIS_IDOPTS="-i \$(grep -oEm1 '\/.*\.json' \${THIS_IDPATH}/\${THIS_MANIFEST})"
-        logger -t \${THIS_APP} "INFO: Single Identity Available in Manifest - Using File Syntax."
+        \${THIS_LOGGER} "INFO: Single Identity Available in Manifest - Using File Syntax."
     else
-        logger -t \${THIS_APP} "ERROR: No Identities Available in Manifest [\${THIS_IDPATH}/\${THIS_MANIFEST}]."
-        logger -t \${THIS_APP} "Stopping \${THIS_APP}."
-        return 1
+        \${THIS_LOGGER} "WARNING: No Identities Available in Manifest [\${THIS_IDPATH}/\${THIS_MANIFEST}]."
     fi
     THIS_RUNOPTIONS="run \${THIS_IDOPTS} \${THIS_UPDNSOPTS}"
-    procd_open_instance
+    procd_open_instance \${THIS_APP}
     procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS}
     procd_set_param respawn 600 5 5
     procd_set_param file "\${THIS_IDPATH}/\${THIS_MANIFEST}"
@@ -195,12 +194,23 @@ start_service() {
     procd_set_param limits core="unlimited"
     procd_set_param stdout 1
     procd_set_param stderr 1
+    procd_open_trigger
+    for EachInterface in \$(ip address show | awk '/^[[:alnum:]]/&&!/^ziti/&&!/^lo/{gsub(":",""); print \$2}'); do
+        \${THIS_LOGGER} "INFO: Adding Trigger for Interface [\${EachInterface}]."
+        procd_add_reload_interface_trigger \${EachInterface}
+    done
+    procd_close_trigger
     procd_close_instance
 }
 
 stop_service() {
-    logger -t \${THIS_APP} "Stopping \${THIS_APP}."
+    \${THIS_LOGGER} "Stopping \${THIS_APP}."
     start-stop-daemon -K -p \${THIS_PIDFILE} -s TERM
+}
+
+reload_service() {
+    stop
+    start
 }
 EOFEOF
 chmod 755 "${ZT_SERVICES[0]}" || GTE ${ZT_STEP}
@@ -219,7 +229,7 @@ THIS_PIDFILE="/var/run/\${THIS_APP}.pid"
 THIS_RUNOPTIONS="60"
 
 start_service() {
-    logger -t \${THIS_APP} "Starting \${THIS_APP}."
+    \${THIS_LOGGER} "Starting \${THIS_APP}."
     procd_open_instance
     procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS}
     procd_set_param respawn 600 5 5
@@ -231,7 +241,7 @@ start_service() {
 }
 
 stop_service() {
-    logger -t \${THIS_APP} "Stopping \${THIS_APP}."
+    \${THIS_LOGGER} "Stopping \${THIS_APP}."
     start-stop-daemon -K -p \${THIS_PIDFILE} -s TERM
 }
 EOFEOF
