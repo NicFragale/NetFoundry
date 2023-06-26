@@ -195,7 +195,7 @@ start_service() {
     procd_set_param stdout 1
     procd_set_param stderr 1
     procd_open_trigger
-    for EachInterface in \$(ip address show | awk '/^[[:alnum:]]/&&!/^ziti/&&!/^lo/{gsub(":",""); print \$2}'); do
+    for EachInterface in \$(ip address show | awk '/^[[:digit:]]/{gsub(":","");if(\$2!="lo"&&\$2!~"ziti[[:digit:]]"){print \$2}}'); do
         \${THIS_LOGGER} "INFO: Adding Trigger for Interface [\${EachInterface}]."
         procd_add_reload_interface_trigger \${EachInterface}
     done
