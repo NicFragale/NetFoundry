@@ -222,6 +222,7 @@ THIS_PATH="${ZT_DIR}"
 THIS_APP="${ZT_WATCH}"
 THIS_PIDFILE="/var/run/\${THIS_APP}.pid"
 THIS_RUNOPTIONS="60"
+THIS_LOGGER="logger -s -t \${THIS_APP}"
 
 start_service() {
     \${THIS_LOGGER} "Starting \${THIS_APP}."
