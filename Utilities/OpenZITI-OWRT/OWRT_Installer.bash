@@ -19,7 +19,7 @@ ZT_DIR_MIN_SIZE="7000" # KBytes. 7000KB+ strongly recommended.
 # DO NOT MODIFY BELOW THIS LINE
 ################################################################################################################
 ZT_IDMANIFEST="manifest.info"
-ZT_WATCH="ziti-watch"
+ZT_WATCH="ziti_watch"
 ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_watch-service")
 for ((i=0;i<100;i++)); do PRINT_PADDING+='          '; done
 function CPrint() {
