@@ -207,11 +207,6 @@ stop_service() {
     \${THIS_LOGGER} "Stopping \${THIS_APP}."
     start-stop-daemon -K -p \${THIS_PIDFILE} -s TERM
 }
-
-reload_service() {
-    stop
-    start
-}
 EOFEOF
 chmod 755 "${ZT_SERVICES[0]}" || GTE ${ZT_STEP}
 
@@ -222,7 +217,7 @@ cat << EOFEOF > "${ZT_SERVICES[1]}"
 # Init script for NetFoundry OpenZITI (WATCH, OpenWRT version).
 USE_PROCD=1
 START=86
-STOP=01
+STOP=86
 THIS_PATH="${ZT_DIR}"
 THIS_APP="${ZT_WATCH}"
 THIS_PIDFILE="/var/run/\${THIS_APP}.pid"
