@@ -225,11 +225,10 @@ THIS_RUNOPTIONS="60"
 
 start_service() {
     \${THIS_LOGGER} "Starting \${THIS_APP}."
-    procd_open_instance
+    procd_open_instance \${THIS_APP}
     procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS}
     procd_set_param respawn 600 5 5
     procd_set_param pidfile \${THIS_PIDFILE}
-    procd_set_param limits core="unlimited"
     procd_set_param stdout 1
     procd_set_param stderr 1
     procd_close_instance
