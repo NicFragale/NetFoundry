@@ -299,7 +299,7 @@ while true; do
         fi
     done < <(find \${ZT_IDDIR} -name *.jwt)
     # Ensure ZITI is running.
-    if [[ $(\${ZT_SERVICES[0]} status) != "running" ]]; then
+    if [[ \$(\${ZT_SERVICES[0]} status) != "running" ]]; then
         echo "[\${ZW_ITR}] RUNTIME RECOVERY INITIATED"
         \${ZT_SERVICES[0]} restart
     fi
