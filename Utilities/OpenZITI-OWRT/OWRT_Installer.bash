@@ -159,7 +159,6 @@ THIS_UPDNSOPTS=""
 THIS_IDOPTS=""
 THIS_RUNOPTIONS=""
 THIS_LOGGER="logger -s -t \${THIS_APP}"
-
 start_service() {
     \${THIS_LOGGER} "Starting \${THIS_APP}."
     if [[ -f \${THIS_RESOLVFILE} ]]; then
@@ -202,7 +201,6 @@ start_service() {
     procd_close_trigger
     procd_close_instance
 }
-
 stop_service() {
     \${THIS_LOGGER} "Stopping \${THIS_APP}."
     start-stop-daemon -K -p \${THIS_PIDFILE} -s TERM
@@ -223,7 +221,6 @@ THIS_APP="${ZT_WATCH}"
 THIS_PIDFILE="/var/run/\${THIS_APP}.pid"
 THIS_RUNOPTIONS="60"
 THIS_LOGGER="logger -s -t \${THIS_APP}"
-
 start_service() {
     \${THIS_LOGGER} "Starting \${THIS_APP}."
     procd_open_instance \${THIS_APP}
@@ -234,7 +231,6 @@ start_service() {
     procd_set_param stderr 1
     procd_close_instance
 }
-
 stop_service() {
     \${THIS_LOGGER} "Stopping \${THIS_APP}."
     start-stop-daemon -K -p \${THIS_PIDFILE} -s TERM
@@ -302,7 +298,11 @@ while true; do
             rm -f "\${EachJWT/.jwt/.json}"
         fi
     done < <(find \${ZT_IDDIR} -name *.jwt)
-
+    # Ensure ZITI is running.
+    if [[ $(\${ZT_SERVICES[0]} status) != "running" ]]; then
+        echo "[\${ZW_ITR}] RUNTIME RECOVERY INITIATED"
+        \${ZT_SERVICES[0]} restart
+    fi
     # Sleep until the next round.
     sleep \${SLEEPTIME:-60}
 done
