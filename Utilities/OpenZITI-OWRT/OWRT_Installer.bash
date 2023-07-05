@@ -337,8 +337,8 @@ fi
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Enabling and Starting Services."
 ${ZT_SERVICES[0]} enable || GTE ${ZT_STEP}
 ${ZT_SERVICES[1]} enable || GTE ${ZT_STEP}
-${ZT_SERVICES[0]} restart || GTE ${ZT_STEP}
-${ZT_SERVICES[1]} restart || GTE ${ZT_STEP}
+${ZT_SERVICES[0]} start || GTE ${ZT_STEP}
+${ZT_SERVICES[1]} start || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "30:42" "Install and Setup Complete."
