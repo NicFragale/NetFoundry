@@ -281,6 +281,9 @@ while true; do
             && "\${ZT_SERVICES[0]}" restart \
             && echo "[\${ZW_ITR}] SUCCESS: Obtained Runtime" \
             || echo "[\${ZW_ITR}] FAILED: Could Not Obtain Runtime"
+    elif [[ \$(\${ZT_SERVICES[0]} status) != "running" ]]; then
+        echo "[\${ZW_ITR}] RECOVERY MODE, RESTARTING RUNTIME"
+        \${ZT_SERVICES[0]} restart            
     fi
     # Cycle any available JWTs.
     while IFS=$'\n' read -r EachJWT; do
@@ -298,11 +301,6 @@ while true; do
             rm -f "\${EachJWT/.jwt/.json}"
         fi
     done < <(find \${ZT_IDDIR} -name *.jwt)
-    # Ensure ZITI is running.
-    if [[ \$(\${ZT_SERVICES[0]} status) != "running" ]]; then
-        echo "[\${ZW_ITR}] RUNTIME RECOVERY INITIATED"
-        \${ZT_SERVICES[0]} restart
-    fi
     # Sleep until the next round.
     sleep \${SLEEPTIME:-60}
 done
