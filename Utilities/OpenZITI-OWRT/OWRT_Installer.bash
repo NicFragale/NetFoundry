@@ -2,7 +2,7 @@
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the router via SSH as ROOT.
 MY_NAME="OWRT_Installer"
-MY_VERSION="20230622"
+MY_VERSION="20230706"
 MY_DESCRIPTION="NFragale: Install/Run Helper for OpenZITI/OpenWRT"
 ################################################################################################################
 
