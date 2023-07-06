@@ -14,8 +14,6 @@ ZT_OWRT_URL="https://downloads.openwrt.org"
 ZT_TUNVER="${4:-latest}"
 ZT_WORKDIR="/tmp"
 ZT_CLONEURL="https://github.com/openziti/ziti-tunnel-sdk-c"
-ZT_CLONEBRANCH="main"
-#ZT_CLONEBRANCH="vcpkg-less-build" # Temporary.
 VCPKG_URL="https://github.com/microsoft/vcpkg"
 
 ################################################################################################################
@@ -128,8 +126,7 @@ elif [[ ${ZT_TUNVERARR[0]} -eq 0 ]] && [[ ${ZT_TUNVERARR[1]} -eq 21 ]] && [[ ${Z
 else
     ZT_USEVCPKG="FALSE"
 fi
-git clone "${ZT_CLONEURL}" "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}" || GTE ${ZT_STEP}
-git checkout "tags/v${ZT_TUNVER}" "ziti-tunnel-sdk-c-${ZT_TUNVER}" || GTE ${ZT_STEP}
+git clone "v${ZT_TUNVER}" "${ZT_CLONEURL}" "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}" || GTE ${ZT_STEP}
 mkdir -vp "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build" || GTE ${ZT_STEP}
 
 ###################################################
