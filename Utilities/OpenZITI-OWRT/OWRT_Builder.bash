@@ -233,6 +233,10 @@ cmake ${ZT_OWRT_CMAKEOPTS[@]} || GTE ${ZT_STEP}
 #  This will only fire if it exactly matches, which applies only to pre-0.21.6 releases.
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Pre-Build Modifications."
 sed -i '/# if ! __GNUC_PREREQ(4,9)/,+2d' "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/_deps/ziti-sdk-c-src/inc_internal/metrics.h" || GTE ${ZT_STEP}
+if [[ ${ZT_USEVCPKG} != "TRUE" ]]; then
+    cp "/usr/local/include/zlib.h" "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/_deps/ziti-sdk-c-src/inc_internal"
+    cp "/usr/include/sodium.h" "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/_deps/ziti-sdk-c-src/inc_internal"
+fi
 
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Build [Target ${ZT_OWRT_BUILDTARGET}]."
