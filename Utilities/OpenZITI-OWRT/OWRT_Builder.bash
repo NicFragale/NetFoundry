@@ -234,7 +234,8 @@ cmake ${ZT_OWRT_CMAKEOPTS[@]} || GTE ${ZT_STEP}
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Pre-Build Modifications."
 sed -i '/# if ! __GNUC_PREREQ(4,9)/,+2d' "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/_deps/ziti-sdk-c-src/inc_internal/metrics.h" || GTE ${ZT_STEP}
 if [[ ${ZT_USEVCPKG} != "TRUE" ]]; then
-    cp -v "/usr/include/{zconf,zlib}.h" "${ZT_OWRT_BUILDTOOLCHAIN[1]}"
+    cp -v "/usr/include/zconf.h" "${ZT_OWRT_BUILDTOOLCHAIN[1]}"
+    cp -v "/usr/include/zlib.h" "${ZT_OWRT_BUILDTOOLCHAIN[1]}"
     cp -vr "/usr/include/sodium" "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/_deps/ziti-sdk-c-src/inc_internal"
 fi
 
