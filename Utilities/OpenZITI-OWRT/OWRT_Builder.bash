@@ -2,7 +2,7 @@
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the build server as a BUILD CAPABLE USER (ROOT is assumed in this example).
 MY_NAME="OWRT_Builder"
-MY_VERSION="20230622"
+MY_VERSION="20230711"
 MY_DESCRIPTION="NFragale: Compile/Build Helper for OpenZITI/OpenWRT"
 ################################################################################################################
 
@@ -12,6 +12,7 @@ ZT_OWRT_VER="${1}"
 ZT_OWRT_TARGET=("${2}" "${3}")
 ZT_OWRT_URL="https://downloads.openwrt.org"
 ZT_TUNVER="${4:-latest}"
+ZT_TUNBRANCH=""
 ZT_WORKDIR="/tmp"
 ZT_CLONEURL="https://github.com/openziti/ziti-tunnel-sdk-c"
 VCPKG_URL="https://github.com/microsoft/vcpkg"
@@ -126,7 +127,7 @@ elif [[ ${ZT_TUNVERARR[0]} -eq 0 ]] && [[ ${ZT_TUNVERARR[1]} -eq 21 ]] && [[ ${Z
 else
     ZT_USEVCPKG="FALSE"
 fi
-git clone --branch "v${ZT_TUNVER}" "${ZT_CLONEURL}" "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}" || GTE ${ZT_STEP}
+git clone --branch "v${ZT_TUNBRANCH:-ZT_TUNVER}" "${ZT_CLONEURL}" "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}" || GTE ${ZT_STEP}
 mkdir -vp "${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build" || GTE ${ZT_STEP}
 
 ###################################################
@@ -216,6 +217,7 @@ if [[ ${ZT_USEVCPKG} == "TRUE" ]]; then
     cd "${VCPKG_ROOT}"
     ./vcpkg install zlib --triplet ${ZT_OWRT_TCINFO[0]}-linux --overlay-triplets=custom-triplets || GTE ${ZT_STEP}
     ./vcpkg install mbedtls --triplet ${ZT_OWRT_TCINFO[0]}-linux --overlay-triplets=custom-triplets || GTE ${ZT_STEP}
+	./vcpkg install llhttp --triplet ${ZT_OWRT_TCINFO[0]}-linux --overlay-triplets=custom-triplets || GTE ${ZT_STEP}
     cp -vr "installed/${ZT_OWRT_TCINFO[0]}-linux"/* "${ZT_OWRT_BUILDTOOLCHAIN[1]}" || GTE ${ZT_STEP}
     cd -
 else
