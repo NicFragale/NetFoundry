@@ -54,7 +54,7 @@ function GTE() {
 ###################################################
 CPrint "30:46" "${MY_NAME:-UNSET NAME} - v${MY_VERSION:-UNSET VERSION} - ${MY_DESCRIPTION:-UNSET DESCRIPTION}"
 CPrint "30:42" "ZITI EDGE TUNNEL VERSION: ${ZT_TUNVER:=UNKNOWN}"
-CPrint "30:42" "OPENWRT VERSION: ${ZT_OWRT_VER:=UNKNOWN}"
+CPrint "30:42" "OPENWRT VERSION: ${ZT_OWRT_VER:=UNKNOWN} (BRANCH:${ZT_TUNBRANCH:-MAIN})"
 CPrint "30:42" "OPENWRT TARGET: ${ZT_OWRT_TARGET[0]:=UNKNOWN}/${ZT_OWRT_TARGET[1]:=UNKNOWN}"
 
 ###################################################
