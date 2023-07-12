@@ -190,7 +190,7 @@ if [[ ${ZT_USEVCPKG} == "TRUE" ]]; then
     cat << EOFEOF > "${VCPKG_ROOT}/custom-triplets/${ZT_OWRT_TCINFO[0]}-linux.cmake"
 set(VCPKG_TARGET_ARCHITECTURE "${ZT_OWRT_TCINFO[0]}")
 set(VCPKG_CRT_LINKAGE "dynamic")
-set(VCPKG_LIBRARY_LINKAGE "dynamic")
+set(VCPKG_LIBRARY_LINKAGE "static")
 set(VCPKG_CMAKE_SYSTEM_NAME "Linux")
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${ZT_WORKDIR}/toolchain.cmake")
 EOFEOF
@@ -218,6 +218,8 @@ if [[ ${ZT_USEVCPKG} == "TRUE" ]]; then
     ./vcpkg install zlib --triplet ${ZT_OWRT_TCINFO[0]}-linux --overlay-triplets=custom-triplets || GTE ${ZT_STEP}
     ./vcpkg install mbedtls --triplet ${ZT_OWRT_TCINFO[0]}-linux --overlay-triplets=custom-triplets || GTE ${ZT_STEP}
 	./vcpkg install llhttp --triplet ${ZT_OWRT_TCINFO[0]}-linux --overlay-triplets=custom-triplets || GTE ${ZT_STEP}
+	./vcpkg install libsodium --triplet ${ZT_OWRT_TCINFO[0]}-linux --overlay-triplets=custom-triplets || GTE ${ZT_STEP}
+	./vcpkg install libuv --triplet ${ZT_OWRT_TCINFO[0]}-linux --overlay-triplets=custom-triplets || GTE ${ZT_STEP}
     cp -vr "installed/${ZT_OWRT_TCINFO[0]}-linux"/* "${ZT_OWRT_BUILDTOOLCHAIN[1]}" || GTE ${ZT_STEP}
     cd -
 else
@@ -227,8 +229,6 @@ fi
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Configure Build [Target ${ZT_OWRT_BUILDTARGET}]."
 cmake ${ZT_OWRT_CMAKEOPTS[@]} || GTE ${ZT_STEP}
-
-###################################################
 # Note: This is only required on pre-0.21.6 releases of ZET-CSDK.
 #  The prior versions failed to build due to preprocessor error on metrics.h as it was expecting a macro to be present.
 #  In other toolchains the included features.h has the macro, and it seems only OpenWRT doesn't include it.
