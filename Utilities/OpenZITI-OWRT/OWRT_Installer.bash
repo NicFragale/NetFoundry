@@ -187,7 +187,7 @@ start_service() {
 	THIS_RUNOPTIONS="run \${THIS_IDOPTS} \${THIS_UPDNSOPTS}"
 	procd_open_instance \${THIS_APP}
 	procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS}
-	procd_set_param respawn 600 5 5
+	procd_set_param respawn 20 5 5
 	procd_set_param file "\${THIS_IDPATH}/\${THIS_MANIFEST}"
 	procd_set_param pidfile \${THIS_PIDFILE}
 	procd_set_param limits core="unlimited"
@@ -225,7 +225,7 @@ start_service() {
 	\${THIS_LOGGER} "Starting \${THIS_APP}."
 	procd_open_instance \${THIS_APP}
 	procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS}
-	procd_set_param respawn 600 5 5
+	procd_set_param respawn 20 5 5
 	procd_set_param pidfile \${THIS_PIDFILE}
 	procd_set_param stdout 1
 	procd_set_param stderr 1
@@ -281,7 +281,7 @@ while true; do
 			&& "\${ZT_SERVICES[0]}" restart \
 			&& echo "[\${ZW_ITR}] SUCCESS: Obtained Runtime" \
 			|| echo "[\${ZW_ITR}] FAILED: Could Not Obtain Runtime"
-	elif [[ \$(\${ZT_SERVICES[0]} status) != "running" ]]; then
+	elif [[ \$(\${ZT_SERVICES[0]} status) != "running" ]] || ! pgrep "${ZT_SERVICES[1]}" >/dev/null; then
 		echo "[\${ZW_ITR}] RECOVERY MODE, RESTARTING RUNTIME"
 		\${ZT_SERVICES[0]} restart
 	fi
