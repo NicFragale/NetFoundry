@@ -187,7 +187,6 @@ start_service() {
 	THIS_RUNOPTIONS="run \${THIS_IDOPTS} \${THIS_UPDNSOPTS}"
 	procd_open_instance \${THIS_APP}
 	procd_set_param command "\${THIS_PATH}/\${THIS_APP}" \${THIS_RUNOPTIONS}
-	procd_set_param respawn 20 5 5
 	procd_set_param file "\${THIS_IDPATH}/\${THIS_MANIFEST}"
 	procd_set_param pidfile \${THIS_PIDFILE}
 	procd_set_param limits core="unlimited"
