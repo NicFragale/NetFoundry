@@ -281,7 +281,7 @@ while true; do
 			&& "\${ZT_SERVICES[0]}" restart \
 			&& echo "[\${ZW_ITR}] SUCCESS: Obtained Runtime" \
 			|| echo "[\${ZW_ITR}] FAILED: Could Not Obtain Runtime"
-	elif [[ \$(\${ZT_SERVICES[0]} status) != "running" ]] || ! pgrep "${ZT_SERVICES[1]}" >/dev/null; then
+	elif [[ \$(\${ZT_SERVICES[0]} status) != "running" ]] || ! pgrep "\${ZT_SERVICES[1]}" >/dev/null; then
 		echo "[\${ZW_ITR}] RECOVERY MODE, RESTARTING RUNTIME"
 		\${ZT_SERVICES[0]} restart
 	fi
