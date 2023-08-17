@@ -78,7 +78,7 @@ fi
 
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Create Staging Area."
-CPrint "30:47" "Location:" "-1" && echo "${ZT_WORKDIR}"
+CPrint "30:47" "Location:" "-1" && echo " ${ZT_WORKDIR}"
 if [[ -d "${ZT_WORKDIR}" ]]; then
 	CPrint "30:45" "WARNING: Staging Area Already Exists." "0"
 	CPrint "30:45" "WARNING: Stop Program (CTRL+C) to Prevent Overwrite." "0"
@@ -210,12 +210,7 @@ fi
 if grep -q "LIBCAP REQUIRED" ${ZT_WORKDIR}/ziti-tunnel-sdk-c-${ZT_TUNVER}/programs/ziti-edge-tunnel/CMakeLists.txt; then
 	CPrint "30:43" "Begin Step $((++ZT_STEP)): Acquire Additional Software Part Three - LIBCAP."
 	git clone "${LIBCAP_URL}" "${LIBCAP_ROOT}" || GTE ${ZT_STEP}
-	sed -i '
-		s/gcc/'"${ZT_OWRT_GCC////\\/}"'/;
-		s/BUILD_CC := $(CC)/BUILD_CC := $(BCC)/
-		/^CC/a BCC := gcc
-	' "${LIBCAP_ROOT}/Make.Rules" || GTE ${ZT_STEP}
-	make -C "${LIBCAP_ROOT}" || GTE ${ZT_STEP}
+	make -C "${LIBCAP_ROOT}" BUILD_CC="gcc" CC="${ZT_OWRT_GCC}" || GTE ${ZT_STEP}
 	cp -vr "${LIBCAP_ROOT}/libcap/"* "${ZT_OWRT_BUILDTOOLCHAIN[1]}/lib" || GTE ${ZT_STEP}
 	cp -vr "${LIBCAP_ROOT}/libcap/include" "${ZT_OWRT_BUILDTOOLCHAIN[1]}" || GTE ${ZT_STEP}
 else
