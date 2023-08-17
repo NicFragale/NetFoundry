@@ -23,10 +23,18 @@ ZT_WATCH="ziti_watch"
 ZT_SERVICES=("/etc/init.d/ziti-service" "/etc/init.d/ziti_watch-service")
 for ((i=0;i<100;i++)); do PRINT_PADDING+='          '; done
 function CPrint() {
-	local OUT_COLOR=(${1/:/ }) IN_TEXT="${2}" OUT_MAXWIDTH OUT_SCREENWIDTH NL_INCLUDE i x z
+	local OUT_COLOR=(${1/:/ }) IN_TEXT="${2}" OUT_MAXWIDTH="${3}" OUT_SCREENWIDTH NL_INCLUDE i x z
 	shopt -s checkwinsize; (:); OUT_SCREENWIDTH="${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}";
-	OUT_MAXWIDTH="${3:-${OUT_SCREENWIDTH:-80}}"
-	[[ ${OUT_MAXWIDTH} -eq ${OUT_SCREENWIDTH} ]] && NL_INCLUDE='\n'
+	if [[ -z ${OUT_MAXWIDTH} ]]; then
+		OUT_MAXWIDTH="${OUT_SCREENWIDTH:-80}"
+		NL_INCLUDE='\n'
+	elif [[ ${OUT_MAXWIDTH} -eq "0" ]]; then
+		OUT_MAXWIDTH="${#IN_TEXT}"
+		NL_INCLUDE='\n'
+	elif [[ ${OUT_MAXWIDTH} -lt "0" ]]; then
+		OUT_MAXWIDTH="${#IN_TEXT}"
+		NL_INCLUDE=''
+	fi
 	[[ ${#IN_TEXT} -gt ${OUT_MAXWIDTH} ]] && IN_TEXT="${IN_TEXT:0:${OUT_MAXWIDTH}}"
 	if [[ ${OUT_COLOR} == "COLORTEST" ]]; then
 		OUT_MAXWIDTH="10"
