@@ -116,7 +116,6 @@ elif [[ ${ZT_ISDYNAMIC} == "false" ]]; then
 		GTE ${ZT_STEP}
 	fi
 fi
-sleep 5
 
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Update System and Packages."
