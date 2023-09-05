@@ -11,7 +11,7 @@ MY_DESCRIPTION="NFragale: Install/Run Helper for OpenZITI/OpenWRT"
 ZT_WORKDIR="/tmp"
 ZT_ZET=("${1}" "ziti-edge-tunnel") # File name in GZ compressed format.  EX: OpenWRT-22.03.3-ath79_generic.gz
 ZT_URL="${2}" # URL basis for obtaining the runtime.  EX: https://myserver.com/somefolder
-ZT_DIR="/opt/netfoundry/ziti"
+ZT_DIR="/opt/openziti/ziti"
 ZT_IDDIR="${ZT_DIR}/identities"
 ZT_DIR_MIN_SIZE="7000" # KBytes. 7000KB+ strongly recommended.
 
