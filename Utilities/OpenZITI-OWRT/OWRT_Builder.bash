@@ -26,7 +26,7 @@ ZT_WORKDIR="${ZT_WORKDIR}/OpenWRT-${ZT_OWRT_VER}-${ZT_OWRT_TARGET[0]}_${ZT_OWRT_
 VCPKG_ROOT="${ZT_WORKDIR}/vcpkg"
 LIBCAP_ROOT="${ZT_WORKDIR}/libcap"
 ZT_STEP="0"
-ZT_ADDLPKG=("gawk" "sed" "git" "zip" "unzip" "wget")
+ZT_ADDLPKG=("gawk" "sed" "git" "zip" "unzip" "wget" "build-essential" "autoconf" "libtool" "pkg-config" "autopoint")
 for ((i=0;i<100;i++)); do PRINT_PADDING+='          '; done
 function CPrint() {
 	local OUT_COLOR=(${1/:/ }) IN_TEXT="${2}" OUT_MAXWIDTH="${3}" OUT_SCREENWIDTH NL_INCLUDE i x z
