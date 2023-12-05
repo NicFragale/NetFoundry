@@ -360,10 +360,10 @@ function DownloadMethod ($DLSource, $DLWhat, $DLDestination, $DLMethod="$DLDefau
 function DownloadInstall {
 	if ($ZDERVer -EQ "AUTO") {
 		$ZDERVer = RunRepoResolve "$ZDERRepo"
-		#$ZDERBinary = "Ziti.Desktop.Edge.Client-$ZDERVer.exe"
-		$ZDERName = "ZitiDesktopEdgeClient-$ZDERVer"
-		$ZDERBinary = "Ziti Desktop Edge Client-$ZDERVer.exe"
-		$ZDERZip = "$ZDERName.zip"
+		$ZDERBinary = "Ziti.Desktop.Edge.Client-$ZDERVer.exe"
+		#$ZDERName = "ZitiDesktopEdgeClient-$ZDERVer"
+		#$ZDERBinary = "Ziti Desktop Edge Client-$ZDERVer.exe"
+		#$ZDERZip = "$ZDERName.zip"
 	}
 	if ($ZCLIRVer -EQ "AUTO" -AND $EnrollMethod -EQ "ZCLI") {
 		$ZCLIRVer = RunRepoResolve "$ZCLIRRepo"
@@ -372,10 +372,10 @@ function DownloadInstall {
 
 	if ($EnrollMethod -EQ "ZCLI") {
 		$ZDECLIEnroll = $MyTmpPath + "\ziti\$ZTCLIRBinary"
-		$BTRETURN = DownloadMethod "$ZDERTarget/$ZDERVer" "$ZDERZip" "$MyTmpPath"
+		$BTRETURN = DownloadMethod "$ZDERTarget/$ZDERVer" "$ZDERBinary" "$MyTmpPath"
 		$BTRETURN = DownloadMethod "$ZCLIRTarget/v$ZCLIRVer" "$ZCLIRZip" "$MyTmpPath"
 	} elseif ($EnrollMethod -EQ "NATIVE") {
-		$BTRETURN = DownloadMethod "$ZDERTarget/$ZDERVer" "$ZDERZip" "$MyTmpPath"
+		$BTRETURN = DownloadMethod "$ZDERTarget/$ZDERVer" "$ZDERBinary" "$MyTmpPath"
 	}
 
 	if ([string]::IsNullOrWhiteSpace($BTRETURN)) {
@@ -389,17 +389,17 @@ function DownloadInstall {
 			}
 			GoToPrint "1" "DarkGray" "Waiting for OpenZITI installation binary to become available, please wait... ($WAITCOUNT/20)"
 			Start-Sleep 1
-		} until (Test-Path "$MyTmpPath\$ZDERZip")
+		} until (Test-Path "$MyTmpPath\$ZDERBinary")
 		GoToPrint "1" "Green" "Download succeeded."
-		Expand-Archive -Path "$MyTmpPath\$ZDERZip" -DestinationPath "$MyTmpPath" -Force 2>&1 | out-null
-		if (-NOT (Get-FileHash "$MyTmpPath\$ZDERBinary" -Algorithm SHA256 | Select-Object -ExpandProperty Hash) -EQ (Get-Content "$MyTmpPath\$ZDERBinary.sha256")) {
-			$ZDERBinaryHash = Get-FileHash "$MyTmpPath\$ZDERBinary" -Algorithm SHA256 | Select-Object -ExpandProperty Hash
-			$ZDERBinaryHashExpected = Get-Content "$MyTmpPath\$ZDERBinary.sha256"
-			GoToPrint "1" "White:Red" "Decompress and validation (SHA256) failed. Hash mismatch."
-			GoToPrint "1" "White:Red" "File HASH:     $ZDERBinaryHash"
-			GoToPrint "1" "White:Red" "EXPECTED HASH: $ZDERBinaryHashExpected"
-			return 0
-		}
+		#Expand-Archive -Path "$MyTmpPath\$ZDERZip" -DestinationPath "$MyTmpPath" -Force 2>&1 | out-null
+		#if (-NOT (Get-FileHash "$MyTmpPath\$ZDERBinary" -Algorithm SHA256 | Select-Object -ExpandProperty Hash) -EQ (Get-Content "$MyTmpPath\$ZDERBinary.sha256")) {
+		#	$ZDERBinaryHash = Get-FileHash "$MyTmpPath\$ZDERBinary" -Algorithm SHA256 | Select-Object -ExpandProperty Hash
+		#	$ZDERBinaryHashExpected = Get-Content "$MyTmpPath\$ZDERBinary.sha256"
+		#	GoToPrint "1" "White:Red" "Decompress and validation (SHA256) failed. Hash mismatch."
+		#	GoToPrint "1" "White:Red" "File HASH:     $ZDERBinaryHash"
+		#	GoToPrint "1" "White:Red" "EXPECTED HASH: $ZDERBinaryHashExpected"
+		#	return 0
+		#}
 		GoToPrint "1" "Green" "OpenZITI installation binary is available. Download complete."
 
 		GoToPrint "1" "Yellow" "Now installing NetFoundry software silently, please wait..."
