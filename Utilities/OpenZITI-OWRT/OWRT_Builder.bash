@@ -305,7 +305,7 @@ gzip -ck9 "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/programs/ziti-edge-tu
 
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Cleanup."
-rm -rf ${ZT_WORKDIR}
+rm -rf ${ZT_ROOT%\/*}/${ZT_ROOT##*\/}
 
 ###################################################
 CPrint "30:42" "Compile and Build Complete."
