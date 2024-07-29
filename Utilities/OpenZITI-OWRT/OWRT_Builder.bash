@@ -8,9 +8,9 @@ MY_DESCRIPTION="NFragale: Compile/Build Helper for OpenZITI/OpenWRT"
 
 ###################################################
 # Set initial variables/functions.
-ZT_OWRT_VER="${1}"
-ZT_OWRT_TARGET=("${2}" "${3}")
-ZT_TUNVER="${4:-latest}"
+ZT_OWRT_VER="${1:-UNKNOWN}"
+ZT_OWRT_TARGET=("${2:-UNKNOWN}" "${3:-UNKNOWN}")
+ZT_TUNVER="${4:-UNKNOWN}"
 ZT_TUNBRANCH="${5}"
 ZT_OWRT_URL="https://downloads.openwrt.org"
 ZT_WORKDIR="/tmp"
@@ -101,9 +101,12 @@ function GTE() {
 
 ###################################################
 CPrint "30:46" "${MY_NAME:-UNSET NAME} - v${MY_VERSION:-UNSET VERSION} - ${MY_DESCRIPTION:-UNSET DESCRIPTION}"
-CPrint "30:42" "ZITI EDGE TUNNEL VERSION: ${ZT_TUNVER:=UNKNOWN} (BRANCH:${ZT_TUNBRANCH:-MAIN})"
+CPrint "30:42" "ZITI EDGE TUNNEL VERSION: ${ZT_TUNVER} (BRANCH:${ZT_TUNBRANCH})"
 CPrint "30:42" "OPENWRT VERSION: ${ZT_OWRT_VER:=UNKNOWN}"
-CPrint "30:42" "OPENWRT TARGET: ${ZT_OWRT_TARGET[0]:=UNKNOWN}/${ZT_OWRT_TARGET[1]:=UNKNOWN}"
+[[ ${ZT_OWRT_TARGET[0]} == "x86" ]] && [[ ${ZT_OWRT_TARGET[1]} == "64" ]] \
+	&& CPrint "30:42" "OPENWRT TARGET: ${ZT_OWRT_TARGET[0]}:${ZT_OWRT_TARGET[1]} (x64)" \
+	&& ZT_OWRT_TCINFO_X="x64" \
+	|| CPrint "30:42" "OPENWRT TARGET: ${ZT_OWRT_TARGET[0]}:${ZT_OWRT_TARGET[1]}"
 
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Input Checking."
@@ -174,11 +177,10 @@ mkdir -vp "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build" || GTE ${ZT_STEP}
 if [[ ${ZT_USEVCPKG} == "TRUE" ]]; then
 	CPrint "30:43" "Begin Step $((++ZT_STEP)): Acquire Additional Software Part Two - VCPKG Required."
 	git clone --branch "${VCPKG_VERSION}" "${VCPKG_URL}" "${VCPKG_ROOT}" || GTE ${ZT_STEP}
-	#git clone "${VCPKG_URL}" "${VCPKG_ROOT}" || GTE ${ZT_STEP}
 	export VCPKG_FORCE_SYSTEM_BINARIES="yes"
 	${VCPKG_ROOT}/bootstrap-vcpkg.sh -disableMetrics || GTE ${ZT_STEP}
 	${VCPKG_ROOT}/vcpkg version >&1 >/dev/null || GTE ${ZT_STEP}
-	mkdir -vp "${ZT_ROOT}/custom-triplets" || GTE ${ZT_STEP}
+	mkdir -vp "${VCPKG_ROOT}/custom-triplets" || GTE ${ZT_STEP}
 else
 	CPrint "30:43" "Skipping Step $((++ZT_STEP)): Acquire Additional Software Part Two - VCPKG Not Required."
 fi
@@ -198,9 +200,7 @@ ZT_OWRT_MUSLVER="$(wget -q "${ZT_OWRT_URL}/releases/${ZT_OWRT_VER}/targets/${ZT_
 ZT_OWRT_SDK[0]="openwrt-sdk-${ZT_OWRT_VER}-${ZT_OWRT_TARGET[0]}-${ZT_OWRT_TARGET[1]}_gcc-${ZT_OWRT_MUSLVER}-x86_64"
 ZT_OWRT_SDK[1]="${ZT_OWRT_URL}/releases/${ZT_OWRT_VER}/targets/${ZT_OWRT_TARGET[0]}/${ZT_OWRT_TARGET[1]}/${ZT_OWRT_SDK[0]}.tar.xz"
 export STAGING_DIR="${ZT_ROOT}/${ZT_OWRT_SDK[0]}/staging_dir"
-[[ -f "${ZT_WORKDIR}/${ZT_OWRT_SDK[0]}.tar.xz" ]] \
-	&& cp -vf "${ZT_WORKDIR}/${ZT_OWRT_SDK[0]}.tar.xz" "${ZT_ROOT}" \
-	|| wget "${ZT_OWRT_SDK[1]}" -O "${ZT_OWRT_SDK[0]}.tar.xz" || GTE ${ZT_STEP}
+[[ -f "${ZT_WORKDIR}/${ZT_OWRT_SDK[0]}.tar.xz" ]] && cp -vf "${ZT_WORKDIR}/${ZT_OWRT_SDK[0]}.tar.xz" "${ZT_ROOT}" || wget "${ZT_OWRT_SDK[1]}" -O "${ZT_OWRT_SDK[0]}.tar.xz" || GTE ${ZT_STEP}
 xz -d "${ZT_OWRT_SDK[0]}.tar.xz" || GTE ${ZT_STEP}
 tar -xf "${ZT_OWRT_SDK[0]}.tar" && rm -f "${ZT_OWRT_SDK[0]}.tar" || GTE ${ZT_STEP}
 ZT_OWRT_BUILDTARGET="$(find "${STAGING_DIR}" -maxdepth 1 -name "target-*" -printf "%P" || GTE ${ZT_STEP})"
@@ -208,12 +208,24 @@ ZT_OWRT_BUILDTOOLCHAIN="$(find "${STAGING_DIR}" -maxdepth 1 -name "toolchain-*" 
 
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Setup Build Environment Part One [Target ${ZT_OWRT_BUILDTARGET}]."
-source <(find "${ZT_ROOT}" -type f -name info.mk -exec cat {} \;) || GTE ${ZT_STEP}
-ZT_OWRT_TCINFO=(${TARGET_CROSS//-/ })
+source <(find "${STAGING_DIR}" -type f -name info.mk -exec cat {} \;) || GTE ${ZT_STEP}
+ZT_OWRT_TCINFO=( ${TARGET_CROSS//-/ } )
 ZT_OWRT_TRIPLE="${ZT_OWRT_TCINFO[0]}-${ZT_OWRT_TCINFO[1]}-${ZT_OWRT_TCINFO[2]}"
 ZT_OWRT_GCC="$(find "${ZT_ROOT}" -type l -name ${ZT_OWRT_TRIPLE}-gcc || GTE ${ZT_STEP})"
 ZT_OWRT_GPP="$(find "${ZT_ROOT}" -type l -name ${ZT_OWRT_TRIPLE}-g++ || GTE ${ZT_STEP})"
-cat << EOFEOF > "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/toolchains/arm-openwrt.cmake"
+if [[ ${ZT_USEVCPKG} == "TRUE" ]]; then
+cat << EOFEOF > "${VCPKG_ROOT}/custom-triplets/${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}-linux.cmake"
+set(VCPKG_TARGET_ARCHITECTURE "${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}")
+set(VCPKG_CRT_LINKAGE "dynamic")
+set(VCPKG_LIBRARY_LINKAGE "static")
+set(VCPKG_CMAKE_SYSTEM_NAME "Linux")
+set(VCPKG_BUILD_TYPE "release")
+set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/toolchains/${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}-openwrt.cmake")
+EOFEOF
+CPrint "30:47" "VCPKG_TRIPLE:" "0"
+awk '{print "\t"$0}' "${VCPKG_ROOT}/custom-triplets/${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}-linux.cmake" || GTE ${ZT_STEP}
+fi
+cat << EOFEOF > "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/toolchains/${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}-openwrt.cmake"
 set(triple "${ZT_OWRT_TRIPLE}")
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR "${ZT_OWRT_TCINFO[0]}")
@@ -226,19 +238,7 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 EOFEOF
 CPrint "30:47" "TOOLCHAIN:" "0"
-awk '{print "\t"$0}' "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/toolchains/arm-openwrt.cmake" || GTE ${ZT_STEP}
-if [[ ${ZT_USEVCPKG} == "TRUE" ]]; then
-cat << EOFEOF > "${ZT_ROOT}/custom-triplets/${ZT_OWRT_TCINFO[0]}-linux.cmake"
-set(VCPKG_TARGET_ARCHITECTURE "${ZT_OWRT_TCINFO[0]}")
-set(VCPKG_CRT_LINKAGE "dynamic")
-set(VCPKG_LIBRARY_LINKAGE "static")
-set(VCPKG_CMAKE_SYSTEM_NAME "Linux")
-set(VCPKG_BUILD_TYPE "release")
-set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/toolchains/arm-openwrt.cmake")
-EOFEOF
-CPrint "30:47" "VCPKG_TRIPLE:" "0"
-awk '{print "\t"$0}' "${ZT_ROOT}/custom-triplets/${ZT_OWRT_TCINFO[0]}-linux.cmake" || GTE ${ZT_STEP}
-fi
+awk '{print "\t"$0}' "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/toolchains/${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}-openwrt.cmake" || GTE ${ZT_STEP}
 
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Setup Build Environment Part Two [Target ${ZT_OWRT_BUILDTARGET}]."
@@ -246,10 +246,10 @@ ZT_CONFIG_CMAKEOPTS[((iCC++))]="-DDISABLE_LIBSYSTEMD_FEATURE=ON"
 [[ -x "/usr/bin/ninja" ]] && ZT_CONFIG_CMAKEOPTS[((iCC++))]="-G Ninja"
 ZT_CONFIG_CMAKEOPTS[((iCC++))]="-DHAVE_LIBSODIUM=ON"
 ZT_CONFIG_CMAKEOPTS[((iCC++))]="-DTLSUV_TLSLIB=openssl"
-ZT_CONFIG_CMAKEOPTS[((iCC++))]="-DCMAKE_PREFIX_PATH=${ZT_OWRT_BUILDTOOLCHAIN}/arm-linux"
-ZT_CONFIG_CMAKEOPTS[((iCC++))]="-DCMAKE_TOOLCHAIN_FILE=${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/toolchains/arm-openwrt.cmake"
+ZT_CONFIG_CMAKEOPTS[((iCC++))]="-DCMAKE_PREFIX_PATH=${ZT_OWRT_BUILDTOOLCHAIN}/${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}-linux"
+ZT_CONFIG_CMAKEOPTS[((iCC++))]="-DCMAKE_TOOLCHAIN_FILE=${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/toolchains/${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}-openwrt.cmake"
 ZT_CONFIG_CMAKEOPTS[((iCC++))]="-DGIT_VERSION=${ZT_TUNVER}-0-0"
-ZT_CONFIG_CMAKEOPTS[((iCC++))]="--preset ci-linux-${ZT_OWRT_TCINFO[0]}-static-libssl"
+ZT_CONFIG_CMAKEOPTS[((iCC++))]="--preset ci-linux-${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}-static-libssl"
 ZT_CONFIG_CMAKEOPTS[((iCC++))]="-S ${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}"
 ZT_CONFIG_CMAKEOPTS[((iCC++))]="-B ${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build"
 ZT_BUILD_CMAKEOPTS[((iBC++))]="--build ${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build"
@@ -257,19 +257,20 @@ ZT_BUILD_CMAKEOPTS[((iBC++))]="--target ziti-edge-tunnel"
 VCPKGOPTS[((iVC++))]="install"
 VCPKGOPTS[((iVC++))]="--x-install-root=${ZT_OWRT_BUILDTOOLCHAIN}"
 VCPKGOPTS[((iVC++))]="--x-manifest-root=${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}"
-VCPKGOPTS[((iVC++))]="--triplet ${ZT_OWRT_TCINFO[0]}-linux"
-VCPKGOPTS[((iVC++))]="--overlay-triplets=custom-triplets"
+VCPKGOPTS[((iVC++))]="--triplet ${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}-linux"
+VCPKGOPTS[((iVC++))]="--overlay-triplets=${VCPKG_ROOT}/custom-triplets"
 VCPKGSSLOPTS[((iVS++))]="install"
 VCPKGSSLOPTS[((iVS++))]="openssl"
 VCPKGSSLOPTS[((iVS++))]="--x-install-root=${ZT_OWRT_BUILDTOOLCHAIN}"
-VCPKGSSLOPTS[((iVS++))]="--triplet ${ZT_OWRT_TCINFO[0]}-linux"
-VCPKGSSLOPTS[((iVS++))]="--overlay-triplets=custom-triplets"
+VCPKGSSLOPTS[((iVS++))]="--triplet ${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}-linux"
+VCPKGSSLOPTS[((iVS++))]="--overlay-triplets=${VCPKG_ROOT}/custom-triplets"
 
 ###################################################
 if [[ ${ZT_USEVCPKG} == "TRUE" ]]; then
 	CPrint "30:43" "Begin Step $((++ZT_STEP)): Build Dependencies via VCPKG [Target ${ZT_OWRT_BUILDTARGET}]."
 	CPrint "30:47" "VCPKG SYNTAX:" "-1" && echo " ${VCPKG_ROOT}/vcpkg ${VCPKGOPTS[@]}"
 	${VCPKG_ROOT}/vcpkg ${VCPKGOPTS[@]} || GTE ${ZT_STEP}
+	CPrint "30:47" "VCPKG SYNTAX:" "-1" && echo " ${VCPKG_ROOT}/vcpkg ${VCPKGSSLOPTS[@]}"
 	${VCPKG_ROOT}/vcpkg ${VCPKGSSLOPTS[@]} || GTE ${ZT_STEP}
 else
 	CPrint "30:43" "Skipping Step $((++ZT_STEP)): Build Dependencies via VCPKG - Not Required."
