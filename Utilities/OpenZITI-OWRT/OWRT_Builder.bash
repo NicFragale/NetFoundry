@@ -304,4 +304,8 @@ CPrint "30:47" "Location:" "-1" && echo " [${ZT_ROOT%\/*}/${ZT_ROOT##*\/}.gz]"
 gzip -ck9 "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/programs/ziti-edge-tunnel/ziti-edge-tunnel" > "${ZT_ROOT%\/*}/${ZT_ROOT##*\/}.gz" || GTE ${ZT_STEP}
 
 ###################################################
+CPrint "30:43" "Begin Step $((++ZT_STEP)): Cleanup."
+rm -rf ${ZT_WORKDIR}
+
+###################################################
 CPrint "30:42" "Compile and Build Complete."
