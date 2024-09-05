@@ -18,7 +18,7 @@ ZT_CMAKEMINVER=( "3" "24" "0" )
 ZT_ROOT="${ZT_WORKDIR}/OpenWRT-${ZT_OWRT_VER}-${ZT_OWRT_TARGET[0]}_${ZT_OWRT_TARGET[1]}"
 ZT_TUNURL="https://github.com/openziti/ziti-tunnel-sdk-c"
 VCPKG_URL="https://github.com/microsoft/vcpkg"
-VCPKG_VERSION="2024.03.25"
+VCPKG_VERSION="2024.04.23"
 LIBCAP_URL="https://github.com/OpenLD/libcap"
 VCPKG_ROOT="${ZT_ROOT}/vcpkg"
 
