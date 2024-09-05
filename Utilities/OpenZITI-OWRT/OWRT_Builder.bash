@@ -178,7 +178,8 @@ mkdir -vp "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build" || GTE ${ZT_STEP}
 ###################################################
 if [[ ${ZT_USEVCPKG} == "TRUE" ]]; then
     CPrint "30:43" "Begin Step $((++ZT_STEP)): Acquire Additional Software Part Two - VCPKG Required."
-    git clone --branch "${VCPKG_VERSION}" "${VCPKG_URL}" "${VCPKG_ROOT}" || GTE ${ZT_STEP}
+    #git clone --branch "${VCPKG_VERSION}" "${VCPKG_URL}" "${VCPKG_ROOT}" || GTE ${ZT_STEP}
+    git clone "${VCPKG_URL}" "${VCPKG_ROOT}" || GTE ${ZT_STEP}
     export VCPKG_FORCE_SYSTEM_BINARIES="yes"
     ${VCPKG_ROOT}/bootstrap-vcpkg.sh -disableMetrics || GTE ${ZT_STEP}
     ${VCPKG_ROOT}/vcpkg version >&1 >/dev/null || GTE ${ZT_STEP}
