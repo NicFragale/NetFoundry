@@ -1601,6 +1601,10 @@ FX_LogoMessaging() {
 ##################################################
 ## MAIN                                         ##
 ##################################################
+# Do not run if not interactive.
+[[ -n "${PS1}" ]] \
+    && exit 0
+    
 #########################
 # The MAIN section.
 if FX_PreLoginCheck; then
