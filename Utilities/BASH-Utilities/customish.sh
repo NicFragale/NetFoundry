@@ -222,6 +222,17 @@ FX_ObtainScreenInfo() {
 #########################
 # Colorize Output.
 FX_AdvancedPrint() {
+    FXSUB_ShowHelp() {
+        # Gather information on the screen.
+        local MyScreenWidth MyMinColumnWidth MyMaxColumnWidth TableColumns
+        local MaxLine=0 ActiveLine=0 ActiveColumn=0
+        MyMinColumnWidth="60"
+        read -d $'\n' MyScreenWidth MyMaxColumnWidth TableColumns < <(FX_ObtainScreenInfo "${MyMinColumnWidth}")
+        TableColumns=( ${TableColumns} )
+
+        FX_AdvancedPrint "COMPLEX:M:${MyScreenWidth}:0:${BBlue};${FWhite}" "HELP EXAMPLES COMING SOON" "END"
+    }
+
     # SubFunction for gathering information on the position of the cursor.
     FXSUB_GetCursorPosition() {
         # Expecting NOINPUT.
@@ -461,6 +472,38 @@ FX_AdvancedPrint() {
 
                 # Wait the required seconds.
                 sleep "${PrinterArray[1]}"
+                shift 1
+            ;;
+
+            # PrinterArray array structure is "0/TYPE".
+            "SAVEPOS"|"RESTOREPOS")
+                # Expecting elements.
+                [[ ${DebugMode} == "TRUE" ]] \
+                    && DebugOut="${DebugOut}/${PrinterArray[0]}:${PrinterArray[1]}"
+
+                # Flush the current queue before beginning.
+                if [[ ${PrintOutSyntax} != "" ]] || [[ ${#PrintOutTrail[@]} -ne 0 ]]; then
+                    printf "${PrintOutSyntax}" "${PrintOutTrail[@]}"
+                    unset PrintOutSyntax PrintOutTrail
+                fi
+
+                FXSUB_ManipulateCursor "${PrinterArray[0]}"
+                shift 1
+            ;;
+
+            # PrinterArray array structure is "0/TYPE".
+            "HELP")
+                # Expecting elements.
+                [[ ${DebugMode} == "TRUE" ]] \
+                    && DebugOut="${DebugOut}/${PrinterArray[0]}:${PrinterArray[1]}"
+
+                # Flush the current queue before beginning.
+                if [[ ${PrintOutSyntax} != "" ]] || [[ ${#PrintOutTrail[@]} -ne 0 ]]; then
+                    printf "${PrintOutSyntax}" "${PrintOutTrail[@]}"
+                    unset PrintOutSyntax PrintOutTrail
+                fi
+
+                FXSUB_ShowHelp
                 shift 1
             ;;
 
