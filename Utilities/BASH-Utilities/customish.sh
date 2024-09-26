@@ -230,7 +230,22 @@ FX_AdvancedPrint() {
         read -d $'\n' MyScreenWidth MyMaxColumnWidth TableColumns < <(FX_ObtainScreenInfo "${MyMinColumnWidth}")
         TableColumns=( ${TableColumns} )
 
-        FX_AdvancedPrint "COMPLEX:M:${MyScreenWidth}:0:${BBlue};${FWhite}" "HELP EXAMPLES COMING SOON" "END"
+        FX_AdvancedPrint "COMPLEX:M:${MyScreenWidth}:1:${BBlue};${FWhite}" "ADVANCED PRINTING EXAMPLES" "END"
+
+        # Show available fill patterns.
+        FX_AdvancedPrint "COMPLEX:L:${MyScreenWidth}:1:${BBlue};${FWhite}" "FILL PATTERNS" "END"
+        for ((i=0;i<${#PadLine[*]};i++)); do
+            FX_AdvancedPrint "COMPLEX:L:10:0:${Normal}" "LINE STYLE" "COMPLEX:L:4:0:${Normal}" " ${i} " "FILL:$((MyScreenWidth-15)):${i}:${Normal}" "END"
+        done
+
+        # Show how to create a padded number.
+        FX_AdvancedPrint "COMPLEX:L:${MyScreenWidth}:1:${BBlue};${FWhite}" "PADDED NUMBERS" "END"
+        FX_AdvancedPrint \
+            "COMPLEX:L:10:0:${Normal}" "3x0 LEFT" "COMPLEX:L:3:10:${Normal}" "1" "NEXT" \
+            "COMPLEX:L:10:0:${Normal}" "8x0 LEFT" "COMPLEX:L:8:10:${Normal}" "1" "NEXT" \
+            "COMPLEX:L:10:0:${Normal}" "3x0 RIGHT" "COMPLEX:R:3:10:${Normal}" "1" "NEXT" \
+            "COMPLEX:L:10:0:${Normal}" "8x0 RIGHT" "COMPLEX:R:8:10:${Normal}" "1" "NEXT" \
+            "END"
     }
 
     # SubFunction for gathering information on the position of the cursor.
@@ -363,9 +378,9 @@ FX_AdvancedPrint() {
                     *)
                         # End boundary specified.
                         if [[ ${#PrinterContext} -gt ${PrinterArray[2]} ]]; then
-                            # Context is greater than the end boundary, so cut anything past the end boundary and continue without padding.
+                            # No end boundary, print everything.
                             PrintOutSyntax="${PrintOutSyntax}\e[${PrinterArray[4]}m%s\e[1;${Normal}m"
-                            PrintOutTrail[itr]="${PrinterContext:0:$((${PrinterArray[2]}-1))}┄"
+                            PrintOutTrail[itr]="${PrinterContext}"
                         else
                             # Special padding (blanks) where printing would otherwise ignore the blank pads.
                             if [[ ${PrinterArray[3]} -eq 0 ]]; then
@@ -1604,7 +1619,7 @@ FX_LogoMessaging() {
 # Do not run if not interactive.
 [[ -n "${PS1}" ]] \
     && exit 0
-    
+
 #########################
 # The MAIN section.
 if FX_PreLoginCheck; then
