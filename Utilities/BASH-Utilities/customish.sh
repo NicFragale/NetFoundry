@@ -188,8 +188,10 @@ FX_ArraySort() {
 #########################
 # Obtain screen info.
 FX_ObtainScreenInfo() {
-    # Expecting 1/MINCOLWIDTH.
+    # Expecting 1/MINCOLWIDTH 2/OUTPUTCONTROL[OPTIONAL].
     local MyMinColumnWidth="${1:-0}"
+    local MyOutputControl="${2:-ALL}" # ALL/SCREENWIDTH/MAXCOLWIDTH/COLUMNS
+
     local MyScreenWidth MyMaxColumnWidth TableColumns i
 
     # Get the width of the screen at the current moment.
@@ -214,7 +216,20 @@ FX_ObtainScreenInfo() {
     fi
 
     # Finally, output the data obtained such that it can be stored as an array.
-    echo -e "${MyScreenWidth} ${MyMaxColumnWidth} ${TableColumns[*]}"
+    case ${MyOutputControl} in
+        "SCREENWIDTH")
+            echo "${MyScreenWidth}"
+        ;;
+        "MAXCOLWIDTH")
+            echo "${MyMaxColumnWidth}"
+        ;;
+        "COLUMNS")
+            echo "${TableColumns[*]}"
+        ;;
+        "ALL"|*)
+            echo "${MyScreenWidth} ${MyMaxColumnWidth} ${TableColumns[*]}"
+        ;;
+    esac
 
     return 0
 }
