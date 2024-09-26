@@ -187,7 +187,7 @@ FX_ArraySort() {
 
 #########################
 # Obtain screen info.
-FX_ObtainScreenInfo() {
+function FX_ObtainScreenInfo() {
     # Expecting 1/MINCOLWIDTH 2/OUTPUTCONTROL[OPTIONAL].
     local MyMinColumnWidth="${1:-0}"
     local MyOutputControl="${2:-ALL}" # ALL/SCREENWIDTH/MAXCOLWIDTH/COLUMNS
@@ -238,13 +238,6 @@ FX_ObtainScreenInfo() {
 # Colorize Output.
 FX_AdvancedPrint() {
     FXSUB_ShowHelp() {
-        # Gather information on the screen.
-        local MyScreenWidth MyMinColumnWidth MyMaxColumnWidth TableColumns
-        local MaxLine=0 ActiveLine=0 ActiveColumn=0
-        MyMinColumnWidth="60"
-        read -d $'\n' MyScreenWidth MyMaxColumnWidth TableColumns < <(FX_ObtainScreenInfo "${MyMinColumnWidth}")
-        TableColumns=( ${TableColumns} )
-
         FX_AdvancedPrint "COMPLEX:M:${MyScreenWidth}:1:${BBlue};${FWhite}" "ADVANCED PRINTING EXAMPLES" "END"
 
         # Show available fill patterns.
@@ -336,6 +329,10 @@ FX_AdvancedPrint() {
     local PrinterArray PrinterContext
     local PrintOutSyntax PrintOutTrail DebugOut AllLines CursorPositionOutput
     local itr=0
+
+    # Gather information on the screen if required.
+    [[ -z ${MyScreenWidth} ]] \
+        && read -d $'\n' MyScreenWidth < <(FX_ObtainScreenInfo "0" "SCREENWIDTH")
 
     # Invisible cursor while printing.
     FXSUB_ManipulateCursor "INVISIBLE"
