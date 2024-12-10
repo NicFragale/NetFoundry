@@ -45,7 +45,6 @@ trap 'FX_AdvancedPrint "CLEARLINE:1" "END" && FX_GotoExit "2"' SIGINT SIGTERM SI
 ## STATIC VARIABLES                             ##
 ##################################################
 SECONDS="0"
-MyAccessTokenExp=""
 MyMode=""
 MyTargetName=""
 MyModifications=""
@@ -53,8 +52,10 @@ MyMOPAuthURL="https://netfoundry-production-xfjiye.auth.us-east-1.amazoncognito.
 MyMOPAccessURL="https://gateway.production.netfoundry.io/core/v2"
 MyMOPIdentityURL="https://gateway.production.netfoundry.io/identity/v1"
 PATH="${PATH}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" # Ensures minimal paths are available.
-ValidIP="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" # REGEX.
-ValidPrefix="(3[01]|[12][0-9]|[1-9])" # REGEX.
+ValidIP="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" # REGEX to match IPv4 addresses.
+ValidPrefix="(3[01]|[12][0-9]|[1-9])" # A REGEX string to match a valid CIDR number.
+ValidNumber="^[0-9]+$"
+AlphaArray=( {A..Z} ) # All letters in the English alphabet (A-Z).
 Normal="0" Bold="1" Dimmed="2" Underline="4" Invert="7" Strike="9" # Trigger codes for BASH.
 FBlack="30" FRed="31" FGreen="32" FYellow="33" FBlue="34" FMagenta="35" FCyan="36" FLiteGray="37" # Foreground color codes for BASH.
 FDarkGray="90" FLiteRed="91" FLiteGreen="92" FLiteYellow="93" FLiteBlue="94" FLiteMagenta="95" FLiteCyan="96" FWhite="37" # Foreground color codes for BASH.
@@ -95,24 +96,26 @@ FX_GotoExit() {
   local MyExitCode="${1}" MyExitDescription="${2}"
   local MyRESTResponse
 
-  [[ ${MyExitCode} -ne 99 ]] \
+  [[ "${MyExitCode}" -ne 99 ]] \
     && FX_AdvancedPrint "COMPLEX:M:-1:1:${Bold};${FWhite};${BBlue}" "CONCLUDE AT $(date) (${SECONDS}s)" "END"
 
   # Removal of BEARER TOKEN (IF PRESENT).
-  if [[ -n ${MyAccessTokenEnv} ]]; then
+  if [[ -z "${MyAccessTokenEnv}" ]] && [[ -n "${MyAccessToken}" ]]; then
     # REST API CALL: Release the BEARER TOKEN through a logout.
     FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "RELEASE TOKEN"
     MyRESTResponse="$(
       FX_RESTConnect \
-        "LOGOUT:${MyAccessTokenEnv}" \
+        "LOGOUT:${MyAccessToken}" \
         "POST:${MyMOPIdentityURL}/logout"
     )"
-    MyAccessTokenEnv="$(jq -r '.loggedOut' <<< "${MyRESTResponse}" 2>/dev/null)"
-    if [[ -n ${MyAccessTokenEnv//null/} ]]; then
+    MyAccessToken="$(jq -r '.loggedOut' <<< "${MyRESTResponse}" 2>/dev/null)"
+    if [[ -n ${MyAccessToken//null/} ]]; then
       FX_AdvancedPrint "COMPLEX:L:65:0:${Normal}" "OK!" "END"
     else
       FX_AdvancedPrint "COMPLEX:L:65:0:${FRed}" "FAILED!" "END"
     fi
+  else
+    FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "RELEASE TOKEN" "COMPLEX:L:65:0:${Normal}" "NOT REQUIRED" "END"
   fi
 
   # Exit per the code passed in.
@@ -738,28 +741,28 @@ FX_PrintHelp() {
   FX_AdvancedPrint \
     "COMPLEX:M:-1:1:${Bold};${FWhite};${BBlue}" "PROGRAM HELP MENU" "NEXT" \
     "COMPLEX:L:0:0:${Bold}" "INPUT OPTIONS" "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-h" "COMPLEX:L:0:0:${Normal}" "Display this help menu." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-mER" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT REVIEW." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-mEC" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT CREATE." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-mEM" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT MODIFY." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-mED" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT DELETE." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-mSR" "COMPLEX:L:0:0:${Normal}" "MODE: SERVICE REVIEW." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-mSC" "COMPLEX:L:0:0:${Normal}" "MODE: SERVICE CREATE." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-mSM" "COMPLEX:L:0:0:${Normal}" "MODE: SERVICE MODIFY." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-mSD" "COMPLEX:L:0:0:${Normal}" "MODE: SERVICE DELETE." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-n \"NAME\" (+)" "COMPLEX:L:0:0:${Normal}" "MODIFIER: Target these NAME(s)." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-i" "COMPLEX:L:0:0:${Normal}" "MODIFIER: Target given NAME(s) using insensitive matching." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-f" "COMPLEX:L:0:0:${Normal}" "MODIFIER: Target given NAME(s) using fuzzy (REGEX) matching. " "COMPLEX:L:0:0:${Underline}" "-indicated using underlines-" "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-F" "COMPLEX:L:0:0:${Normal}" "MODIFIER: Target given NAME(s) using inverted fuzzy (REGEX) matching." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-a \"ATTR\" (+)" "COMPLEX:L:0:0:${Normal}" "MODIFIER: ADD these ATTRIBUTES(s) to given NAME(s) in MODIFY MODE." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-A \"ATTR\" (+)" "COMPLEX:L:0:0:${Normal}" "MODIFIER: REMOVE these ATTRIBUTES(s) from given NAME(s) in MODIFY MODE." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-A \"ATTR\" (+)" "COMPLEX:L:0:0:${Normal}" "MODIFIER: REMOVE these ATTRIBUTES(s) from given NAME(s) in MODIFY MODE." "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:15:0:${Normal}" "-h" "COMPLEX:L:0:0:${Normal}" "Display this help menu." "END"
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-h" "COMPLEX:L:0:0:${Normal}" "Display this help menu." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mER" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT REVIEW." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mEC" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT CREATE." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mEM" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT MODIFY." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mED" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT DELETE." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mSR" "COMPLEX:L:0:0:${Normal}" "MODE: SERVICE REVIEW." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mSC" "COMPLEX:L:0:0:${Normal}" "MODE: SERVICE CREATE." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mSM" "COMPLEX:L:0:0:${Normal}" "MODE: SERVICE MODIFY." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mSD" "COMPLEX:L:0:0:${Normal}" "MODE: SERVICE DELETE." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-n \"NAME\" (+)" "COMPLEX:L:0:0:${Normal}" "MODIFIER: Target these NAME(s)." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-N \"ATTRIBUTE\" (+)" "COMPLEX:L:0:0:${Normal}" "MODIFIER: Target these ATTRIBUTE(s)." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-i" "COMPLEX:L:0:0:${Normal}" "MODIFIER: Target given NAME(s) using insensitive matching." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-f" "COMPLEX:L:0:0:${Normal}" "MODIFIER: Target given NAME(s) using fuzzy (REGEX) matching. " "COMPLEX:L:0:0:${Underline};${FYellow}" "-underlined and yellow-" "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-F" "COMPLEX:L:0:0:${Normal}" "MODIFIER: Target given NAME(s) using inverted fuzzy (REGEX) matching." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-a \"ATTR\" (+)" "COMPLEX:L:0:0:${Normal}" "MODIFIER: ADD these ATTRIBUTES(s) to given NAME(s) in MODIFY MODE." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-A \"ATTR\" (+)" "COMPLEX:L:0:0:${Normal}" "MODIFIER: REMOVE these ATTRIBUTES(s) from given NAME(s) in MODIFY MODE." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-h" "COMPLEX:L:0:0:${Normal}" "Display this help menu." "END"
 
   FX_AdvancedPrint \
     "COMPLEX:L:0:0:${Bold}" "USAGE EXAMPLES" "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:36:0:${Normal}" "-ifmER -n \"([^f]*fra[^f]*fra[^f])\"" "COMPLEX:L:0:0:${Normal}" "ENDPOINT REVIEW, CASE INSENSITIVE, FUZZY SELECT, ANY NAME MATCHING REGEX \"fra repeated twice\"" "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:36:0:${Normal}" "-FmER -n \"(john|james).*zde-0[1-2]\"" "COMPLEX:L:0:0:${Normal}" "ENDPOINT REVIEW, CASE SENSITIVE, INVERTED FUZZY SELECT, ANY NAME MATCHING REGEX \"john or james with zde-01 or zde-02\"" "END"
+    "FILL:2:0:${Normal}" "COMPLEX:L:41:0:${Normal}" "-ifmER -n \"([^f]*fra[^f]*fra[^f])\"" "COMPLEX:L:0:0:${Normal}" "ENDPOINT REVIEW, CASE INSENSITIVE, FUZZY SELECT, ANY NAME MATCHING REGEX \"fra repeated twice\"" "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:41:0:${Normal}" "-FmER -n \"(john|james).*zde-0[1-2]\"" "COMPLEX:L:0:0:${Normal}" "ENDPOINT REVIEW, CASE SENSITIVE, INVERTED FUZZY SELECT, ANY NAME MATCHING REGEX \"john or james with zde-01 or zde-02\"" "END"
   return 0
 }
 
@@ -779,15 +782,15 @@ FX_CheckEnvironment() {
   if [[ ${MyType} == "HELPCONTEXT" ]]; then
     FX_AdvancedPrint \
       "COMPLEX:L:0:0:${Bold}" "ENVIRONMENT OPTIONS [SHELL VARIABLE EXPORTS]" "NEXT" \
-      "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "FLAG_DebugMode" "FILL:16:0:${Normal}" "COMPLEX:L:0:0:${Normal}" "Toggle DEBUG printing ON/TRUE or OFF/FALSE (Currently: ${FLAG_DebugMode})." "NEXT" \
-      "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "FLAG_IgnoreColorizer" "FILL:16:0:${Normal}" "COMPLEX:L:0:0:${Normal}" "Toggle COLORIZED printing OFF/TRUE or ON/FALSE (Currently: ${FLAG_IgnoreColorizer})." "NEXT" \
-      "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "FLAG_LogoMessaging" "FILL:16:0:${Normal}" "COMPLEX:L:0:0:${Normal}" "Toggle LOGO printing ON/TRUE or OFF/FALSE (Currently: ${FLAG_LogoMessaging})." "END"
+      "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "FLAG_DebugMode" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${Normal}" "Toggle DEBUG printing ON/TRUE or OFF/FALSE (Currently: ${FLAG_DebugMode})." "NEXT" \
+      "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "FLAG_IgnoreColorizer" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${Normal}" "Toggle COLORIZED printing OFF/TRUE or ON/FALSE (Currently: ${FLAG_IgnoreColorizer})." "NEXT" \
+      "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "FLAG_LogoMessaging" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${Normal}" "Toggle LOGO printing ON/TRUE or OFF/FALSE (Currently: ${FLAG_LogoMessaging})." "END"
     [[ -z "${MyMOPSecret}" ]] \
-      && FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPSecret" "FILL:16:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "The NetFoundry MOP API Secret Value (Currently: NOT SET)." "END" \
-      || FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPSecret" "FILL:16:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "The NetFoundry MOP API Secret Value (Currently: SET)." "END"
+      && FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPSecret" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "The NetFoundry MOP API Secret Value (Currently: NOT SET)." "END" \
+      || FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPSecret" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "The NetFoundry MOP API Secret Value (Currently: SET)." "END"
     [[ -z "${MyMOPClientID}" ]] \
-      && FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPClientID" "FILL:16:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "The NetFoundry MOP API Secret Value (Currently: NOT SET)." "END" \
-      || FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPClientID" "FILL:16:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "The NetFoundry MOP API Secret Value (Currently: SET)." "END"
+      && FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPClientID" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "The NetFoundry MOP API Secret Value (Currently: NOT SET)." "END" \
+      || FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPClientID" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "The NetFoundry MOP API Secret Value (Currently: SET)." "END"
   elif [[ ${MyType} == "RUNCONTEXT" ]]; then
     [[ -z "${MyMOPSecret}" ]] && [[ -z "${MyMOPClientID}" ]] \
       && FX_AdvancedPrint "COMPLEX:M:-1:0:${FRed}" "ERROR: MOPSECRET=NOT_SET | MOPCLIENTID=NOT_SET" "END" \
@@ -819,37 +822,54 @@ FX_ShowDebug() {
   return 0
 }
 
-#########################
+#################################################################################
 # JWT Decoder.
-FX_JWTDecoder() {
-  # Expecting 1/JWTInput.
-  local MyJWTInput="${1}"
+function FX_JWTDecoder() {
+  # Expecting 1/JWTInput 2/MODE.
+  local MyJWTInput="${1:-ERROR}"
+  local MyMode="${2:-CHECKONLY}" # VALIDATE/TIMEREMAINING/RENEWCHECK
   local MyCurrentDateEpoch="$(date "+%s")"
   local MyJWTParts MyJWTDecoded MyJWTExpirationEpoch MyJWTConvertedLeft
 
   # Ensure a JWT was passed in which is at least populated.
-  [[ ${#MyJWTInput} -lt 10 ]] \
-    && return 1
+  [[ ${MyJWTInput} == "ERROR" ]] || [[ ${#MyJWTInput} -lt 10 ]] \
+      && return 1
 
   # Break the JWT into its parts.
-  MyJWTParts=( ${MyJWTInput//\./ } )
+  IFS='.' read -ra MyJWTParts <<< "${MyJWTInput}"
   # Get the decoded header information.
-  MyJWTDecoded="$(base64 --decode <<<"${MyJWTParts[1]}=" 2>/dev/null)"
+  MyJWTDecoded="$(base64 --decode <<< "${MyJWTParts[1]}=")"
   # Parse out the expiration date from decoded header information.
-  MyJWTExpirationEpoch="$(gawk '{print gensub(".*\"exp\":([[:digit:]]+),.*","\\1",1)}' <<<"${MyJWTDecoded}" 2>/dev/null)"
+  MyJWTExpirationEpoch="$(gawk '{print gensub(".*\"exp\":([[:digit:]]+),.*","\\1",1)}' <<< "${MyJWTDecoded}")"
   # Convert the date information (EPOCH) and do maths.
   MyJWTConvertedLeft="$((MyJWTExpirationEpoch-MyCurrentDateEpoch))"
-  # Return what was derived.
-  echo "EXPIRATION: $((MyJWTConvertedLeft/86400))d $(((MyJWTConvertedLeft%86400)/3600))h $(((MyJWTConvertedLeft%3600)/60))m $((MyJWTConvertedLeft%60))s"
-  [[ ${MyJWTConvertedLeft} -gt 600 ]] \
-    && return 0 \
-    || return 1
+
+  # Return what was derived based on what is required.
+  case ${MyMode} in
+  "VALIDATE")
+    [[ ${MyJWTConvertedLeft:-ERROR} =~ ${ValidNumber} ]] && [[ ${MyJWTConvertedLeft} -gt 0 ]] \
+      && return 0 \
+      || return 1
+    ;;
+    "TIMEREMAINING")
+      echo "EXPIRY: $((MyJWTConvertedLeft/86400))d $(((MyJWTConvertedLeft%86400)/3600))h $(((MyJWTConvertedLeft%3600)/60))m $((MyJWTConvertedLeft%60))s"
+      return 0
+    ;;
+    "RENEWCHECK")
+      [[ ${MyJWTConvertedLeft:-ERROR} =~ ${ValidNumber} ]] && [[ ${MyJWTConvertedLeft} -lt 300 ]] \
+        && return 0 \
+        || return 1
+    ;;
+    *)
+      return 1
+    ;;
+  esac
 }
 
 #########################
 # Initiate REST Connect.
 FX_RESTConnect() {
-  # Expecting 1/[AUTH:USER:SECRET || ACCESS:AUTHTOKEN || LOGOUT:AUTHTOKEN], 2/METHOD:URL, 3/DATA.
+  # Expecting 1/TYPE[AUTH:USER:SECRET || ACCESS:AUTHTOKEN || LOGOUT:AUTHTOKEN], 2/METHOD:URL, 3/DATA.
   local MyType="${1}" MyMethod="${2}" MyData="${3}"
   local MyRESTResponse MyRESTHeaders MyRESTJSON
 
@@ -936,13 +956,14 @@ FX_RESTExtract() {
 #########################
 # Obtain Bearer Token.
 FX_ObtainBearer() {
-  local MyRESTResponse MyAccessToken
+  local MyRESTResponse
 
   FX_AdvancedPrint "COMPLEX:M:-1:1:${Bold};${FWhite};${BBlue}" "BEGIN AT $(date) (${SECONDS}s)" "END"
 
   # REST API CALL: Obtain BEARER TOKEN for interface to MOP.
+  echo $MyAccessTokenEnv
   FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "ACCESS TOKEN"
-  if [[ -n ${MyAccessTokenEnv} ]] && ! FX_JWTDecoder "${MyAccessTokenEnv}" >/dev/null || [[ -z ${MyAccessTokenEnv} ]]; then
+  if [[ -n "${MyAccessTokenEnv}" ]] && ! FX_JWTDecoder "${MyAccessTokenEnv}" "VALIDATE" >/dev/null || [[ -z ${MyAccessTokenEnv} ]]; then
     # Token was available, but expired OR was not available at all.
     MyRESTResponse="$(
       FX_RESTConnect \
@@ -956,10 +977,8 @@ FX_ObtainBearer() {
     MyAccessToken="${MyAccessTokenEnv}"
   fi
   # Report and return.
-  MyAccessTokenExp="$(FX_JWTDecoder "${MyAccessToken}")"
-  if [[ ${MyAccessToken%% :-: *} != "FAILED" ]] && [[ -n ${MyAccessTokenExp} ]]; then
-    FX_AdvancedPrint "COMPLEX:L:65:0:${Normal}" "${MyAccessTokenExp:0:40}..." "END"
-    export MyAccessTokenEnv="${MyAccessToken}"
+  if [[ ${MyAccessToken%% :-: *} != "FAILED" ]] && FX_JWTDecoder "${MyAccessToken}" "VALIDATE"; then
+    FX_AdvancedPrint "COMPLEX:L:65:0:${Normal}" "$(FX_JWTDecoder "${MyAccessToken}" "TIMEREMAINING")" "END"
   else
     FX_AdvancedPrint "COMPLEX:L:0:0:${FRed}" "FAILED [SEE OUTPUT FOLLOWING]" "END"
     echo "${MyAccessToken#* :-: }"
@@ -978,7 +997,7 @@ FX_ObtainObjects() {
   FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "OBTAIN ${MyObjectType^^}S"
   MyRESTResponse="$(
     FX_RESTConnect \
-      "ACCESS:${MyAccessTokenEnv}" \
+      "ACCESS:${MyAccessToken}" \
       "GET:${MyMOPAccessURL}/${MyObjectType}s"
   )"
   MyEmbeddedList="$(FX_RESTExtract "_embedded" "${MyRESTResponse}")"
@@ -1008,13 +1027,13 @@ FX_UpdateObject() {
 
   # REST API CALL: Using BEARER TOKEN and Object UUID, Set the attributes of the object.
   MyRESTResponse="$(
-      FX_RESTConnect \
-        "ACCESS:${MyAccessTokenEnv}" \
-        "PUT:${MyMOPAccessURL}/${MyObjectType}/${MyObjectID}" \
-        "{
-            \"attributes\": ${MyObjectAttributes},
-            \"name\": \"${MyObjectName}\"
-        }"
+    FX_RESTConnect \
+      "ACCESS:${MyAccessToken}" \
+      "PUT:${MyMOPAccessURL}/${MyObjectType}/${MyObjectID}" \
+      "{
+        \"attributes\": ${MyObjectAttributes},
+        \"name\": \"${MyObjectName}\"
+      }"
   )"
   MyObjectAttributes="$(FX_RESTExtract "attributes[] // \"EMPTY\"" "${MyRESTResponse}")"
   if [[ ${MyObjectAttributes%% :-: *} != "FAILED" ]]; then
@@ -1048,83 +1067,82 @@ FX_JSONMod() {
 # Runtime.
 FX_Runtime() {
   #########################
-  # Object Worker
+  # Object Worker.
   FXSUB_ObjectWorker() {
-    local ThisObjectName MyObjectAttributesOLD FoundSema n i x z
+    local ThisObjectName ThisObjectAttributes FoundSemaArr
+    local i n x z
+    FoundSemaArr=( "FALSE" "FALSE" ) # 0/FOUNDNAME, 1/FOUNDATTRIBUTE.
     for ((i=0;i<${#MyObjectsNames[@]};i++)); do
+      ThisObjectName="${MyObjectsNames[${i}]}"
+      ThisObjectAttributes="${MyObjectsAttributes[${i}]}"
       [[ "${MyMode[2]}" == "INSENSITIVE" ]] \
         && shopt -s nocasematch
-      if [[ "${MyMode[1]}" == "REVIEW" ]]; then
-        if [[ -n "${MyTargetName}" ]]; then
-          if { [[ "${MyMode[3]}" == "SPECIFIC" ]] && [[ "${MyObjectsNames[${i}]}" == ${MyTargetName} ]]; } \
-            || { [[ "${MyMode[3]}" == "FUZZY" ]] && [[ "${MyObjectsNames[${i}]}" =~ ${MyTargetName} ]]; } \
-            || { [[ "${MyMode[3]}" == "INVERTFUZZY" ]] && [[ ! "${MyObjectsNames[${i}]}" =~ "${MyTargetName}" ]]; }; then
-            FoundSema="TRUE"
-            FX_AdvancedPrint \
-              "FILL:1:0:${Normal}" "COMPLEX:L:5:2:${FLiteBlue}" "#$((++n))" \
-              "COMPLEX:L:65:2:${FLiteBlue}" "$(echo -e \"${MyObjectsNames[${i}]//${BASH_REMATCH}/\\e[${Underline}m${BASH_REMATCH}\\e[${Normal}m\\e[${FLiteBlue}m}\")" \
-              "COMPLEX:L:0:0:${Dimmed}" "${MyObjectsIDs[${i}]}" "NEXT" \
-              "FILL:2:0:${Normal}" "COMPLEX:L:2:1:${FLiteBlue}" "┗━" "COMPLEX:L:0:0:${Normal}" "${MyObjectsAttributes[${i}]}" "END"
-          else
-            continue
-          fi
+      if { [[ "${MyTargetName}" == "ANY" ]]; } \
+      || { [[ "${MyMode[3]}" == "SPECIFIC" ]] && [[ "${ThisObjectName}" == "${MyTargetName}" ]]; } \
+      || { [[ "${MyMode[3]}" == "FUZZY" ]] && [[ "${ThisObjectName}" =~ ${MyTargetName} ]]; } \
+      || { [[ "${MyMode[3]}" == "INVERTFUZZY" ]] && [[ ! "${ThisObjectName}" =~ ${MyTargetName} ]]; }; then
+        FoundSemaArr=( "TRUE" "FALSE" )
+        [[ "${MyTargetName}" != "ANY" ]] \
+          && read -r ThisObjectName < <(echo -e "${ThisObjectName//${BASH_REMATCH}/\\e[${Underline};${FYellow}m${BASH_REMATCH}\\e[${Normal}m\\e[${FLiteBlue}m}")
+        if [[ "${MyTargetAttributes}" == "ANY" ]]; then
+          FoundSemaArr[1]="TRUE"
         else
-          FoundSema="TRUE"
-          FX_AdvancedPrint \
-            "FILL:1:0:${Normal}" "COMPLEX:L:5:2:${FLiteBlue}" "#$((++n))" \
-            "COMPLEX:L:65:2:${FLiteBlue}" "${MyObjectsNames[${i}]}" \
-            "COMPLEX:L:0:0:${Dimmed}" "${MyObjectsIDs[${i}]}" "NEXT" \
-            "FILL:2:0:${Normal}" "COMPLEX:L:3:1:${FLiteBlue}" "┗━" "COMPLEX:L:0:0:${Normal}" "${MyObjectsAttributes[${i}]}" "END"
-        fi
-      elif [[ "${MyMode[1]}" == "MODIFY" ]]; then
-          if { [[ "${MyMode[3]}" == "SPECIFIC" ]] && [[ "${MyObjectsNames[${i}]}" == "${MyTargetName}" ]]; } \
-            || { [[ "${MyMode[3]}" == "FUZZY" ]] && [[ "${MyObjectsNames[${i}]}" =~ "${MyTargetName}" ]]; } \
-            || { [[ "${MyMode[3]}" == "INVERTFUZZY" ]] && [[ ! "${MyObjectsNames[${i}]}" =~ "${MyTargetName}" ]]; }; then
-          FoundSema="TRUE"
-          MyObjectAttributesOLD="${MyObjectsAttributes[${i}]}"
-          FX_AdvancedPrint \
-            "FILL:1:0:${Normal}" "COMPLEX:L:5:2:${FLiteBlue}" "#$((++n))" \
-            "COMPLEX:L:65:2:${FLiteBlue}" "$(echo -e \"${MyObjectsNames[${i}]//${BASH_REMATCH}/\\e[${Underline}m${BASH_REMATCH}\\e[${Normal}m\\e[${FLiteBlue}m}\")" \
-            "COMPLEX:L:0:0:${Dimmed}" "${MyObjectsIDs[${i}]}" "NEXT" \
-            "FILL:2:0:${Normal}" "COMPLEX:L:11:2:${FLiteBlue}" "┗┳OLD" "COMPLEX:L:0:0:${Normal}" "${MyObjectsAttributes[${i}]}" "END"
-          for ((x=0;x<${#MyModifications[@]};x++)); do
-            if [[ "${MyModifications[${x}]%:*}" == "ADDATTR" ]]; then
-              FX_AdvancedPrint "FILL:3:0:${Normal}" "COMPLEX:L:10:2:${FCyan}" "┣ADDATTR" "COMPLEX:L:0:0:${Normal}" "${MyModifications[${x}]#*:}" "END"
-              MyObjectsAttributes[${i}]="$(FX_JSONMod "ADDATTR" "${MyObjectsAttributes[${i}]}" "${MyModifications[${x}]#*:}")"
-            elif [[ "${MyModifications[${x}]%:*}" == "DELATTR" ]]; then
-              FX_AdvancedPrint "FILL:3:0:${Normal}" "COMPLEX:L:10:2:${FMagenta}" "┣DELATTR" "COMPLEX:L:0:0:${Normal}" "${MyModifications[${x}]#*:}" "END"
-              MyObjectsAttributes[${i}]="$(FX_JSONMod "DELATTR" "${MyObjectsAttributes[${i}]}" "${MyModifications[${x}]#*:}")"
+          for ((z=0;z<${#MyTargetAttributes[@]};z++)); do
+            # Target attribute was found (at least one).
+            if [[ "${ThisObjectAttributes}" =~ "${MyTargetAttributes[${z}]}" ]]; then
+              FoundSemaArr[1]="TRUE"
+              read -r ThisObjectAttributes < <(echo -e "${ThisObjectAttributes//${BASH_REMATCH//\"/}/\\e[${Underline};${FYellow}m${BASH_REMATCH//\"/}\\e[${Normal}m}")
             fi
           done
-          FX_AdvancedPrint \
-            "FILL:3:0:${Normal}" "COMPLEX:L:10:2:${FLiteBlue}" "┣NEW" "COMPLEX:L:0:0:${Normal}" "${MyObjectsAttributes[${i}]}" "NEXT" \
-            "FILL:3:0:${Normal}" "COMPLEX:L:10:2:${FLiteBlue}" "┗STATUS"
-          if [[ "${MyObjectAttributesOLD}" == "${MyObjectsAttributes[${i}]}" ]]; then
-            FX_AdvancedPrint "COMPLEX:L:0:0:${FYellow}" "NO_CHANGE" "END"
-          else
-            FX_UpdateObject "${MyObjectsIDs[${i}]}" "${MyObjectsNames[${i}]}" "${MyObjectsAttributes[${i}]}" || FX_GotoExit "13"
+        fi
+        if [[ "${FoundSemaArr[0]}" == "TRUE" ]] && [[ "${FoundSemaArr[1]}" == "TRUE" ]]; then
+          if [[ "${MyMode[1]}" == "REVIEW" ]]; then
+            FX_AdvancedPrint \
+              "FILL:1:0:${Normal}" "COMPLEX:L:5:2:${FLiteBlue}" "#$((++n))" \
+              "COMPLEX:L:65:2:${FLiteBlue}" "${ThisObjectName}" \
+              "COMPLEX:L:0:0:${Dimmed}" "${MyObjectsIDs[${i}]}" "NEXT" \
+              "FILL:2:0:${Normal}" "COMPLEX:L:2:1:${FLiteBlue}" "┗━" "COMPLEX:L:0:0:${Normal}" "${ThisObjectAttributes}" "END"
+          elif [[ "${MyMode[1]}" == "MODIFY" ]]; then
+            MyObjectAttributesOLD="${MyObjectsAttributes[${i}]}"
+            FX_AdvancedPrint \
+              "FILL:1:0:${Normal}" "COMPLEX:L:5:2:${FLiteBlue}" "#$((++n))" \
+              "COMPLEX:L:65:2:${FLiteBlue}" "${ThisObjectName}" \
+              "COMPLEX:L:0:0:${Dimmed}" "${MyObjectsIDs[${i}]}" "NEXT" \
+              "FILL:2:0:${Normal}" "COMPLEX:L:11:2:${FLiteBlue}" "┗┳OLD" "COMPLEX:L:0:0:${Normal}" "${MyObjectAttributesOLD}" "END"
+            for ((x=0;x<${#MyModifications[@]};x++)); do
+              if [[ "${MyModifications[${x}]%:*}" == "ADDATTR" ]]; then
+                FX_AdvancedPrint "FILL:3:0:${Normal}" "COMPLEX:L:10:2:${FCyan}" "┣ADDATTR" "COMPLEX:L:0:0:${Normal}" "${MyModifications[${x}]#*:}" "END"
+                MyObjectsAttributes[${i}]="$(FX_JSONMod "ADDATTR" "${MyObjectsAttributes[${i}]}" "${MyModifications[${x}]#*:}")"
+              elif [[ "${MyModifications[${x}]%:*}" == "DELATTR" ]]; then
+                FX_AdvancedPrint "FILL:3:0:${Normal}" "COMPLEX:L:10:2:${FMagenta}" "┣DELATTR" "COMPLEX:L:0:0:${Normal}" "${MyModifications[${x}]#*:}" "END"
+                MyObjectsAttributes[${i}]="$(FX_JSONMod "DELATTR" "${MyObjectsAttributes[${i}]}" "${MyModifications[${x}]#*:}")"
+              fi
+            done
+            FX_AdvancedPrint \
+              "FILL:3:0:${Normal}" "COMPLEX:L:10:2:${FLiteBlue}" "┣NEW" "COMPLEX:L:0:0:${Normal}" "${MyObjectsAttributes[${i}]}" "NEXT" \
+              "FILL:3:0:${Normal}" "COMPLEX:L:10:2:${FLiteBlue}" "┗STATUS"
+            if [[ "${MyObjectAttributesOLD}" == "${MyObjectsAttributes[${i}]}" ]]; then
+              FX_AdvancedPrint "COMPLEX:L:0:0:${FYellow}" "NO_CHANGE" "END"
+            else
+              FX_UpdateObject "${MyMode[0],,}s" "${MyObjectsIDs[${i}]}" "${MyObjectsNames[${i}]}" "${MyObjectsAttributes[${i}]}" || FX_GotoExit "13"
+            fi
           fi
         fi
-      elif [[ "${MyMode[1]}" == "CREATE" ]]; then
-        FX_AdvancedPrint "COMPLEX:L:20:0:${FYellow}" "WARNING" "COMPLEX:L:0:0:${Normal}" "Mode \"${MyMode[0]} -> ${MyMode[1]}\" not available yet." "END"
-        return 0
-      elif [[ "${MyMode[1]}" == "DELETE" ]]; then
-        FX_AdvancedPrint "COMPLEX:L:20:0:${FYellow}" "WARNING" "COMPLEX:L:0:0:${Normal}" "Mode \"${MyMode[0]} -> ${MyMode[1]}\" not available yet." "END"
-        return 0
       fi
     done
     shopt -u nocasematch
-    [[ "${FoundSema}" == "TRUE" ]] \
+    [[ "${FoundSemaArr}" == "TRUE" ]] \
       && return 0 \
       || return 1
   }
 
-  # Expecting 1/MODE, 2/TARGET(S), 3/MODIFICATIONS.
-  local MyRESTResponse MyModifications MyTargetNames MyTargetName
-  local MyObjects MyObjectsNames MyObjectsIDs MyObjectsAttributes
+  # Expecting 1/MODE, 2/TARGETNAME(S), 3/TARGETATTRIBUTE(S), 4/MODIFICATIONS.
+  local MyRESTResponse MyModifications MyTargetNames MyTargetName MyTargetAttributes
+  local MyObjects MyObjectsNames MyObjectsIDs MyObjectsAttributes i
   local MyMode="${1}"
   local MyInTargetNames="${2}"
-  local MyInModifications="${3}"
+  local MyInTargetAttributes="${3}"
+  local MyInModifications="${4}"
 
   FX_AdvancedPrint "COMPLEX:M:-1:1:${Bold};${FWhite};${BBlue}" "BEGIN RUNTIME (${SECONDS}s)" "END"
 
@@ -1141,23 +1159,16 @@ FX_Runtime() {
 
   if [[ "${MyMode[1]}" == "REVIEW" ]] || [[ "${MyMode[1]}" == "MODIFY" ]] || [[ "${MyMode[1]}" == "CREATE" ]] || [[ "${MyMode[1]}" == "REMOVE" ]]; then
     IFS=$'\n' read -d '\n' -ra MyTargetNames <<< "${MyInTargetNames//:::/${NL}}"
+    IFS=$'\n' read -d '\n' -ra MyTargetAttributes <<< "${MyInTargetAttributes//:::/${NL}}"
   fi
 
-  if [[ "${MyMode[0]}" == "ENDPOINT" ]]; then
-    FX_ObtainObjects "endpoint" || FX_GotoExit "2"
-  elif [[ "${MyMode[0]}" == "SERVICE" ]]; then
-    FX_ObtainObjects "service" || FX_GotoExit "2"
-  fi
+  FX_ObtainObjects "${MyMode[0],,}" || FX_GotoExit "2"
 
-  if [[ "${#MyTargetNames[@]}" -gt 0 ]]; then
-    for ((z=0;z<${#MyTargetNames[@]};z++)); do
-      MyTargetName="${MyTargetNames[${z}]}"
-      FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "${MyMode[0]} NAME SET" "COMPLEX:L:0:0:${Normal}" "${MyTargetName:-ALL TARGETS}" "END"
-      FXSUB_ObjectWorker || FX_AdvancedPrint "FILL:20:0:${Normal}" "COMPLEX:L:0:0:${FYellow}" "NAME SET RETURNED NO RESULTS" "END"
-    done
-  else
+  for ((i=0;i<${#MyTargetNames[@]};i++)); do
+    MyTargetName="${MyTargetNames[${i}]}"
+    FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "${MyMode[0]} NAME SET" "COMPLEX:L:0:0:${Normal}" "${MyTargetName:-ALL TARGETS}" "END"
     FXSUB_ObjectWorker || FX_AdvancedPrint "FILL:20:0:${Normal}" "COMPLEX:L:0:0:${FYellow}" "NAME SET RETURNED NO RESULTS" "END"
-  fi
+  done
 
   return 0
 }
@@ -1170,7 +1181,7 @@ FX_LogoMessaging "${SystemLogo}" "${MyPurpose[0]}" "${MyPurpose[1]}"
 
 # Switching syntax.
 # Get options from command line.
-	while getopts "n:m:a:A:ifFhH" ThisOpt; do
+	while getopts "n:N:m:a:A:ifFhH" ThisOpt; do
 		case "${ThisOpt}" in
       "n")
         [[ "${#OPTARG}" -le 2 ]] \
@@ -1180,6 +1191,15 @@ FX_LogoMessaging "${SystemLogo}" "${MyPurpose[0]}" "${MyPurpose[1]}"
           && FX_AdvancedPrint "COMPLEX:L:20:0:${FRed}" "ERROR" "COMPLEX:L:0:0:${Normal}" "Name \"${OPTARG}\" has an illegal character \":::\"." "END" \
           && FX_GotoExit "1"
         MyTargetNames+="${OPTARG}:::"
+      ;;
+      "N")
+        [[ "${#OPTARG}" -le 2 ]] \
+          && FX_AdvancedPrint "COMPLEX:L:20:0:${FRed}" "ERROR" "COMPLEX:L:0:0:${Normal}" "Attribute \"${OPTARG}\" must be greater than TWO characters long." "END" \
+          && FX_GotoExit "1"
+        [[ "${OPTARG}" =~ ":::" ]] \
+          && FX_AdvancedPrint "COMPLEX:L:20:0:${FRed}" "ERROR" "COMPLEX:L:0:0:${Normal}" "Attribute \"${OPTARG}\" has an illegal character \":::\"." "END" \
+          && FX_GotoExit "1"
+        MyTargetAttributes+="#${OPTARG//#/}:::"
       ;;
       "m")
         case "${OPTARG}" in
@@ -1259,12 +1279,13 @@ FX_LogoMessaging "${SystemLogo}" "${MyPurpose[0]}" "${MyPurpose[1]}"
   # 1/ENDPOINT|SERVICE, 2/REVIEW|MODIFY|CREATE|REMOVE, 3/SENSITIVE|INSENSITIVE, 4/SPECIFIC|FUZZY|INVERTFUZZY
   MyMode[0]="${MyMode[1]:=UNSET},${MyMode[2]:=REVIEW},${MyMode[3]:=SENSITIVE},${MyMode[4]:=SPECIFIC}"
   MyTargetNames="${MyTargetNames%:::*}" # Remove trailing comma.
+  MyTargetAttributes="${MyTargetAttributes%:::*}" # Remove trailing comma.
   MyModifications="${MyModifications%:::*}" # Remove trailing comma.
 
   # Print runtime info.
   FX_CheckEnvironment "RUNCONTEXT" || FX_GotoExit "1"
 
-  # Check rules.
+  # Check rules and set defaults.
   [[ "${MyMode[1]:-UNSET}" == "UNSET" ]] \
     && FX_AdvancedPrint "COMPLEX:L:20:0:${FRed}" "ERROR" "COMPLEX:L:0:0:${Normal}" "MODE REQUIRED." "END" \
     && FX_GotoExit "99"
@@ -1274,14 +1295,21 @@ FX_LogoMessaging "${SystemLogo}" "${MyPurpose[0]}" "${MyPurpose[1]}"
   [[ "${MyMode[2]:-UNSET}" == "MODIFY" ]] && [[ -z "${MyModifications}" ]] \
     && FX_AdvancedPrint "COMPLEX:L:20:0:${FRed}" "ERROR" "COMPLEX:L:0:0:${Normal}" "ATTRIBUTE(S) REQUIRED FOR MODE ${MyMode[1]} [MODIFY]." "END" \
     && FX_GotoExit "99"
+  [[ -z "${MyTargetNames}" ]] \
+    && MyTargetNames="ANY"
+  [[ -z "${MyTargetAttributes}" ]] \
+    && MyTargetAttributes="ANY"
+  [[ -z "${MyModifications}" ]] \
+    && MyModifications="ANY"
 
   # Print selections.
   FX_AdvancedPrint \
     "COMPLEX:L:20:0:${Bold}" "MODE" "COMPLEX:L:0:0:${Normal}" "${MyMode[1]} -> ${MyMode[2]}" "NEXT" \
-    "COMPLEX:L:20:0:${Bold}" "TARGET NAME(S)" "COMPLEX:L:0:0:${Normal}" "${MyTargetNames:-ALL TARGETS}" "NEXT" \
+    "COMPLEX:L:20:0:${Bold}" "TARGET NAME SET(S)" "COMPLEX:L:0:0:${Normal}" "${MyTargetNames//:::/ [AND] }" "NEXT" \
+    "COMPLEX:L:20:0:${Bold}" "TARGET ATTRIBUTE(S)" "COMPLEX:L:0:0:${Normal}" "${MyTargetAttributes//:::/ [OR] }" "NEXT" \
     "COMPLEX:L:20:0:${Bold}" "CASE SENSITIVITY" "COMPLEX:L:0:0:${Normal}" "${MyMode[3]}" "NEXT" \
     "COMPLEX:L:20:0:${Bold}" "SELECT METHOD" "COMPLEX:L:0:0:${Normal}" "${MyMode[4]}" "NEXT" \
-    "COMPLEX:L:20:0:${Bold}" "MODIFICATIONS" "COMPLEX:L:0:0:${Normal}" "${MyModifications:-NONE}" "END"
+    "COMPLEX:L:20:0:${Bold}" "MODIFICATIONS" "COMPLEX:L:0:0:${Normal}" "${MyModifications//:::/ [AND] }" "END"
 
   # Obtain the BEARER TOKEN for further operations.
   FX_ObtainBearer || FX_GotoExit "$?"
@@ -1290,13 +1318,13 @@ FX_LogoMessaging "${SystemLogo}" "${MyPurpose[0]}" "${MyPurpose[1]}"
     "ENDPOINT"|"SERVICE")
       if [[ "${MyMode[2]}" == "MODIFY" ]] || [[ "${MyMode[2]}" == "REMOVE" ]] && [[ "${MyMode[4]}" =~ "FUZZY" ]]; then
         FX_AdvancedPrint \
-          "COMPLEX:L:20:0:${FMagenta}" "WARNING" "COMPLEX:L:0:0:${Normal}" "MODIFY/REMOVE MODE with fuzzy or inverted fuzzy select can be dangerous!" "NEXT" \
+          "COMPLEX:L:20:0:${FMagenta}" "WARNING" "COMPLEX:L:0:0:${Normal}" "MODIFY/REMOVE MODE with fuzzy or inverted fuzzy name select can be dangerous!" "NEXT" \
           "COMPLEX:L:20:0:${FMagenta}" "WARNING" "COMPLEX:L:0:0:${Normal}" "The following will be affected by your command." "END"
-        FX_Runtime "${MyMode[1]},REVIEW,${MyMode[3]},${MyMode[4]}" "${MyTargetNames}"
+        FX_Runtime "${MyMode[1]},REVIEW,${MyMode[3]},${MyMode[4]}" "${MyTargetNames}" "${MyTargetAttributes}"
         FX_GetYorN "Proceed? " "No" "30" \
-          && FX_Runtime "${MyMode[0]}" "${MyTargetNames}" "${MyModifications}"
+          && FX_Runtime "${MyMode[0]}" "${MyTargetNames}" "${MyTargetAttributes}" "${MyModifications}"
       else
-        FX_Runtime "${MyMode[0]}" "${MyTargetNames}" "${MyModifications}"
+        FX_Runtime "${MyMode[0]}" "${MyTargetNames}" "${MyTargetAttributes}" "${MyModifications}"
       fi
     ;;
   esac
