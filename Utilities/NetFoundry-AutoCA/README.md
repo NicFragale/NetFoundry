@@ -18,5 +18,6 @@ Basic functions of this utility are:
 1. Workflow to create a self signed ROOT and INTERMEDIATE certificate authority.
 2. Workflow to utilize the INTERMEDIATE certificate authority and validate it for signing identities with the NetFoundry network target(s).
 3. Workflow to utilize the primary ZITI CLI [DOWNLOADABLE HERE](https://github.com/openziti/ziti/releases) to enroll identities utilizing the INTERMEDIATE certificate authority's signer to create identities in the target network(s).
+4. Learning mode teaches you how/what calls are made to NetFoundry API to perform the actions.
 
 [PS-shield]: https://img.shields.io/badge/Code%20Basis-Linux%20BASH-blue.svg
