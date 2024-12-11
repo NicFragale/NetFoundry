@@ -33,8 +33,7 @@ NF_IdentityAttributes=(
 )
 
 # The location of the ZITI CLI executable. (./ziti) OR (/path/to/ziti)
-NF_ZitiExec="/Users/nicfragale/Desktop/Work/WIP/ziti"
-#NF_ZitiExec="ziti"
+NF_ZitiExec="ziti"
 
 ##########################################################################################################################################
 # DO NOT EDIT BELOW THIS LINE WITHOUT KNOWING WHAT YOU ARE DOING!
@@ -694,6 +693,7 @@ FX_VerifyCAs() {
     NF_MOPJSON="$(\
       FX_PrintHelper "FILL:2:0:${Normal}" "TRUE" curl \"https://gateway.production.netfoundry.io/core/v2/certificate-authorities\" \
           -s \
+          --connect-timeout 10 \
           -X \"POST\" \
           -H \"Content-Type: application/json\" \
           -H \"Accept: application/json\" \
@@ -750,6 +750,7 @@ EOFEOFEOF
     NF_MOPJSON="$(\
       FX_PrintHelper "FILL:2:0:${Normal}" "TRUE" curl \"https://gateway.production.netfoundry.io/core/v2/certificate-authorities/${NF_CAID}/verify\" \
         -s \
+        --connect-timeout 10 \
         -X \"POST\" \
         -H \"Content-Type: text/plain\" \
         -H \"Accept: application/json\" \
@@ -839,6 +840,10 @@ FX_CreateEnrollIDs() {
           # Bug!
           [[ ! -f "${NF_ZIDDir}/${NF_NetworkID}.jwt" ]] \
             && echo "${NF_NetworkJWT}" > ${NF_ZIDDir}/${NF_NetworkID}.jwt
+
+          if [[ ! -f "${NF_ZIDDir}/${NF_CATarget}/identities/${NF_ZIDName}.json" ]]; then
+            FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Identity \"${NF_ZIDName}\" failed to enroll." "END"
+          fi
         done
       else
         FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: The CA is not verified for this network." "END"
