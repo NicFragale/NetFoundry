@@ -8,24 +8,33 @@
 ##########################################################################################################################################
 # NetFoundry Networks: The target NetFoundry network(s).
 NF_NetworkIDs=(
-  "a7a4a330-ae19-4d7d-8b9f-39cbd320c05f" # 0
+  "6e9af693-beee-40ef-8163-13efceeb9723" # 0
+  "31af4926-c22f-41f2-b43a-cc41f4360b1f" # 1
 )
 # NetFoundry Networks CA Naming: Within the Xn NetFoundry networks, configure/utilize each of these CAs.
 NF_CATargets=(
-  "FragaleCA" # 0
+  "SigningCA_1" # 0
+  "SigningCA_2" # 1
 )
 # NetFoundry Networks CA Subject Basis: The corresponding x509 syntax for the 3rd Party CA.
 CA_SubjectBasis=(
-  "/C=US/ST=CO/L=Parker/O=${NF_CATargets[0]}" # 0
+  "/C=US/ST=CO/L=Denver/O=${NF_CATargets[0]}" # 0
+  "/C=US/ST=TX/L=Dallas/O=${NF_CATargets[1]}" # 1
 )
 # Format of Naming: Any combination of strings and/or the these variables [caName] [caId] [commonName] [requestedName] [identityId].
 NF_IdentityNamings=(
   "[caName]-[commonName]" # 0
+  "[caName]-[commonName]" # 1
 )
 # Attributes given by default in (\"#[NAME]\",) format.
 NF_IdentityAttributes=(
   "\"#NetFoundry_Admin\",\"#Customer_Admin\"" # 0
+  "\"#NFTEST\"" # 1
 )
+
+# The location of the ZITI CLI executable. (./ziti) OR (/path/to/ziti)
+NF_ZitiExec="/Users/nicfragale/Desktop/Work/WIP/ziti"
+#NF_ZitiExec="ziti"
 
 ##########################################################################################################################################
 # DO NOT EDIT BELOW THIS LINE WITHOUT KNOWING WHAT YOU ARE DOING!
@@ -42,8 +51,8 @@ ParentPID="$$" # The PID of this script (AKA the parent that spawns subprocesses
 MyName=( "${0##*/}" "${0}" ) # NAME (0/Base 1/Full) of the program.
 FLAG_LearnMode="FALSE" # TRUE/FALSE - Flag to print extra information about commands that are run.
 FLAG_SetupCA="FALSE" # TRUE/FALSE - Flag to setup CAs locally.
-FLAG_ValidateCA="FALSE" # TRUE/FALSE - Flag to validate a 3rd party CA in NetFoundry.
-FLAG_EnrollIDs="FALSE" # TRUE/FALSE - Flag to enroll identities agaist a validated 3rd party CA.
+FLAG_VerifyCA="FALSE" # TRUE/FALSE - Flag to verify a 3rd party CA in NetFoundry.
+FLAG_EnrollIDs="FALSE" # TRUE/FALSE - Flag to enroll identities agaist a verified 3rd party CA.
 ZIDQuantity="1" # The default quantity of identities to create and enroll.
 export Normal="0" Bold="1" Dimmed="2" Invert="7" # Trigger codes for BASH.
 export FBlack="30" FRed="31" FGreen="32" FYellow="33" FBlue="34" FMagenta="35" FCyan="36" FLiteGray="37" # Foreground color codes for BASH.
@@ -556,7 +565,7 @@ FX_LogoMessaging() {
 
 #################################################################################
 # JWT Decoder.
-function FX_JWTDecoder() {
+FX_JWTDecoder() {
   # Expecting 1/JWTInput 2/MODE.
   local MyJWTInput="${1:-ERROR}"
   local MyMode="${2:-CHECKONLY}" # VALIDATE/TIMEREMAINING/RENEWCHECK
@@ -600,89 +609,181 @@ function FX_JWTDecoder() {
 
 #################################################################################
 # Primary Runtime Function.
-FX_Primary() {
-  # Expecting 1/NetworkID, 2/CATarget.
+FX_PrimaryRuntime() {
+  local i="0"
+
+  # Input checking.
+  if [[ ${FLAG_EnrollIDs} == "TRUE" ]]; then
+    if [[ ! ${NF_ZIDQuantity} =~ ${ValidNumber} ]] || [[ ! ${NF_ZIDQuantity} -gt 0 ]]; then
+      FX_AdvancedPrint "COMPLEX:M:0:1:${BRed};${Bold}" "ERROR: Value for creation/enrollment of identities \"${NF_ZIDQuantity}\" is invalid." "END"
+      FLAG_SetupCA="FALSE"
+      FLAG_VerifyCA="FALSE"
+      FLAG_EnrollIDs="FALSE"
+    fi
+    if [[ "${NF_EnrollTargets%%:*}" == "${NF_EnrollTargets##*:}" ]]; then
+      FX_AdvancedPrint "COMPLEX:M:0:1:${BRed};${Bold}" "ERROR: Input for creation/enrollment of identities \"${NF_EnrollTargets}\" is invalid. (SEE HELP)" "END"
+      FLAG_SetupCA="FALSE"
+      FLAG_VerifyCA="FALSE"
+      FLAG_EnrollIDs="FALSE"
+    fi
+  fi
+
+  # If required, setup the CAs first.
+  if [[ ${FLAG_SetupCA} == "TRUE" ]]; then
+    FX_AdvancedPrint "COMPLEX:M:-1:1:${BBlue};${Bold}" "SETUP OF CERTIFICATE AUTHORITIES" "END"
+    FX_SetupCAs
+  fi
+
+  # Verify 3rd party CAs into NetFoundry and/or enroll identities utilizing verified 3rd party CAs.
+  if [[ ${FLAG_VerifyCA} == "TRUE" ]] || [[ ${FLAG_EnrollIDs} == "TRUE" ]]; then
+    if [[ -z "${NF_BearerToken}" ]]; then
+      FX_AdvancedPrint "COMPLEX:M:0:1:${BRed};${Bold}" "ERROR: Function requires ENVIRONMENT VARIABLE \"NF_BearerToken\" to be set." "END"
+    elif ! FX_JWTDecoder "${NF_BearerToken}" "VALIDATE"; then
+      FX_AdvancedPrint "COMPLEX:M:0:1:${BRed};${Bold}" "ERROR: ENVIRONMENT VARIABLE \"NF_BearerToken\" is set, however, it is not valid/expired. (${NF_BearerTokenStatus})" "END"
+    else
+      if [[ ${FLAG_VerifyCA} == "TRUE" ]]; then
+        FX_AdvancedPrint "COMPLEX:M:-1:1:${BBlue};${Bold}" "VALIDATION OF CERTIFICATE AUTHORITIES IN NETFOUNDRY" "END"
+        for EachNetworkID in ${NF_NetworkIDs[@]}; do
+          for EachCATarget in ${NF_CATargets[@]}; do
+              FX_VerifyCAs "${EachNetworkID}" "${EachCATarget}" "${CA_SubjectBasis[${i}]}" "${NF_IdentityAttributes[${i}]}" "${NF_IdentityNamings[${i}]}"
+              ((i+=1))
+          done
+        done
+      fi
+      if [[ ${FLAG_EnrollIDs} == "TRUE" ]]; then
+        FX_AdvancedPrint "COMPLEX:M:-1:1:${BBlue};${Bold}" "CREATION AND ENROLLMENT OF IDENTITIES" "END"
+        FX_CreateEnrollIDs "${NF_EnrollTargets%%:*}" "${NF_EnrollTargets##*:}" "${NF_ZIDQuantity}"
+      fi
+    fi
+  fi
+}
+
+#################################################################################
+# Verify CAs in the NetFoundry Cloud target networks.
+FX_VerifyCAs() {
+  # Expecting 1/NetworkID, 2/CATarget, 3/SubjectBasis, 4/IdentityAttributes, 5/IdentityNamings.
   local NF_NetworkID="${1}"
   local NF_CATarget="${2}"
+  local CA_SubjectBasis="${3}"
+  local NF_IdentityAttributes="${4}"
+  local NF_IdentityNamings="${5}"
   local CA_Intermediate CA_IntermediateDir
 
-  FX_AdvancedPrint "COMPLEX:L:-1:2:${FBlue};${Bold}" "VALIDATION: NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: BEGIN [$((SECONDS/60))m $((SECONDS%60))s]" "END"
-
-  FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Creating directories." "END"
-  FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" mkdir -vp ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}/{certs,csr,private,identities}
 
   CA_Intermediate="CA_Intermediate_${NF_CATarget}"
   CA_IntermediateDir="${MYPWD}/${NF_BaseDir}/${CA_Intermediate}"
 
-  FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Formatting certificate for upload to NetFoundry." "END"
-  CA_SigningCert="$(FX_PrintHelper "FILL:2:0:${Normal}" "TRUE" openssl x509 -in ${CA_IntermediateDir}/${CA_Intermediate}.crt -outform PEM)"
-  CA_SigningCert="${CA_SigningCert//$'\n'/\\n}"
+  FX_AdvancedPrint "COMPLEX:L:-1:2:${FBlue};${Bold}" "VALIDATION: NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: BEGIN [$((SECONDS/60))m $((SECONDS%60))s]" "END"
 
-  NF_MOPJSON="$(\
-    FX_PrintHelper "FILL:2:0:${Normal}" "TRUE" curl \"https://gateway.production.netfoundry.io/core/v2/certificate-authorities\" \
-        -s \
-        -X \"POST\" \
-        -H \"Content-Type: application/json\" \
-        -H \"Accept: application/json\" \
-        -H \"Authorization: Bearer ${NF_BearerToken}\" \
-        --data-binary \'{ \
-          \"selected\":false, \
-          \"authEnabled\":true, \
-          \"endpointAttributes\":[${NF_IdentityAttributes}], \
-          \"networkId\":\"${NF_NetworkID}\", \
-          \"name\":\"${NF_CATarget}\", \
-          \"certPem\":\"${CA_SigningCert}\", \
-          \"autoCaEnrollmentEnabled\":true, \
-          \"identityNameFormat\":\"${NF_IdentityNamings}\" \
-        }\'
-  )"
+  # Validation Request: Bypass when this work has already been done.
+  if [[ -f "${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env" ]]; then
 
-  read -d '' -r NF_CAID NF_CAValidateToken NF_NetworkJWT < <( \
-    jq -r '
-      .id,.verificationToken,.jwt
-    ' <<< "${NF_MOPJSON}"
-  )
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Network and CA information found - Loading." "END"
+    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" cat ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env
+    source "${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env"
 
-  if [[ ! -f "${NF_NetworksDir}/${NF_NetworkID}/${NF_CAID}.conf" ]]; then
-    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Saving validation information." "END"
-cat << EOFEOFEOF > ${NF_NetworksDir}/${NF_NetworkID}/${NF_CAID}.conf
+  else
+
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Creating directories." "END"
+    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" mkdir -vp ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}/{certs,csr,private,identities}
+
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Formatting certificate for upload to NetFoundry." "END"
+    CA_SigningCert="$(FX_PrintHelper "FILL:2:0:${Normal}" "TRUE" openssl x509 -in ${CA_IntermediateDir}/${CA_Intermediate}.crt -outform PEM)"
+    CA_SigningCert="${CA_SigningCert//$'\n'/\\n}"
+
+    NF_MOPJSON="$(\
+      FX_PrintHelper "FILL:2:0:${Normal}" "TRUE" curl \"https://gateway.production.netfoundry.io/core/v2/certificate-authorities\" \
+          -s \
+          -X \"POST\" \
+          -H \"Content-Type: application/json\" \
+          -H \"Accept: application/json\" \
+          -H \"Authorization: Bearer ${NF_BearerToken}\" \
+          --data-binary \'{ \
+            \"selected\":false, \
+            \"authEnabled\":true, \
+            \"endpointAttributes\":[${NF_IdentityAttributes}], \
+            \"networkId\":\"${NF_NetworkID}\", \
+            \"name\":\"${NF_CATarget}\", \
+            \"autoCaEnrollmentEnabled\":true, \
+            \"identityNameFormat\":\"${NF_IdentityNamings}\", \
+            \"certPem\":\"${CA_SigningCert}\" \
+          }\'
+    )"
+
+    read -d '' -r NF_CAID NF_CAVerifyToken NF_NetworkJWT < <( \
+      jq -r '
+        .id,.verificationToken,.jwt
+      ' <<< "${NF_MOPJSON}"
+    )
+
+    if [[ ${NF_CAID} != "null" ]] && [[ ${NF_CAVerifyToken} != "null" ]] && [[ ${NF_NetworkJWT} != "null" ]]; then
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Saving validation information." "END"
+cat << EOFEOFEOF > ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env
 export NF_NetworkID="${NF_NetworkID}"
 export NF_CAID="${NF_CAID}"
-export NF_CAValidateToken="${NF_CAValidateToken}"
+export NF_CAVerifyToken="${NF_CAVerifyToken}"
 export NF_NetworkJWT="${NF_NetworkJWT}"
+export NF_CAVerified="FALSE"
 EOFEOFEOF
+      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" cat ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env
+      source "${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env"
+    else
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: A failure occurred while communicating with NetFoundry."
+    fi
   fi
 
-  FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" cat ${NF_NetworksDir}/${NF_NetworkID}/${NF_CAID}.conf
+  # Verify Response: Bypass when this work has already been done.
+  if [[ ${NF_CAID} != "null" ]] && [[ ${NF_CAVerified} != "TRUE" ]]; then
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Saving network JWT to file." "END"
+    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" tee ${NF_NetworksDir}/${NF_NetworkID}/${NF_NetworkID}.jwt < <(echo "${NF_NetworkJWT}")
 
-  FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Saving network JWT." "END"
-  FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" tee ${NF_NetworksDir}/${NF_NetworkID}/${NF_NetworkID}.jwt < <(echo "${NF_NetworkJWT}")
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating private key." "END"
+    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl genrsa -out ${CA_IntermediateDir}/private/${NF_NetworkID}-NFVERIFY.key 2048
 
-  FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating private key." "END"
-  FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl genrsa -out ${MYPWD}/${NF_BaseDir}/${CA_Intermediate}/private/${NF_NetworkID}-NFVALIDATE.key 2048
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating CSR with private key." "END"
+    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl req -new -key ${CA_IntermediateDir}/private/${NF_NetworkID}-NFVERIFY.key -out ${CA_IntermediateDir}/csr/${NF_NetworkID}-NFVERIFY.csr -subj "${CA_SubjectBasis}/OU=${NF_NetworkID}/CN=${NF_CAVerifyToken}"
 
-  FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating CSR with private key." "END"
-  FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl req -new -key ${MYPWD}/${NF_BaseDir}/${CA_Intermediate}/private/${NF_NetworkID}-NFVALIDATE.key -out ${MYPWD}/${NF_BaseDir}/${CA_Intermediate}/csr/${NF_NetworkID}-NFVALIDATE.csr -subj "${CA_SubjectBasis}/OU=${NF_NetworkID}/CN=${NF_CAValidateToken}"
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating signed certificate from CSR with [${CA_Intermediate}] private key." "END"
+    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl ca -config ${CA_IntermediateDir}/${CA_Intermediate}.conf -in ${CA_IntermediateDir}/csr/${NF_NetworkID}-NFVERIFY.csr -out ${CA_IntermediateDir}/certs/${NF_NetworkID}-NFVERIFY.crt -batch
+    CA_VerifiedClientCert="$(FX_PrintHelper "FILL:2:0:${Normal}" "TRUE" openssl x509 -in ${CA_IntermediateDir}/certs/${NF_NetworkID}-NFVERIFY.crt -outform PEM)"
 
-  FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating signed certificate from CSR with [${CA_Intermediate}] private key." "END"
-  FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl ca -config ${MYPWD}/${NF_BaseDir}/${CA_Intermediate}/${CA_Intermediate}.conf -in ${MYPWD}/${NF_BaseDir}/${CA_Intermediate}/csr/${NF_NetworkID}-NFVALIDATE.csr -out ${MYPWD}/${NF_BaseDir}/${CA_Intermediate}/certs/${NF_NetworkID}-NFVALIDATE.crt -batch
-  CA_ValidatedClientCert="$(FX_PrintHelper "FILL:2:0:${Normal}" "TRUE" openssl x509 -in ${MYPWD}/${NF_BaseDir}/${CA_Intermediate}/certs/${NF_NetworkID}-NFVALIDATE.crt -outform PEM)"
+    NF_MOPJSON="$(\
+      FX_PrintHelper "FILL:2:0:${Normal}" "TRUE" curl \"https://gateway.production.netfoundry.io/core/v2/certificate-authorities/${NF_CAID}/verify\" \
+        -s \
+        -X \"POST\" \
+        -H \"Content-Type: text/plain\" \
+        -H \"Accept: application/json\" \
+        -H \"Authorization: Bearer ${NF_BearerToken}\" \
+        --data-binary \""${CA_VerifiedClientCert}"\"
+    )"
 
-  NF_MOPJSON="$(\
-    FX_PrintHelper "FILL:2:0:${Normal}" "TRUE" curl \"https://gateway.production.netfoundry.io/core/v2/certificate-authorities/${NF_CAID}/verify\" \
-      -s \
-      -X \"POST\" \
-      -H \"Content-Type: text/plain\" \
-      -H \"Accept: application/json\" \
-      -H \"Authorization: Bearer ${NF_BearerToken}\" \
-      --data-binary \""${CA_ValidatedClientCert}"\"
-  )"
+    read -d '' -r NF_CAVerified < <( \
+      jq -r '
+        .verified
+      ' <<< "${NF_MOPJSON}"
+    )
+    [[ "${NF_CAVerified}" == "true" ]] \
+      && NF_CAVerified="TRUE" \
+      || NF_CAVerified="FALSE"
 
-  FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating configuration file \"${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.conf\"." "END"
-  FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" tee ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.conf < <(sed "/new_certs_dir/s|=.*|= ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}/certs|" ${CA_IntermediateDir}/${CA_Intermediate}.conf)
+    if [[ ${NF_CAVerified} == "TRUE" ]]; then
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Verification SUCCESS." "END"
+      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" tee ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env < <(sed "/NF_CAVerified/s|=.*|=\"TRUE\"|" ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env)
+    else
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Verification FAILED." "END"
+      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" tee ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env < <(sed "/NF_CAVerified/s|=.*|=\"FALSE\"|" ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env)
+    fi
+  fi
+
+  if [[ ${NF_CAID} != "null" ]] && [[ ${NF_CAVerified} == "TRUE" ]]; then
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating configuration file \"${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.conf\"." "END"
+    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" tee ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.conf < <(sed "/new_certs_dir/s|=.*|=${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}/certs|" ${CA_IntermediateDir}/${CA_Intermediate}.conf)
+  fi
 }
 
-FX_Secondary() {
+#################################################################################
+# Utilize a verified CA to create and/or enroll identities on target networks.
+FX_CreateEnrollIDs() {
     # Expecting 1/NetworkID, 2/CATarget, 3/ZIDQuantity.
     local NF_NetworkID="${1}"
     local NF_CATarget="${2}"
@@ -690,56 +791,91 @@ FX_Secondary() {
     local NF_ZIDDir
 
     NF_ZIDDir="${NF_NetworksDir}/${NF_NetworkID}"
-    source ${NF_ZIDDir}/*.conf
 
     #################################################################################
     # Client Certificate Creation (Looping)
-    # NOTE: The following assumes you have the ZITI CLI
-    #       or access to an Edge Tunnel with enrollment functionality.
+    # Requires ZITI CLI or Ziti Edge Tunnel enroller functionality availability.
     FX_AdvancedPrint "COMPLEX:L:-1:2:${FBlue};${Bold}" "CLIENT CERTIFICATE CREATION: NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: BEGIN [$((SECONDS/60))m $((SECONDS%60))s]" "END"
-    for ((i=1;i<=${NF_ZIDQuantity};i++)); do
-      NF_ZIDName="IDENTITY_${i}"
 
-      # Bug!
-      [[ ! -f "${NF_ZIDDir}/${NF_NetworkID}.jwt" ]] \
-        && echo "${NF_NetworkJWT}" > ${NF_ZIDDir}/${NF_NetworkID}.jwt
+    if [[ ! -f "${NF_NetworksDir}/${NF_NetworkID}/${NF_NetworkID}.jwt" ]]; then
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: The network UUID was not valid." "END"
+      return 1
+    fi
+    if [[ ! -f "${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env" ]]; then
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: The CA name was not valid." "END"
+      return 2
+    fi
 
-      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating private key for \"${NF_ZIDName}\"." "END"
-      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl genrsa -out ${NF_ZIDDir}/${NF_CATarget}/private/${NF_ZIDName}.key 2048
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Network and CA information found - Loading." "END"
+    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" cat ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env
+    source "${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env"
 
-      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating CSR with private key for \"${NF_ZIDName}\"." "END"
-      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl req -new -key ${NF_ZIDDir}/${NF_CATarget}/private/${NF_ZIDName}.key -out ${NF_ZIDDir}/${NF_CATarget}/csr/${NF_ZIDName}.csr -subj "${CA_SubjectBasis}/OU=${NF_CATarget}/CN=${NF_ZIDName}"
+    if [[ -x "${NF_ZitiExec}" ]]; then
+      if [[ ${NF_CAVerified} == "TRUE" ]]; then
+        for ((i=1;i<=${NF_ZIDQuantity};i++)); do
+          NF_ZIDName="IDENTITY_${i}"
 
-      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating signed certificate from CSR with [${NF_CATarget}] private key for \"${NF_ZIDName}\"." "END"
-      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl ca -config ${NF_ZIDDir}/${NF_CATarget}.conf -in ${NF_ZIDDir}/${NF_CATarget}/csr/${NF_ZIDName}.csr -out ${NF_ZIDDir}/${NF_CATarget}/certs/${NF_ZIDName}.crt -batch
+          if [[ -f "${NF_ZIDDir}/${NF_CATarget}/identities/${NF_ZIDName}.json" ]]; then
+            FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FYellow}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Identity \"${NF_ZIDName}\" already exists." "END"
+            continue
+          fi
 
-      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Enrolling into network for \"${NF_ZIDName}\"." "END"
-      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" ./ziti edge enroll --cert ${NF_ZIDDir}/${NF_CATarget}/certs/${NF_ZIDName}.crt --key ${NF_ZIDDir}/${NF_CATarget}/private/${NF_ZIDName}.key --jwt ${NF_ZIDDir}/${NF_NetworkID}.jwt --out ${NF_ZIDDir}/${NF_CATarget}/identities/${NF_ZIDName}.json
-    done
+          # Bug!
+          [[ ! -f "${NF_ZIDDir}/${NF_NetworkID}.jwt" ]] \
+            && echo "${NF_NetworkJWT}" > ${NF_ZIDDir}/${NF_NetworkID}.jwt
+
+          FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating private key for \"${NF_ZIDName}\"." "END"
+          FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl genrsa -out ${NF_ZIDDir}/${NF_CATarget}/private/${NF_ZIDName}.key 2048
+
+          FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating CSR with private key for \"${NF_ZIDName}\"." "END"
+          FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl req -new -key ${NF_ZIDDir}/${NF_CATarget}/private/${NF_ZIDName}.key -out ${NF_ZIDDir}/${NF_CATarget}/csr/${NF_ZIDName}.csr -subj "${CA_SubjectBasis}/OU=${NF_CATarget}/CN=${NF_ZIDName}"
+
+          FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Generating signed certificate from CSR with [${NF_CATarget}] private key for \"${NF_ZIDName}\"." "END"
+          FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl ca -config ${NF_ZIDDir}/${NF_CATarget}.conf -in ${NF_ZIDDir}/${NF_CATarget}/csr/${NF_ZIDName}.csr -out ${NF_ZIDDir}/${NF_CATarget}/certs/${NF_ZIDName}.crt -batch
+
+          FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: Enrolling into network for \"${NF_ZIDName}\"." "END"
+          FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" ${NF_ZitiExec} edge enroll --cert ${NF_ZIDDir}/${NF_CATarget}/certs/${NF_ZIDName}.crt --key ${NF_ZIDDir}/${NF_CATarget}/private/${NF_ZIDName}.key --jwt ${NF_ZIDDir}/${NF_NetworkID}.jwt --out ${NF_ZIDDir}/${NF_CATarget}/identities/${NF_ZIDName}.json
+
+          # Bug!
+          [[ ! -f "${NF_ZIDDir}/${NF_NetworkID}.jwt" ]] \
+            && echo "${NF_NetworkJWT}" > ${NF_ZIDDir}/${NF_NetworkID}.jwt
+        done
+      else
+        FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: The CA is not verified for this network." "END"
+      fi
+    else
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "CLIENT CERTIFICATE CREATION: Cannot continue without ZITI CLI at location \"${NF_ZitiExec}\"." "END"
+    fi
   }
 
+#################################################################################
+# Setup a locally signed set of CAs to facilitate signing of identities.
 FX_SetupCAs() {
   # Expecting NO INPUT.
   local CA_Root CA_RootDir CA_Intermediate CA_IntermediateDir
   local MyTempFile
   local EachIntermediateCA
 
-  FX_AdvancedPrint "COMPLEX:L:-1:2:${FBlue};${Bold}" "ROOT CA: BEGIN [$((SECONDS/60))m $((SECONDS%60))s]" "END"
   CA_Root="CA_Root" # ROOT CA (VERY PRIVATE) - SHOULD NOT BE ABLE TO SIGN CLIENT CERTIFICATES - IDEALLY ONLY ONE.
   CA_RootDir="${MYPWD}/${NF_BaseDir}/${CA_Root}"
-  FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "ROOT CA [${CA_Root}]: Creating directories." "END"
-  FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" mkdir -vp ${MYPWD}/${NF_BaseDir}
-  FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" mkdir -vp ${CA_RootDir}/{certs,csr,private}
+  FX_AdvancedPrint "COMPLEX:L:-1:2:${FBlue};${Bold}" "ROOT CA: BEGIN [$((SECONDS/60))m $((SECONDS%60))s]" "END"
 
-  #################################################################################
-  # Root CA Setup
-  #################################################################################
-  FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "ROOT CA [${CA_Root}]: Generating private key." "END"
-  FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl genrsa -out ${CA_RootDir}/private/${CA_Root}.key 4096
-  ## -x509: Generate a self-signed certificate.
-  ## -days 3650: Valid for 10 years.
-  FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "ROOT CA [${CA_Root}]: Generating self signed certificate with private key." "END"
-  FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl req -x509 -new -nodes -key ${CA_RootDir}/private/${CA_Root}.key -sha256 -days 3650 -out ${CA_RootDir}/certs/${CA_Root}.crt -subj \"${CA_SubjectBasis}/OU=${CA_Root}/CN=Root\"
+  if [[ -f "${CA_RootDir}/certs/${CA_Root}.crt" ]]; then
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FYellow}" "ROOT CA [${CA_Root}]: Certificate already exists." "END"
+  else
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "ROOT CA [${CA_Root}]: Creating directories." "END"
+    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" mkdir -vp ${MYPWD}/${NF_BaseDir}
+    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" mkdir -vp ${CA_RootDir}/{certs,csr,private}
+
+    #################################################################################
+    # Root CA Setup
+    #################################################################################
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "ROOT CA [${CA_Root}]: Generating private key." "END"
+    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl genrsa -out ${CA_RootDir}/private/${CA_Root}.key 4096
+
+    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "ROOT CA [${CA_Root}]: Generating self signed certificate with private key." "END"
+    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl req -x509 -new -nodes -key ${CA_RootDir}/private/${CA_Root}.key -sha256 -days 3650 -out ${CA_RootDir}/certs/${CA_Root}.crt -subj \"${CA_SubjectBasis}/OU=${CA_Root}/CN=Root\"
+  fi
 
   #################################################################################
   # Intermediate CA(s) Setup
@@ -749,27 +885,30 @@ FX_SetupCAs() {
     CA_Intermediate="CA_Intermediate_${EachIntermediateCA}"
     CA_IntermediateDir="${MYPWD}/${NF_BaseDir}/${CA_Intermediate}"
 
-    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "INTERMEDIATE CA [${CA_Intermediate}]: Creating directories." "END"
-    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" mkdir -vp ${CA_IntermediateDir}/{certs,csr,private}
-    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" touch ${CA_IntermediateDir}/index.txt
-    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" tee ${CA_IntermediateDir}/serial < <(echo 1000)
+    if [[ -f "${CA_IntermediateDir}/${CA_Intermediate}.crt" ]]; then
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FYellow}" "INTERMEDIATE CA [${CA_Intermediate}]: Certificate already exists." "END"
+    else
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "INTERMEDIATE CA [${CA_Intermediate}]: Creating directories." "END"
+      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" mkdir -vp ${CA_IntermediateDir}/{certs,csr,private}
+      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" touch ${CA_IntermediateDir}/index.txt
+      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" tee ${CA_IntermediateDir}/serial < <(echo 1000)
 
-    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "INTERMEDIATE CA [${CA_Intermediate}]: Generating private key." "END"
-    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl genrsa -out ${CA_IntermediateDir}/private/${CA_Intermediate}.key 4096
-    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "INTERMEDIATE CA [${CA_Intermediate}]: Generating CSR with private key." "END"
-    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl req -new -key ${CA_IntermediateDir}/private/${CA_Intermediate}.key -out ${CA_IntermediateDir}/csr/${CA_Intermediate}.csr -subj "${CA_SubjectBasis}/OU=${CA_Intermediate}/CN=Intermediate"
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "INTERMEDIATE CA [${CA_Intermediate}]: Generating private key." "END"
+      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl genrsa -out ${CA_IntermediateDir}/private/${CA_Intermediate}.key 4096
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "INTERMEDIATE CA [${CA_Intermediate}]: Generating CSR with private key." "END"
+      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl req -new -key ${CA_IntermediateDir}/private/${CA_Intermediate}.key -out ${CA_IntermediateDir}/csr/${CA_Intermediate}.csr -subj "${CA_SubjectBasis}/OU=${CA_Intermediate}/CN=Intermediate"
 
-    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "INTERMEDIATE CA [${CA_Intermediate}]: Generating signed certificate from CSR with [${CA_Root}] private key." "END"
-    ## -CA XXX.crt: Use the root CA certificate.
-    ## -CAkey XXX.key: Use the root CA’s private key.
-    ## -CAcreateserial: Generate a serial number for the intermediate certificate.
-    ## basicConstraints=CA:TRUE,pathlen:0: Indicates this is a CA certificate with no additional sub-CAs allowed.
-    local MyTempFile="$(mktemp)"
-    echo "basicConstraints=CA:TRUE,pathlen:0" > "${MyTempFile}"
-    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl x509 -req -in ${CA_IntermediateDir}/csr/${CA_Intermediate}.csr -CA ${CA_RootDir}/certs/${CA_Root}.crt -CAkey ${CA_RootDir}/private/${CA_Root}.key -CAcreateserial -out ${CA_IntermediateDir}/${CA_Intermediate}.crt -days 1825 -sha256 -extfile ${MyTempFile}
-    rm -f "${MyTempFile}"
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "INTERMEDIATE CA [${CA_Intermediate}]: Generating signed certificate from CSR with [${CA_Root}] private key." "END"
+      ## -CA XXX.crt: Use the root CA certificate.
+      ## -CAkey XXX.key: Use the root CA’s private key.
+      ## -CAcreateserial: Generate a serial number for the intermediate certificate.
+      ## basicConstraints=CA:TRUE,pathlen:0: Indicates this is a CA certificate with no additional sub-CAs allowed.
+      local MyTempFile="$(mktemp)"
+      echo "basicConstraints=CA:TRUE,pathlen:0" > "${MyTempFile}"
+      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" openssl x509 -req -in ${CA_IntermediateDir}/csr/${CA_Intermediate}.csr -CA ${CA_RootDir}/certs/${CA_Root}.crt -CAkey ${CA_RootDir}/private/${CA_Root}.key -CAcreateserial -out ${CA_IntermediateDir}/${CA_Intermediate}.crt -days 1825 -sha256 -extfile ${MyTempFile}
+      rm -f "${MyTempFile}"
 
-    FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "INTERMEDIATE CA [${CA_Intermediate}]: Generating configuration file \"${CA_IntermediateDir}/${CA_Intermediate}.conf\"." "END"
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "INTERMEDIATE CA [${CA_Intermediate}]: Generating configuration file \"${CA_IntermediateDir}/${CA_Intermediate}.conf\"." "END"
 cat << EOFEOFEOF > ${CA_IntermediateDir}/${CA_Intermediate}.conf
 [ ca ]
 default_ca = CA_default
@@ -794,7 +933,8 @@ x509_extensions    = v3_ca
 [ v3_ca ]
 basicConstraints = CA:TRUE, pathlen:0
 EOFEOFEOF
-    FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" cat ${CA_IntermediateDir}/${CA_Intermediate}.conf
+      FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" cat ${CA_IntermediateDir}/${CA_Intermediate}.conf
+    fi
   done
 }
 
@@ -808,86 +948,51 @@ EOFEOFEOF
 
 # Welcome.
 FX_LogoMessaging "${SystemLogo}" \
-  "3rd Party CA Automation to Provision, Validate, Utilize" \
+  "3rd Party CA Automation to Provision, Verify, Utilize" \
   "https://support.netfoundry.io/hc/en-us/articles/360048210572-How-to-Register-Endpoints-with-Certificates-from-Another-Authority" \
   "Environment Variable [NF_BearerToken]: ${NF_BearerTokenStatus}"
 
 # Get options from command line.
-while getopts "CVLE:" ThisOpt 2>/dev/null; do
+while getopts "CVE:e:l" ThisOpt 2>/dev/null; do
   case ${ThisOpt} in
     "C")
       FLAG_SetupCA="TRUE"
     ;;
     "V")
-      FLAG_ValidateCA="TRUE"
+      FLAG_VerifyCA="TRUE"
     ;;
     "E")
       FLAG_EnrollIDs="TRUE"
-      NF_ZIDQuantity="${OPTARG:-NO_QUANTITY}"
+      NF_EnrollTargets="${OPTARG:-UNSET}"
+      NF_ZIDQuantity="1"
     ;;
-    "L")
+    "e")
+      NF_ZIDQuantity="${OPTARG:-0}"
+    ;;
+    "l")
       FLAG_LearnMode="TRUE"
     ;;
     *)
       FX_AdvancedPrint \
         "COMPLEX:M:-1:1:${BBlue};${Bold}" "HELP MENU" "NEXT" \
-        "COMPLEX:R:10:0:${Normal}" "${MyName[0]}" "COMPLEX:L:10:0:${Normal}" " -C" "COMPLEX:L:0:0:${Normal}" "INCLUDE WORKFLOW: Create local Certificate Authorities (ROOT/INTERMEDIATE)." "NEXT" \
-        "COMPLEX:R:10:0:${Normal}" "${MyName[0]}" "COMPLEX:L:10:0:${Normal}" " -V" "COMPLEX:L:0:0:${Normal}" "INCLUDE WORKFLOW: Per-Network, Upload/Validate/Enable INTERMEDIATE Certificate Authorities in NetFoundry. " "NEXT" \
-        "COMPLEX:R:10:0:${Normal}" "${MyName[0]}" "COMPLEX:L:10:0:${Normal}" " -E [#]" "COMPLEX:L:0:0:${Normal}" "INCLUDE WORKFLOW: Per-Network, Create/Enroll/OutputJSON [#n] Identities using validated INTERMEDIATE Certificate Authority." "NEXT" \
-        "COMPLEX:R:10:0:${Normal}" "${MyName[0]}" "COMPLEX:L:10:0:${Normal}" " -L" "COMPLEX:L:0:0:${Normal}" "LEARN MODE: Output commands used during runtime." "NEXT" \
-        "COMPLEX:R:10:0:${Normal}" "${MyName[0]}" "COMPLEX:L:10:0:${Normal}" " " "COMPLEX:L:0:0:${FYellow}" "INFO: OPTIONS [-V] and [-E] required ENVIRONMENT VARIABLE \"NF_BearerToken\" to be set. (${NF_BearerTokenStatus})" "NEXT" \
+        "COMPLEX:R:10:0:${Normal}" "${MyName[0]}" "COMPLEX:L:22:0:${Normal}" " -C" "COMPLEX:L:0:0:${Normal}" "INCLUDE WORKFLOW: Create local Certificate Authorities (ROOT/INTERMEDIATE)." "NEXT" \
+        "COMPLEX:R:10:0:${Normal}" "${MyName[0]}" "COMPLEX:L:22:0:${Normal}" " -V" "COMPLEX:L:0:0:${Normal}" "INCLUDE WORKFLOW: Per-Network, Upload/Verify/Enable INTERMEDIATE Certificate Authorities in NetFoundry. " "NEXT" \
+        "COMPLEX:R:10:0:${Normal}" "${MyName[0]}" "COMPLEX:L:22:0:${Normal}" " -E [NETUUID:CANAME]" "COMPLEX:L:0:0:${Normal}" "INCLUDE WORKFLOW: Create/Enroll a single identity in [NETUUID] network using [CANAME] Certificate Authority." "NEXT" \
+        "COMPLEX:R:10:0:${Normal}" "${MyName[0]}" "COMPLEX:L:22:0:${Normal}" " -e [#]" "COMPLEX:L:0:0:${Normal}" "[OPTIONAL] For option [-E], Create/Enroll [#] quantity of identities." "NEXT" \
+        "COMPLEX:R:10:0:${Normal}" "${MyName[0]}" "COMPLEX:L:22:0:${Normal}" " -l" "COMPLEX:L:0:0:${Normal}" "LEARN MODE: Output commands used during runtime." "NEXT" \
+        "COMPLEX:R:10:0:${Normal}" "${MyName[0]}" "COMPLEX:L:22:0:${Normal}" " " "COMPLEX:L:0:0:${FYellow}" "INFO: OPTIONS [-V] and [-E] required ENVIRONMENT VARIABLE \"NF_BearerToken\" to be set. (${NF_BearerTokenStatus})" "NEXT" \
         "END"
       FLAG_SetupCA="FALSE"
-      FLAG_ValidateCA="FALSE"
+      FLAG_VerifyCA="FALSE"
       FLAG_EnrollIDs="FALSE"
     ;;
   esac
 done
 
-# Input checking.
-if [[ ${FLAG_EnrollIDs} == "TRUE" ]]; then
-  if [[ ! ${NF_ZIDQuantity} =~ ${ValidNumber} ]] || [[ ! ${NF_ZIDQuantity} -gt 0 ]]; then
-    FX_AdvancedPrint "COMPLEX:M:0:1:${BRed};${Bold}" "ERROR: Value for creation/enrollment of identities \"${NF_ZIDQuantity}\" is invalid." "END"
-    FLAG_SetupCA="FALSE"
-    FLAG_ValidateCA="FALSE"
-    FLAG_EnrollIDs="FALSE"
-  fi
-fi
-
-# If required, setup the CAs first.
-if [[ ${FLAG_SetupCA} == "TRUE" ]]; then
-  FX_AdvancedPrint "COMPLEX:M:-1:1:${BBlue};${Bold}" "SETUP OF CERTIFICATE AUTHORITIES" "END"
-  FX_SetupCAs
-fi
-
-# Validate 3rd party CAs into NetFoundry and/or enroll identities utilizing validated 3rd party CAs.
-if [[ ${FLAG_ValidateCA} == "TRUE" ]] || [[ ${FLAG_EnrollIDs} == "TRUE" ]]; then
-  if [[ -z "${NF_BearerToken}" ]]; then
-    FX_AdvancedPrint "COMPLEX:M:0:1:${BRed};${Bold}" "ERROR: Function requires ENVIRONMENT VARIABLE \"NF_BearerToken\" to be set." "END"
-  elif ! FX_JWTDecoder "${NF_BearerToken}" "VALIDATE"; then
-    FX_AdvancedPrint "COMPLEX:M:0:1:${BRed};${Bold}" "ERROR: ENVIRONMENT VARIABLE \"NF_BearerToken\" is set, however, it is not valid/expired. (${NF_BearerTokenStatus})" "END"
-  else
-    if [[ ${FLAG_ValidateCA} == "TRUE" ]]; then
-      FX_AdvancedPrint "COMPLEX:M:-1:1:${BBlue};${Bold}" "VALIDATION OF CERTIFICATE AUTHORITIES IN NETFOUNDRY" "END"
-      for EachNetworkID in ${NF_NetworkIDs[@]}; do
-        for EachCATarget in ${NF_CATargets[@]}; do
-            FX_Primary "${EachNetworkID}" "${EachCATarget}"
-        done
-      done
-    fi
-    if [[ ${FLAG_EnrollIDs} == "TRUE" ]]; then
-      FX_AdvancedPrint "COMPLEX:M:-1:1:${BBlue};${Bold}" "CREATION AND ENROLLMENT OF IDENTITIES" "END"
-      for EachNetworkID in ${NF_NetworkIDs[@]}; do
-        for EachCATarget in ${NF_CATargets[@]}; do
-          FX_Secondary "${EachNetworkID}" "${EachCATarget}" "${NF_ZIDQuantity}"
-        done
-      done
-    fi
-  fi
-fi
+FX_PrimaryRuntime
 
 FX_AdvancedPrint "COMPLEX:M:-1:1:${BBlue};${Bold}" "DONE [RunTime: $((SECONDS/60))m $((SECONDS%60))s]"
-tput cnorm # Ensure cursor is visible.
+tput cnorm # Ensure cursor is visible again.
 stty sane 2>/dev/null # Return sanity to the input processing.
 exit 0
 ##########################################################################################################################################
