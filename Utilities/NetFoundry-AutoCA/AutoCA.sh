@@ -11,22 +11,22 @@ NF_NetworkIDs=(
   "6e9af693-beee-40ef-8163-13efceeb9723" # 0
   "31af4926-c22f-41f2-b43a-cc41f4360b1f" # 1
 )
-# NetFoundry Networks CA Naming: Within the Xn NetFoundry networks, configure/utilize each of these CAs.
+# NetFoundry Networks CA Naming: [PER NETWORK ID] Within the Xn NetFoundry networks, configure/utilize each of these CAs.
 NF_CATargets=(
   "SigningCA_1" # 0
   "SigningCA_2" # 1
 )
-# NetFoundry Networks CA Subject Basis: The corresponding x509 syntax for the 3rd Party CA.
+# NetFoundry Networks CA Subject Basis: [PER CA TARGET] The corresponding x509 syntax for the 3rd Party CA.
 CA_SubjectBasis=(
   "/C=US/ST=CO/L=Denver/O=${NF_CATargets[0]}" # 0
   "/C=US/ST=TX/L=Dallas/O=${NF_CATargets[1]}" # 1
 )
-# Format of Naming: Any combination of strings and/or the these variables [caName] [caId] [commonName] [requestedName] [identityId].
+# Format of Naming: [PER CA TARGET] Any combination of strings and/or the these variables [caName] [caId] [commonName] [requestedName] [identityId].
 NF_IdentityNamings=(
   "[caName]-[commonName]" # 0
   "[caName]-[commonName]" # 1
 )
-# Attributes given by default in (\"#[NAME]\",) format.
+# Identity Attribution: [PER CA TARGET] Attributes given by default in (\"#[NAME]\",) format.
 NF_IdentityAttributes=(
   "\"#NetFoundry_Admin\",\"#Customer_Admin\"" # 0
   "\"#NFTEST\"" # 1
