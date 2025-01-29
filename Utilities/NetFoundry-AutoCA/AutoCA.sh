@@ -9,7 +9,6 @@
 # NetFoundry Networks: The target NetFoundry network(s).
 NF_NetworkIDs=(
   "6e9af693-beee-40ef-8163-13efceeb9723" # 0
-  "31af4926-c22f-41f2-b43a-cc41f4360b1f" # 1
 )
 # NetFoundry Networks CA Naming: [PER NETWORK ID] Within the Xn NetFoundry networks, configure/utilize each of these CAs.
 NF_CATargets=(
@@ -33,7 +32,7 @@ NF_IdentityAttributes=(
 )
 
 # The location of the ZITI CLI executable. (./ziti) OR (/path/to/ziti)
-NF_ZitiExec="ziti"
+NF_ZitiExec="./ziti"
 
 ##########################################################################################################################################
 # DO NOT EDIT BELOW THIS LINE WITHOUT KNOWING WHAT YOU ARE DOING!
@@ -668,7 +667,6 @@ FX_VerifyCAs() {
   local NF_IdentityNamings="${5}"
   local CA_Intermediate CA_IntermediateDir
 
-
   CA_Intermediate="CA_Intermediate_${NF_CATarget}"
   CA_IntermediateDir="${MYPWD}/${NF_BaseDir}/${CA_Intermediate}"
 
@@ -728,7 +726,7 @@ EOFEOFEOF
       FX_PrintHelper "FILL:2:0:${Normal}" "FALSE" cat ${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env
       source "${NF_NetworksDir}/${NF_NetworkID}/${NF_CATarget}.env"
     else
-      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: A failure occurred while communicating with NetFoundry."
+      FX_AdvancedPrint "FILL:1:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "NETWORK ID [${NF_NetworkID}]: CATARGET [${NF_CATarget}]: A failure occurred while communicating with NetFoundry." "END"
     fi
   fi
 
