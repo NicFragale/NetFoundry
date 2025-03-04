@@ -253,8 +253,8 @@ ZT_CONFIG_CMAKEOPTS[((iCC++))]="-DCMAKE_PREFIX_PATH=${ZT_OWRT_BUILDTOOLCHAIN}/${
 ZT_CONFIG_CMAKEOPTS[((iCC++))]="-DCMAKE_TOOLCHAIN_FILE=${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/toolchains/${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}-openwrt.cmake"
 ZT_CONFIG_CMAKEOPTS[((iCC++))]="-DGIT_VERSION=${ZT_TUNVER}-0-0"
 [[ ${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}} == "aarch64" ]] \
-    && ZT_CONFIG_CMAKEOPTS[((iCC++))]="--preset ci-linux-arm64-static-libssl" \
-    || ZT_CONFIG_CMAKEOPTS[((iCC++))]="--preset ci-linux-${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}-static-libssl"
+    && ZT_CONFIG_CMAKEOPTS[((iCC++))]="--preset ci-linux-arm64" \
+    || ZT_CONFIG_CMAKEOPTS[((iCC++))]="--preset ci-linux-${ZT_OWRT_TCINFO_X:-${ZT_OWRT_TCINFO[0]}}"
 ZT_CONFIG_CMAKEOPTS[((iCC++))]="-S ${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}"
 ZT_CONFIG_CMAKEOPTS[((iCC++))]="-B ${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build"
 ZT_BUILD_CMAKEOPTS[((iBC++))]="--build ${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build"
