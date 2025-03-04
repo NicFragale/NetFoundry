@@ -2,7 +2,7 @@
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the build server as a BUILD CAPABLE USER (ROOT is assumed in this example).
 MY_NAME="OWRT_Builder"
-MY_VERSION="20240701"
+MY_VERSION="20250304"
 MY_DESCRIPTION="NFragale: Compile/Build Helper for OpenZITI/OpenWRT"
 ################################################################################################################
 
