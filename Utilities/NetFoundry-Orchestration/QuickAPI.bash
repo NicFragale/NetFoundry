@@ -741,7 +741,7 @@ FX_PrintHelp() {
   FX_AdvancedPrint \
     "COMPLEX:M:-1:1:${Bold};${FWhite};${BBlue}" "PROGRAM HELP MENU" "NEXT" \
     "COMPLEX:L:0:0:${Bold}" "INPUT OPTIONS" "NEXT" \
-    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-h" "COMPLEX:L:0:0:${Normal}" "Display this help menu." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-c \"FILE\"" "COMPLEX:L:0:0:${Normal}" "INPUT: Read from MOP Credentials File." "NEXT" \
     "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mER" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT REVIEW." "NEXT" \
     "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mEC" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT CREATE." "NEXT" \
     "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mEM" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT MODIFY." "NEXT" \
@@ -1200,8 +1200,16 @@ FX_LogoMessaging "${SystemLogo}" "${MyPurpose[0]}" "${MyPurpose[1]}"
 
 # Switching syntax.
 # Get options from command line.
-	while getopts "n:N:m:a:A:ifFhH" ThisOpt; do
+	while getopts "c:n:N:m:a:A:ifFhH" ThisOpt; do
 		case "${ThisOpt}" in
+      "c")
+        [[ ! -f "${OPTARG}" ]] \
+          && FX_AdvancedPrint "COMPLEX:L:20:0:${FRed}" "ERROR" "COMPLEX:L:0:0:${Normal}" "The referenced credential file \"${OPTARG}\" is not valid." "END" \
+          && FX_GotoExit "1"
+          export MyMOPClientID="$(jq -r '.clientId // ""' "${OPTARG}" 2>/dev/null)"
+          export MyMOPSecret="$(jq -r '.password // ""' "${OPTARG}" 2>/dev/null)"
+          export MyMOPAuthURL="$(jq -r '.authenticationUrl  // ""' "${OPTARG}" 2>/dev/null)"
+      ;;
       "n")
         [[ "${#OPTARG}" -le 2 ]] \
           && FX_AdvancedPrint "COMPLEX:L:20:0:${FRed}" "ERROR" "COMPLEX:L:0:0:${Normal}" "Name \"${OPTARG}\" must be greater than TWO characters long." "END" \
