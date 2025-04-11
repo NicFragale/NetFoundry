@@ -6,14 +6,20 @@
 </center></p>
 <br>
 
-This utility acts as a quick and easy way to interact with the NetFoundry Orchestration Platform (MOP) with a limited set of capabilities.  The WEB UI (Console) that acts as a mechanism for general MOP interactions using HTTP provides a rich experience for an admin of a ZITI network.  Though, a CLI construct can sometimes lend to a faster method of interactation with such a system.
+This utility acts as a quick and easy way to interact with the NetFoundry Orchestration Platform (MOP) with a limited set of capabilities.  The WEB UI (Console) is a mechanism for general MOP interactions using HTTP provides a rich experience for an admin of a ZITI network.  Though, a CLI construct can sometimes lend to a faster method of interactation with such a system.
 
 The full APIv2 spec for management can be found at the [API Guide](https://gateway.production.netfoundry.io/core/v2/docs/index.html).
 
 ---
 
+Before running this utility:
+1. Export in your shell the API CLIENT and API SECRET generated from the NetFoundry MOP.
+2. To validate the utility is able to access the exported variables, run it with the "-h" syntax and review the output.
+
+---
+
 Basic functions of this utility are:
-1. Upon initialization of the utility runtime, use an API CLIENT and API SECRET generated from the NetFoundry MOP and available in the environment of the running shell.
+1. Upon initialization, parse and store the API CLIENT and API SECRET which the user has made available in the environment of the running shell.
 2. Convert the API CLIENT AND API SECRET into a time-limited BEARER TOKEN.
 3. Utilize the time-limited BEARER TOKEN to interact with the MOP, explictly with the network(s) tied to it.
 4. Upon conclusion of the utility runtime, destroy the time-limited BEARER TOKEN.
@@ -30,10 +36,6 @@ In the future, as time permits development, the utility will also have functiona
 2. Add/remove objects starting with simple and eventually moving to advanced inputs.
 3. Rename objects.
 4. ...and more.
-
-```
-ABC
-```
 
 For more information about OpenZITI, check out the Github page at [The OpenZITI Repo](https://github.com/openziti).
 

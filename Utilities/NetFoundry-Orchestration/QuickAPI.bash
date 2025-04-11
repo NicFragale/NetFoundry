@@ -4,7 +4,7 @@ MyName="${0}"
 MyPurpose=("OpenZiti by NetFoundry" "Automation for Quick RESTful Interaction with NetFoundry Cloud")
 MyWarranty="This program comes without any warranty, implied or otherwise."
 MyLicense="This program has no license."
-MyVersion="1.0.20240801 : Nic Fragale @ NetFoundry"
+MyVersion="1.0.20250411 : Nic Fragale @ NetFoundry"
 MyCurrentDate="$(date)"
 ####################################################################################################
 
@@ -938,18 +938,27 @@ FX_RESTExtract() {
   local MyOutput
 
   # Extract information from the JSON.
-  MyOutput="$(
+  mapfile -t MyOutput < <(
     jq -r '
-      .RESULT = (.errors // "SUCCESS :-: " + (.'"${MyExtractKey}"' | tostring))
+      .RESULT = (.errors // "[[RETAOK]]" + (.'"${MyExtractKey}"' | tostring))
       | .RESULT
     ' <<< "${MyRestJSON[@]}"
-  )"
+  )
 
   # Review and return.
-  [[ ${MyOutput%% :-: *} == "SUCCESS" ]] \
-    && echo "${MyOutput//SUCCESS :-: /}" \
-    || echo "FAILED :-: ${MyOutput:-${MyRestJSON}}"
+  for ((i=0;i<${#MyOutput[@]};i++)); do
+    if [[ "${MyOutput[${i}]:0:10}" != "[[RETAOK]]" ]]; then
+      echo "[[RETNOK]]${MyOutput[${i}]:-${MyRestJSON[@]}}"
+      return 1
+    else
+      MyOutput[${i}]="${MyOutput[${i}]:10}"
+    fi
+  done
 
+  # Success if assessment made it this far.
+  for ((i=0;i<${#MyOutput[@]};i++)); do
+    echo "${MyOutput[${i}]}"
+  done
   return 0
 }
 
@@ -977,11 +986,11 @@ FX_ObtainBearer() {
     MyAccessToken="${MyAccessTokenEnv}"
   fi
   # Report and return.
-  if [[ ${MyAccessToken%% :-: *} != "FAILED" ]] && FX_JWTDecoder "${MyAccessToken}" "VALIDATE"; then
+  if [[ "${MyAccessToken:0:10}" != "[[RETNOK]]" ]] && FX_JWTDecoder "${MyAccessToken}" "VALIDATE"; then
     FX_AdvancedPrint "COMPLEX:L:65:0:${Normal}" "$(FX_JWTDecoder "${MyAccessToken}" "TIMEREMAINING")" "END"
   else
     FX_AdvancedPrint "COMPLEX:L:0:0:${FRed}" "FAILED [SEE OUTPUT FOLLOWING]" "END"
-    echo "${MyAccessToken#* :-: }"
+    echo "${MyAccessToken:10}"
     return 1
   fi
 }
@@ -1001,17 +1010,27 @@ FX_ObtainObjects() {
       "GET:${MyMOPAccessURL}/${MyObjectType}s"
   )"
   MyEmbeddedList="$(FX_RESTExtract "_embedded" "${MyRESTResponse}")"
-  if [[ ${MyEmbeddedList%% :-: *} != "FAILED" ]]; then
+
+  # First gate checking: Was the list returned successfully?
+  if [[ "${MyEmbeddedList:0:10}" != "[[RETNOK]]" ]]; then
     MyObjects="$(FX_RESTExtract "${MyObjectType}List[]" "${MyEmbeddedList}")"
     IFS=$'\n'
     MyObjectsNames=( $(FX_RESTExtract "name" "${MyObjects}") )
     MyObjectsIDs=( $(FX_RESTExtract "id" "${MyObjects}") )
     MyObjectsAttributes=( $(FX_RESTExtract "attributes" "${MyObjects}") )
     IFS=$' \t\n'
-    FX_AdvancedPrint "COMPLEX:L:65:0:${Normal}" "OK! [FOUND ${#MyObjectsIDs[@]} ${MyObjectType^^} OBJECTS TOTAL]" "END"
+  fi
+
+  # Second gate checking: Was everything returned successfully?
+  if [[ "${MyEmbeddedList:0:10}" != "[[RETNOK]]" ]] \
+    && [[ "${MyObjects:0:10}" != "[[RETNOK]]" ]] \
+    && [[ "${MyObjectsNames:0:10}" != "[[RETNOK]]" ]] \
+    && [[ "${MyObjectsIDs:0:10}" != "[[RETNOK]]" ]] \
+    && [[ "${MyObjectsAttributes:0:10}" != "[[RETNOK]]" ]]; then
+      FX_AdvancedPrint "COMPLEX:L:65:0:${Normal}" "OK! [FOUND ${#MyObjectsIDs[@]} ${MyObjectType^^} OBJECTS TOTAL]" "END"
   else
     FX_AdvancedPrint "COMPLEX:L:0:0:${FRed}" "FAILED [SEE OUTPUT FOLLOWING]" "END"
-    echo "${MyEmbeddedList#* :-: }"
+    echo "${MyEmbeddedList:10}"
     return 2
   fi
 }
@@ -1036,11 +1055,11 @@ FX_UpdateObject() {
       }"
   )"
   MyObjectAttributes="$(FX_RESTExtract "attributes[] // \"EMPTY\"" "${MyRESTResponse}")"
-  if [[ ${MyObjectAttributes%% :-: *} != "FAILED" ]]; then
+  if [[ "${MyObjectAttributes:0:10}" != "[[RETNOK]]" ]]; then
     FX_AdvancedPrint "COMPLEX:L:0:0:${FGreen}" "OK!" "END"
   else
     FX_AdvancedPrint "COMPLEX:L:0:0:${FRed}" "FAILED [SEE OUTPUT FOLLOWING]" "END"
-    echo "${MyObjectAttributes#* :-: }"
+    echo "${MyObjectAttributes:10}"
     return 3
   fi
 }
