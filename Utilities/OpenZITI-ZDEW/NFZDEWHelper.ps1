@@ -1,5 +1,5 @@
  ###################################################################################################################
-# NFZDEWHelper - A helper utility for installing/enrolling/DNSing NetFoundry OpenZITI Desktop Edge for Windows.
+# NFZDEWHelper - A helper utility for installing/enrolling/DNSing NetFoundry OpenZiti Desktop Edge for Windows.
 # Written by Nic Fragale @ NetFoundry.
 ###################################################################################################################
 ############################################# DO NOT MODIFY THIS FILE #############################################
@@ -29,7 +29,7 @@ param(
 ### STATIC VARIABLES LOADER ###
 $MyWarranty     = "This program comes without any warranty, implied or otherwise."
 $MyLicense      = "This program utilizes the Apache 2.0 license."
-$MyVersion      = "20231205"
+$MyVersion      = "20250418"
 $SystemRuntime  = [system.diagnostics.stopwatch]::StartNew()
 $MyPath         = Split-Path $MyInvocation.MyCommand.Path
 $ThisUser       = [System.Security.Principal.WindowsIdentity]::GetCurrent()
@@ -68,7 +68,7 @@ $OptionalCmds	= @(
 $ConfigDefaults	= '
 	$script:DefaultMode     = "environment" # Default mode if no options arguments are passed in. See help menu for options.
 	$script:AutoUpdate      = "true" # Instructs the program to check for an update to itself from the specified server (true=try to update | false=ignore).
-	$script:ServerURL       = "https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW" # Update server URL.
+	$script:ServerURL       = "https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZiti-ZDEW" # Update server URL.
 	$script:ServerRootExec  = "NFZDEWHelper.ps1" # Filename of runtime on update server.
 	$script:ZDERVer         = "AUTO" # ZITI Desktop Edge (Win) version to target from repos (AUTO=find automatically | [X.XX.XX=target this version]).
 	$script:ZCLIRVer        = "AUTO" # ZITI CLI version to target from repos (AUTO=find automatically | [X.XX.XX]=target this version).
@@ -387,7 +387,7 @@ function DownloadInstall {
 				GoToPrint "1" "White:Red" "Download failed. Cannot continue."
 				return 0
 			}
-			GoToPrint "1" "DarkGray" "Waiting for OpenZITI installation binary to become available, please wait... ($WAITCOUNT/20)"
+			GoToPrint "1" "DarkGray" "Waiting for OpenZiti installation binary to become available, please wait... ($WAITCOUNT/20)"
 			Start-Sleep 1
 		} until (Test-Path "$MyTmpPath\$ZDERBinary")
 		GoToPrint "1" "Green" "Download succeeded."
@@ -400,7 +400,7 @@ function DownloadInstall {
 		#	GoToPrint "1" "White:Red" "EXPECTED HASH: $ZDERBinaryHashExpected"
 		#	return 0
 		#}
-		GoToPrint "1" "Green" "OpenZITI installation binary is available. Download complete."
+		GoToPrint "1" "Green" "OpenZiti installation binary is available. Download complete."
 
 		GoToPrint "1" "Yellow" "Now installing NetFoundry software silently, please wait..."
 		Start-Process "$MyTmpPath\$ZDERBinary" -WorkingDirectory "$MyTmpPath" -ArgumentList "/PASSIVE" -Wait
@@ -415,10 +415,10 @@ function DownloadInstall {
 			return 1
 		} else {
 			if (-NOT (Test-Path "$ZRPath\$ZUIRBinary"))  {
-				GoToPrint "1" "White:Red" "OpenZITI runtime binary at path [$ZRPath\$ZUIRBinary] does not exist."
+				GoToPrint "1" "White:Red" "OpenZiti runtime binary at path [$ZRPath\$ZUIRBinary] does not exist."
 			}
 			if (($EnrollMethod -EQ "NATIVE") -AND (-NOT (Test-Path "$ZDECLIEnroll")))  {
-				GoToPrint "1" "White:Red" "OpenZITI CLI at path [$ZDECLIEnroll] does not exist."
+				GoToPrint "1" "White:Red" "OpenZiti CLI at path [$ZDECLIEnroll] does not exist."
 			}
 			GoToPrint "1" "White:Red" "Install failed.  Cannot continue."
 			return 0
@@ -544,15 +544,19 @@ function RunEnroll {
 		$JSONObj = Parse-JWTtoken (Get-Content "$TargetJWT")
 		if (-NOT ($JSONObj -EQ "")) {
 			$JSONExp = (([System.DateTimeOffset]::FromUnixTimeSeconds($JSONObj.exp)).DateTime).ToString()
-			if ((Get-Date) -GT $JSONExp) {
+			if ((Get-Date) -GT $JSONExp -AND $JSONObj.em -EQ "ott") {
 				GoToPrint "1" "Red" "Enrollment of [$TargetFile] failed because it is expired as of [$JSONObj]."
 				return
 			} elseif (Test-Path -Path "$ZDEKSPath\$TargetFile.json" -PathType Leaf) {
 				GoToPrint "1" "Yellow" "Enrollment of [$TargetFile] will not occur because it has already been enrolled."
 				return
 			} else {
-				GoToPrint "3" "DarkGray" "The JWT points towards the OpenZITI controller at [$($JSONObj.iss)]."
-				GoToPrint "3" "DarkGray" "The JWT has an expiration of [$JSONExp]."
+				GoToPrint "3" "DarkGray" "The JWT points towards the OpenZiti controller at [$($JSONObj.iss)]."
+				if ($JSONObj.em -EQ "network") {
+					GoToPrint "3" "DarkGray" "The JWT has an expiration of [$JSONExp]."
+				} else {
+					GoToPrint "3" "DarkGray" "The JWT is network-only, and has no expiration."
+				}
 				GoToPrint "3" "Green" "Enrollment of [$TargetFile] proceeding."
 			}
 		} else {
@@ -571,27 +575,27 @@ function RunEnroll {
 				do {
 					$WAITCOUNT++
 					if ($WAITCOUNT -GT 20) {
-						GoToPrintJSON "1" "Red" "The OpenZITI IPC pipe failed to become available."
+						GoToPrintJSON "1" "Red" "The OpenZiti IPC pipe failed to become available."
 						ZPipeRelay "CLOSE"
 						return
 					}
-					GoToPrintJSON "1" "DarkGray" "Waiting for OpenZITI IPC pipe to become available, please wait... ($WAITCOUNT/20)"
+					GoToPrintJSON "1" "DarkGray" "Waiting for OpenZiti IPC pipe to become available, please wait... ($WAITCOUNT/20)"
 				} until (ZPipeRelay "OPEN")
-				GoToPrintJSON "1" "DarkGray" "The OpenZITI IPC pipe became available."
+				GoToPrintJSON "1" "DarkGray" "The OpenZiti IPC pipe became available."
 
 				$WAITCount = 0
 				do {
 					$WAITCOUNT++
 					if ($WAITCOUNT -GT 20) {
-						GoToPrintJSON "1" "Red" "The OpenZITI IPC pipe failed to accept inbound enrollment request."
+						GoToPrintJSON "1" "Red" "The OpenZiti IPC pipe failed to accept inbound enrollment request."
 						ZPipeRelay "CLOSE"
 						return
 					}
-					GoToPrintJSON "1" "DarkGray" "Sending the OpenZITI IPC pipe the enrollment request, please wait... ($WAITCOUNT/20)"
-					ZPipeRelay "{""Data"":{""JwtFileName"":""$TargetFile.jwt"",""JwtContent"":""$TargetJWTString""},""Command"":""AddIdentity""}\n"
+					GoToPrintJSON "1" "DarkGray" "Sending the OpenZiti IPC pipe the enrollment request, please wait... ($WAITCOUNT/20)"
+					ZPipeRelay "{""Data"":{""IdentityFilename"":""$TargetFile.json"",""JwtContent"":""$TargetJWTString"",""UseKeychain"":true},""Command"":""AddIdentity""}\n"
 					start-sleep 1
 				} until (ZPipeRelay "READ")
-				GoToPrintJSON "1" "DarkGray" "The OpenZITI IPC pipe accepted the enrollment request."
+				GoToPrintJSON "1" "DarkGray" "The OpenZiti IPC pipe accepted the enrollment request."
 
 				$script:ZIPCIOENROLLRESPONSE
 
@@ -618,11 +622,11 @@ function RunEnroll {
 					}
 				} elseif ($CurrentLineJSON.Success -EQ $true) {
 					$EnrollState = $CurrentLineJSON.Success
-					GoToPrint "1" "Green" "The OpenZITI IPC pipe returned [$EnrollState]."
+					GoToPrint "1" "Green" "The OpenZiti IPC pipe returned [$EnrollState]."
 					break
 				} elseif ($CurrentLineJSON.Success -EQ $false) {
 					$EnrollState = $CurrentLineJSON.Success
-					GoToPrint "1" "Red" "The OpenZITI IPC pipe returned [$EnrollState] with message [$($CurrentLineJSON.Error)]."
+					GoToPrint "1" "Red" "The OpenZiti IPC pipe returned [$EnrollState] with message [$($CurrentLineJSON.Error)]."
 					break
 				}
 			} while (((Get-Job -Name "$TargetFile-ZENROLL").HasMoreData) -EQ $true)
