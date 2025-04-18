@@ -13,3 +13,4 @@ $script:OverwriteInst	= "true" # If set to "true" will overwrite if software alr
 #$script:AddSuffix		= "domain.local" # Change the following DOMAIN and NAMESERVERS as appropriate.
 #$script:Domain			= @(".domain.local")
 #$script:NameServers	= @("1.2.3.4" "5.6.7.8")
+#$script:InputJWT       = "[JWT STRING]"
