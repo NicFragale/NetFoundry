@@ -552,7 +552,7 @@ function RunEnroll {
 				return
 			} else {
 				GoToPrint "3" "DarkGray" "The JWT points towards the OpenZiti controller at [$($JSONObj.iss)]."
-				if ($JSONObj.em -EQ "network") {
+				if ($JSONObj.em -EQ "ott") {
 					GoToPrint "3" "DarkGray" "The JWT has an expiration of [$JSONExp]."
 				} else {
 					GoToPrint "3" "DarkGray" "The JWT is network-only, and has no expiration."
