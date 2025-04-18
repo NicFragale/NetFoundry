@@ -985,7 +985,7 @@ function PrintHelp {
 	GoToPrint "1" "DarkGray" "-verbosity [0-3]        : [OPTION] Affects logging output where a higher number is more verbose."
 	GoToPrint "1" "DarkGray" "-force                  : [OPTION] Affects certain [MODE]s which normally prompt by forcing an affirmative answer."
 	GoToPrint "1" "DarkGray" "-JWT [STR]              : [OPTION] Affects certain [MODE]s which normally would seek a JWT."
-	GoToPrint "1" "DarkGray" "-conf (SERVERURL)       : [OPTION] Will attempt to load configuration from ""SERVERURL"" (EX: https://fragale.us/PDATA/NFZDEWHelper_conf.ps1)"
+	GoToPrint "1" "DarkGray" "-conf (URL)       : [OPTION] Will attempt to load configuration from ""URL"" (EX: https://fragale.us/PDATA/NFZDEWHelper_conf.ps1)"
 }
 
 # Cleanup any temporary files and folders before exit is called.
