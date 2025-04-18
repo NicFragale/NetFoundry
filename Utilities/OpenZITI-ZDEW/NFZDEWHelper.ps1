@@ -187,7 +187,7 @@ function RunGetCurrentEnv ($GetTypes="ALL") {
 		} else {
 			GoToPrint "1" "Yellow" "OPENZITI WINDOWS DESKTOP EDGE [NOTRUNNING]."
 		}
-		if (FindProcess "ziti-tunnel") {
+		if (FindProcess "ziti-edge-tunnel") {
 			GoToPrint "1" "Green" "OPENZITI WINDOWS TUNNEL [RUNNING]."
 		} else {
 			GoToPrint "1" "Yellow" "OPENZITI WINDOWS TUNNEL [NOTRUNNING]."
