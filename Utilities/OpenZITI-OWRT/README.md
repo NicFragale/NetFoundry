@@ -1,7 +1,7 @@
 <p><center>
     <h1><b>NetFoundry OpenZITI Utility: Compile and Build Helper for OpenWRT</b></h1>
-    
-![OpenZITI_OpenWRT][PS-shield] 
+
+![OpenZITI_OpenWRT][PS-shield]
 
 </center></p>
 
@@ -14,16 +14,16 @@
 </center></p>
 
 <p>
-    
+
 Run this on your build machine to obtain the compressed runtime file.
 ```
-bash <(curl -Ls https://owrtbuilder.fragale.us) [OpenWRT_Version] [Target_Part_A] [Target_Part_B]
+curl -fsSL https://owrtbuilder.fragale.us | bash -s -- [OpenWRT_Version] [Target_Part_A] [Target_Part_B]
 ```
 
 Copy the compressed runtime file to your OpenWRT router and place it into `/tmp`.  Then run this on your OpenWRT router.
 ```
 opkg update && opkg install bash
-bash <(curl -Ls https://owrtinstaller.fragale.us)
+curl -fsSL https://owrtinstaller.fragale.us | bash
 ```
 
 <br>
@@ -47,7 +47,7 @@ chmod 755 ./OWRT_Builder.bash
 ```
 bash <(curl -Ls https://owrtbuilder.fragale.us [OpenWRT_Version]) [Target_Part_A] [Target_Part_B] [OpenZITI_Tunnel_Version]
 ```
-WHERE: 
+WHERE:
 * `[OpenWRT_Version]` is the OpenWRT version you wish to use [https://downloads.openwrt.org/releases].
 * `[Target_Part_A]` is the first part of the target platform from within the version to use.
 * `[Target_Part_B]` is the second part of the target platform from within the version to use.
@@ -56,16 +56,16 @@ WHERE:
 EXAMPLES:
 ```
 # Run the builder with OpenWRT version "22.03.3", platform "ath79/nand", using OpenZITI version "latest".
-bash <(curl -Ls https://owrtbuilder.fragale.us) "22.03.3" "ath79" "nand" "latest"   
+curl -fsSL https://owrtbuilder.fragale.us | bash -s -- "22.03.3" "ath79" "nand" "latest"
 ```
 ```
 # Run the builder with OpenWRT version "22.03.3", platform "ipq806x/generic", assume OpenZITI version "latest".
-bash <(curl -Ls https://owrtbuilder.fragale.us) "22.03.3" "ipq806x" "generic"
+curl -fsSL https://owrtbuilder.fragale.us | bash -s -- "22.03.3" "ipq806x" "generic"
 ```
 
 ```
 # Run the builder with OpenWRT version "22.03.3", platform "ath79/nand", using OpenZITI version "0.21.0".
-bash <(curl -Ls https://owrtbuilder.fragale.us) "22.03.3" "ipq806x" "generic" "0.21.0"
+curl -fsSL https://owrtbuilder.fragale.us | bash -s -- "22.03.3" "ipq806x" "generic" "0.21.0"
 ```
 
 
@@ -86,26 +86,26 @@ chmod 755 ./OWRT_Installer.bash
 ```
 -OR-
 ```
-bash <(curl -Ls https://owrtinstaller.fragale.us) [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download]
+curl -fsSL https://owrtinstaller.fragale.us | bash -s -- [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download]
 ```
-WHERE: 
+WHERE:
 * `[OpenZITI_Tunnel_Compressed_Build]` is the name of the compressed build of the OpenZITI binary built by the first step in format "OpenWRT-[OWRT_VERSION]-[TARGETA]_[TARGETB].gz".
 * `[URL_To_Download]` is the URL location of the compressed build - folder path only.
 
 EXAMPLES:
 ```
 # Run the installer with compressed file "OpenWRT-22.03.3-ath79_nand.gz" which is located at "https://owrtbuilds.fragale.us/0.21.0/".
-bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.5-ath79_nand.gz" "https://owrtbuilds.fragale.us/0.21.5"
+curl -fsSL https://owrtinstaller.fragale.us | bash -s -- "OpenWRT-22.03.5-ath79_nand.gz" "https://owrtbuilds.fragale.us/0.21.5"
 ```
 ```
 # Run the installer with compressed file "OpenWRT-22.03.3-ipq806x_generic.gz" which is located locally in (/tmp).
-bash <(curl -Ls https://owrtinstaller.fragale.us) "OpenWRT-22.03.5-ipq806x_generic.gz"
+curl -fsSL https://owrtinstaller.fragale.us | bash -s -- "OpenWRT-22.03.5-ipq806x_generic.gz"
 ```
 ```
-# Run the installer and review the system to determine the name of the compressed file which is located locally in (/tmp) OR locate the uncompressed file (ziti-edge-tunnel) in (/tmp) if it exists instead. 
-bash <(curl -Ls https://owrtinstaller.fragale.us)
+# Run the installer and review the system to determine the name of the compressed file which is located locally in (/tmp) OR locate the uncompressed file (ziti-edge-tunnel) in (/tmp) if it exists instead.
+curl -fsSL https://owrtinstaller.fragale.us | bash 
 ```
 
-> HINT: The utility will setup the runtime if spaces allows, however, if less than 7MB is available to install, it will attempt to run DYNAMICALLY.  In this mode of operation, all services are created to launch the runtime, except the runtime itself it will be downloaded at boottime - every time.  This allows a limited space device to run OpenZITI even when space is limited.  Ideally, the download location is within a private LAN (NOT INTERNET), uses HTTPS as the protocol, and is located on a server that you control for security reasons.  Note that in this mode you MUST specify the compressed file name (format as above) AND URL where it can be obtained or this operation will fail.  
+> HINT: The utility will setup the runtime if spaces allows, however, if less than 7MB is available to install, it will attempt to run DYNAMICALLY.  In this mode of operation, all services are created to launch the runtime, except the runtime itself it will be downloaded at boottime - every time.  This allows a limited space device to run OpenZITI even when space is limited.  Ideally, the download location is within a private LAN (NOT INTERNET), uses HTTPS as the protocol, and is located on a server that you control for security reasons.  Note that in this mode you MUST specify the compressed file name (format as above) AND URL where it can be obtained or this operation will fail.
 
 [PS-shield]: https://img.shields.io/badge/Code%20Basis-Linux%20BASH-blue.svg
