@@ -298,8 +298,7 @@ jq 'if any(.configurePresets[]; .name == "ci-linux-mipsel")
     end' "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets.json" > "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets_UPDATED.json"
 [[ -f "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets_UPDATED.json" ]] \
     && mv -f "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets_UPDATED.json" "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets.json"
-sed -i -e '/stack\[128\]/i /*' -e '/free(symbols)/a */' /tmp/OpenWRT-22.03.0-ramips_mt7620/ziti-tunnel-sdk-c-1.5.11/programs/ziti-edge-tunnel/ziti-edge-tunnel.c
-sed -i -e '/execinfo.h/i /*' -e '/execinfo.h/a */' /tmp/OpenWRT-22.03.0-ramips_mt7620/ziti-tunnel-sdk-c-1.5.11/programs/ziti-edge-tunnel/ziti-edge-tunnel.c
+sed -i -e '/stack\[128\]/i /*' -e '/free(symbols)/a */' -e '/execinfo.h/i /*' -e '/execinfo.h/a */' "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/programs/ziti-edge-tunnel/ziti-edge-tunnel.c"
 cmake ${ZT_CONFIG_CMAKEOPTS[@]} || GTE ${ZT_STEP}
 # Note: This is only required on pre-0.21.6 releases of TSDK.
 #  The prior versions failed to build due to preprocessor error on metrics.h as it was expecting a macro to be present.
