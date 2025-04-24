@@ -27,7 +27,7 @@ VCPKG_ROOT="${ZT_ROOT}/vcpkg"
 ################################################################################################################
 ZT_STEP="0" iCC="0" iBC="0" iVC="0" iVS="0"
 ZT_ADDLPKG=(
-    "autoconf" "automake" "autopoint" "build-essential"
+    "autoconf" "automake" "autopoint" "build-essential" "jq"
     "curl" "doxygen" "expect" "flex" "cppcheck" "gcovr" "gpg"
     "graphviz" "libcap-dev" "libssl-dev" "libprotobuf-c-dev"
     "libsystemd-dev" "libtool" "ninja-build" "lsb-release"
@@ -101,7 +101,7 @@ function GTE() {
 
 ###################################################
 CPrint "30:46" "${MY_NAME:-UNSET NAME} - v${MY_VERSION:-UNSET VERSION} - ${MY_DESCRIPTION:-UNSET DESCRIPTION}"
-CPrint "30:42" "ZITI EDGE TUNNEL VERSION: ${ZT_TUNVER} (BRANCH:${ZT_TUNBRANCH})"
+CPrint "30:42" "ZITI EDGE TUNNEL VERSION: ${ZT_TUNVER} (BRANCH:${ZT_TUNBRANCH:-MAIN})"
 CPrint "30:42" "OPENWRT VERSION: ${ZT_OWRT_VER:=UNKNOWN}"
 if [[ ${ZT_OWRT_TARGET[0]} == "x86" ]] && [[ ${ZT_OWRT_TARGET[1]} == "64" ]]; then
     CPrint "30:42" "OPENWRT TARGET: ${ZT_OWRT_TARGET[0]}:${ZT_OWRT_TARGET[1]} (x64)"
@@ -284,6 +284,22 @@ fi
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Configure Build [Target ${ZT_OWRT_BUILDTARGET}]."
 CPrint "30:47" "CMAKE SYNTAX:" "-1" && echo " cmake ${ZT_CONFIG_CMAKEOPTS[@]}"
+jq 'if any(.configurePresets[]; .name == "ci-linux-mipsel")
+    then .
+    else
+        .configurePresets += [{
+            "name": "ci-linux-mipsel",
+            "inherits": "ci-linux-x64",
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "mipsel-linux",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchains/mipsel-openwrt.cmake"
+            }
+        }]
+    end' "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets.json" > "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets_UPDATED.json"
+[[ -f "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets_UPDATED.json" ]] \
+    && mv -f "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets_UPDATED.json" "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets.json"
+sed -i -e '/stack\[128\]/i /*' -e '/free(symbols)/a */' /tmp/OpenWRT-22.03.0-ramips_mt7620/ziti-tunnel-sdk-c-1.5.11/programs/ziti-edge-tunnel/ziti-edge-tunnel.c
+sed -i -e '/execinfo.h/i /*' -e '/execinfo.h/a */' /tmp/OpenWRT-22.03.0-ramips_mt7620/ziti-tunnel-sdk-c-1.5.11/programs/ziti-edge-tunnel/ziti-edge-tunnel.c
 cmake ${ZT_CONFIG_CMAKEOPTS[@]} || GTE ${ZT_STEP}
 # Note: This is only required on pre-0.21.6 releases of TSDK.
 #  The prior versions failed to build due to preprocessor error on metrics.h as it was expecting a macro to be present.

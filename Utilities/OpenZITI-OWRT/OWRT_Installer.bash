@@ -264,7 +264,7 @@ while true; do
 		echo "ZITIWATCH CYCLE [\${ZW_ITR}]"
 	fi
 	# LOW STORAGE DEVICE FUNCTION: Attempt to obtain the runtime if not present.
-	if ${ZT_ISDYNAMIC} && [[ ! -f \${ZTWORKDIR}/\${ZT_ZET[1]} ]]; then
+	if ${ZT_ISDYNAMIC} && [[ ! -e \${ZTWORKDIR}/\${ZT_ZET[1]} ]]; then
 		echo "[\${ZW_ITR}] DYNAMIC MODE, OBTAINING RUNTIME"
 		"\${ZT_SERVICES[0]}" stop
 		wget "\${ZT_URL}/\${ZT_ZET[0]}" -O "\${ZT_WORKDIR}/\${ZT_ZET[0]}" \
