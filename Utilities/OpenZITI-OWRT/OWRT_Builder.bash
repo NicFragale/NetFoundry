@@ -284,6 +284,7 @@ fi
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Configure Build [Target ${ZT_OWRT_BUILDTARGET}]."
 CPrint "30:47" "CMAKE SYNTAX:" "-1" && echo " cmake ${ZT_CONFIG_CMAKEOPTS[@]}"
+# This is a temporary measure until a patch can be submitted to update the CMakePresets.json file.
 jq 'if any(.configurePresets[]; .name == "ci-linux-mipsel")
     then .
     else
