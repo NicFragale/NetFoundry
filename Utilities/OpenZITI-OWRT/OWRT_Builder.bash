@@ -305,7 +305,7 @@ cmake ${ZT_CONFIG_CMAKEOPTS[@]} || GTE ${ZT_STEP}
 #  In other toolchains the included features.h has the macro, and it seems only OpenWRT doesn't include it.
 #  This will only fire if it exactly matches, which applies only to pre-0.21.6 releases.
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Pre-Build Modifications."
-sed -i '/Ziti C SDK version/i ZITI_LOG(INFO, "Welcome to Ziti - OpenWRT Edition [v'"${BUILD_VERSION}"']");' "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/_deps/ziti-sdk-c-src/library/utils.c"
+sed -i '/Ziti C SDK version/i ZITI_LOG(INFO, "Welcome to Ziti - OpenWRT Edition [v'"${ZT_TUNVER}"']");' "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/_deps/ziti-sdk-c-src/library/utils.c"
 sed -i '/# if ! __GNUC_PREREQ(4,9)/,+2d' $(find "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}" -name "metrics.h") || GTE ${ZT_STEP}
 if [[ ${ZT_USEVCPKG} != "TRUE" ]]; then
     cp -vr "/usr/include/sodium.h" "/usr/include/sodium" "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/_deps/ziti-sdk-c-src/includes" || GTE ${ZT_STEP}
