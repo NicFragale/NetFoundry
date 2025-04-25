@@ -2,8 +2,8 @@
 ################################################## ATTENTION ###################################################
 # Instruction: Run on the build server as a BUILD CAPABLE USER (ROOT is assumed in this example).
 MY_NAME="OWRT_Builder"
-MY_VERSION="20250304"
-MY_DESCRIPTION="NFragale: Compile/Build Helper for OpenZITI/OpenWRT"
+MY_VERSION="20250425"
+MY_DESCRIPTION="NFragale: Compile/Build Helper for OpenZiti/OpenWRT"
 ################################################################################################################
 
 ###################################################
@@ -298,7 +298,6 @@ jq 'if any(.configurePresets[]; .name == "ci-linux-mipsel")
     end' "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets.json" > "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets_UPDATED.json"
 [[ -f "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets_UPDATED.json" ]] \
     && mv -f "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets_UPDATED.json" "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets.json"
-sed -i -e '/stack\[128\]/i /*' -e '/free(symbols)/a */' -e '/execinfo.h/i /*' -e '/execinfo.h/a */' "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/programs/ziti-edge-tunnel/ziti-edge-tunnel.c"
 cmake ${ZT_CONFIG_CMAKEOPTS[@]} || GTE ${ZT_STEP}
 # Note: This is only required on pre-0.21.6 releases of TSDK.
 #  The prior versions failed to build due to preprocessor error on metrics.h as it was expecting a macro to be present.
@@ -310,8 +309,6 @@ sed -i '/# if ! __GNUC_PREREQ(4,9)/,+2d' $(find "${ZT_ROOT}/ziti-tunnel-sdk-c-${
 if [[ ${ZT_USEVCPKG} != "TRUE" ]]; then
     cp -vr "/usr/include/sodium.h" "/usr/include/sodium" "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/_deps/ziti-sdk-c-src/includes" || GTE ${ZT_STEP}
 fi
-# Note: This is required until a patch is made to implicitly include time support in the model.
-sed -i '/#include <sys\/time.h>/d ; /#define ZITI_SDK_MODEL_SUPPORT_H/a #include <sys\/time.h>' "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/build/_deps/ziti-sdk-c-src/includes/ziti/model_support.h"
 
 ###################################################
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Build [Target ${ZT_OWRT_BUILDTARGET}]."

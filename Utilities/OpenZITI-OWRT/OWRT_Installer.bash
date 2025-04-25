@@ -3,7 +3,7 @@
 # Instruction: Run on the router via SSH as ROOT.
 MY_NAME="OWRT_Installer"
 MY_VERSION="20230731"
-MY_DESCRIPTION="NFragale: Install/Run Helper for OpenZITI/OpenWRT"
+MY_DESCRIPTION="NFragale: Install/Run Helper for OpenZiti/OpenWRT"
 ################################################################################################################
 
 ###################################################
@@ -151,7 +151,7 @@ fi
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Create Runtime Service."
 cat << EOFEOF > "${ZT_SERVICES[0]}"
 #!/bin/sh /etc/rc.common
-# Init script for NetFoundry OpenZITI (ZITI EDGE TUNNEL, OpenWRT version).
+# Init script for NetFoundry OpenZiti (ZITI EDGE TUNNEL, OpenWRT version).
 USE_PROCD=1
 START=85
 STOP=85
@@ -219,7 +219,7 @@ chmod 755 "${ZT_SERVICES[0]}" || GTE ${ZT_STEP}
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Create ZITI Watch Service."
 cat << EOFEOF > "${ZT_SERVICES[1]}"
 #!/bin/sh /etc/rc.common
-# Init script for NetFoundry OpenZITI (WATCH, OpenWRT version).
+# Init script for NetFoundry OpenZiti (WATCH, OpenWRT version).
 USE_PROCD=1
 START=86
 STOP=86
@@ -249,7 +249,7 @@ chmod 755 "${ZT_SERVICES[1]}" || GTE ${ZT_STEP}
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Create ZITI Watch."
 cat << EOFEOF > "${ZT_DIR}/${ZT_WATCH}"
 #!/bin/bash
-# Trigger system for NetFoundry OpenZITI.
+# Trigger system for NetFoundry OpenZiti.
 SLEEPTIME="\${1}"
 ZT_URL="${ZT_URL}"
 ZT_ZET=("${ZT_ZET[0]}" "${ZT_ZET[1]}")

@@ -1,7 +1,7 @@
 <p><center>
-    <h1><b>NetFoundry OpenZITI Utility: Compile and Build Helper for OpenWRT</b></h1>
+    <h1><b>NetFoundry OpenZiti Utility: Compile and Build Helper for OpenWRT</b></h1>
 
-![OpenZITI_OpenWRT][PS-shield]
+![OpenZiti_OpenWRT][PS-shield]
 
 </center></p>
 
@@ -39,32 +39,32 @@ This utility was written for Ubuntu 22.04+.  Though it may work on other environ
 Once this repo has been cloned to the building server (or the raw utility downloaded), change the run permissions of the file for execute rights, and then run the utility.  Alternatively, you can run directly in a shell so long as you have BASH available.
 ```
 chmod 755 ./OWRT_Builder.bash
-./OWRT_Builder.bash [OpenWRT_Version] [Target_Part_A] [Target_Part_B] [OpenZITI_Tunnel_Version]
+./OWRT_Builder.bash [OpenWRT_Version] [Target_Part_A] [Target_Part_B] [OpenZiti_Tunnel_Version]
 ```
 
 -OR-
 
 ```
-bash <(curl -Ls https://owrtbuilder.fragale.us [OpenWRT_Version]) [Target_Part_A] [Target_Part_B] [OpenZITI_Tunnel_Version]
+bash <(curl -Ls https://owrtbuilder.fragale.us [OpenWRT_Version]) [Target_Part_A] [Target_Part_B] [OpenZiti_Tunnel_Version]
 ```
 WHERE:
 * `[OpenWRT_Version]` is the OpenWRT version you wish to use [https://downloads.openwrt.org/releases].
 * `[Target_Part_A]` is the first part of the target platform from within the version to use.
 * `[Target_Part_B]` is the second part of the target platform from within the version to use.
-* `[OpenZITI_Tunnel_Version]` is the OpenZITI Tunnel version you wish to use [https://github.com/openziti/ziti-tunnel-sdk-c/releases].  If not present, assumes "latest".
+* `[OpenZiti_Tunnel_Version]` is the OpenZiti Tunnel version you wish to use [https://github.com/OpenZiti/ziti-tunnel-sdk-c/releases].  If not present, assumes "latest".
 
 EXAMPLES:
 ```
-# Run the builder with OpenWRT version "22.03.3", platform "ath79/nand", using OpenZITI version "latest".
+# Run the builder with OpenWRT version "22.03.3", platform "ath79/nand", using OpenZiti version "latest".
 curl -fsSL https://owrtbuilder.fragale.us | bash -s -- "22.03.3" "ath79" "nand" "latest"
 ```
 ```
-# Run the builder with OpenWRT version "22.03.3", platform "ipq806x/generic", assume OpenZITI version "latest".
+# Run the builder with OpenWRT version "22.03.3", platform "ipq806x/generic", assume OpenZiti version "latest".
 curl -fsSL https://owrtbuilder.fragale.us | bash -s -- "22.03.3" "ipq806x" "generic"
 ```
 
 ```
-# Run the builder with OpenWRT version "22.03.3", platform "ath79/nand", using OpenZITI version "0.21.0".
+# Run the builder with OpenWRT version "22.03.3", platform "ath79/nand", using OpenZiti version "0.21.0".
 curl -fsSL https://owrtbuilder.fragale.us | bash -s -- "22.03.3" "ipq806x" "generic" "0.21.0"
 ```
 
@@ -85,14 +85,14 @@ NOTE: If you are attempting to upgrade to a newer version, you must first remove
 
 ```
 chmod 755 ./OWRT_Installer.bash
-./OWRT_Installer.bash [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download]
+./OWRT_Installer.bash [OpenZiti_Tunnel_Compressed_Build] [URL_To_Download]
 ```
 -OR-
 ```
-curl -fsSL https://owrtinstaller.fragale.us | bash -s -- [OpenZITI_Tunnel_Compressed_Build] [URL_To_Download]
+curl -fsSL https://owrtinstaller.fragale.us | bash -s -- [OpenZiti_Tunnel_Compressed_Build] [URL_To_Download]
 ```
 WHERE:
-* `[OpenZITI_Tunnel_Compressed_Build]` is the name of the compressed build of the OpenZITI binary built by the first step in format "OpenWRT-[OWRT_VERSION]-[TARGETA]_[TARGETB].gz".
+* `[OpenZiti_Tunnel_Compressed_Build]` is the name of the compressed build of the OpenZiti binary built by the first step in format "OpenWRT-[OWRT_VERSION]-[TARGETA]_[TARGETB].gz".
 * `[URL_To_Download]` is the URL location of the compressed build - folder path only.
 
 EXAMPLES:
@@ -109,6 +109,6 @@ curl -fsSL https://owrtinstaller.fragale.us | bash -s -- "OpenWRT-22.03.5-ipq806
 curl -fsSL https://owrtinstaller.fragale.us | bash
 ```
 
-> HINT: The utility will setup the runtime if spaces allows, however, if less than 7MB is available to install, it will attempt to run DYNAMICALLY.  In this mode of operation, all services are created to launch the runtime, except the runtime itself it will be downloaded at boottime - every time.  This allows a limited space device to run OpenZITI even when space is limited.  Ideally, the download location is within a private LAN (NOT INTERNET), uses HTTPS as the protocol, and is located on a server that you control for security reasons.  Note that in this mode you MUST specify the compressed file name (format as above) AND URL where it can be obtained or this operation will fail.
+> HINT: The utility will setup the runtime if spaces allows, however, if less than 7MB is available to install, it will attempt to run DYNAMICALLY.  In this mode of operation, all services are created to launch the runtime, except the runtime itself it will be downloaded at boottime - every time.  This allows a limited space device to run OpenZiti even when space is limited.  Ideally, the download location is within a private LAN (NOT INTERNET), uses HTTPS as the protocol, and is located on a server that you control for security reasons.  Note that in this mode you MUST specify the compressed file name (format as above) AND URL where it can be obtained or this operation will fail.
 
 [PS-shield]: https://img.shields.io/badge/Code%20Basis-Linux%20BASH-blue.svg
