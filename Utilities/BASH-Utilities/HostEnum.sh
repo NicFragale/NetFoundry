@@ -79,22 +79,24 @@ for (( i=0; i<num_addresses; i++ )); do
     b=$(( (current >> 16) & 0xFF ))
     c=$(( (current >> 8) & 0xFF ))
     d=$(( current & 0xFF ))
-    fulladdress="${a}.${b}.${c}.${d} ${a}.${b}.${c}.${d}.${domain}"
+    fulladdress[0]="${a}.${b}.${c}.${d}"
+    fulladdress[1]="${a}.${b}.${c}.${d}.${domain}"
+    fulladdress[2]="${i}.${domain}"
     if [[ "${outmode}" == "WRITE" ]]; then
-        if ! grep "${fulladdress}" "${outfile}" &>/dev/null; then
-            echo "<${outmode}> ${fulladdress}"
-            echo "${fulladdress}" >> "${outfile}"
+        if ! grep "${fulladdress[1]}" "${outfile}" &>/dev/null; then
+            echo "<${outmode}> ${fulladdress[*]}"
+            echo "${fulladdress[*]}" >> "${outfile}"
         else
-            echo "<SKIP> ${fulladdress}"
+            echo "<SKIP> ${fulladdress[*]}"
         fi
     elif [[ "${outmode}" == "DELETE" ]]; then
-        if grep "${fulladdress}" "${outfile}" &>/dev/null; then
-            echo "<${outmode}> ${fulladdress}"
-            gsed -i '/'"${fulladdress}"'/ d' "${outfile}" &>/dev/null
+        if grep "${fulladdress[1]}" "${outfile}" &>/dev/null; then
+            echo "<${outmode}> ${fulladdress[*]}"
+            gsed -i '/'"${fulladdress[1]}"'/ d' "${outfile}" &>/dev/null
         else
-            echo "<SKIP> ${fulladdress}"
+            echo "<SKIP> ${fulladdress[*]}"
         fi
     elif [[ "${outmode}" == "NOWRITE" ]]; then
-        echo "${fulladdress}"
+        echo "${fulladdress[*]}"
     fi
 done
