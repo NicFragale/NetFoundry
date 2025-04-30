@@ -8,11 +8,9 @@ MyLicense="This program has no license."
 MyVersion="1.20250501"
 ####################################################################################################
 
-# Enumerate all IP addresses in a given CIDR network.
-# Usage: ./myname.sh "10.20.10.0/28" "domain.tld"
-
-if [ "$#" -lt 2 ] || [[ "${3}" == "-h" ]]; then
-  echo "Usage: $0 \"<network>/<cidr>\" \"<domain>\" \"WRITE or DELETE or NOWRITE\""
+if [[ "${1}" != "CLEAN" ]] && [[ "$#" -lt 2 ]] || [[ "${3}" == "-h" ]]; then
+  echo "Usage: $0 \"<network>/<cidr>\" \"<domain>\" \"WRITE or DELETE or NOWRITE\" :: Write, Delete, or output to screen."
+  echo "Usage: $0 CLEAN :: Clean all host entries created by this utility."
   exit 1
 fi
 
@@ -20,6 +18,10 @@ outfile="/etc/hosts"
 network="$1"
 domain="$2"
 outmode="${3:-NOWRITE}"
+
+# Special cleanup.
+[[ "${network}" == "CLEAN" ]] \
+    && outmode="CLEAN"
 
 # Check outmode.
 case "${outmode}" in
@@ -33,6 +35,13 @@ case "${outmode}" in
     ;;
     "NOWRITE")
         echo "### Will output to screen only ###"
+    ;;
+    "CLEAN")
+	# Special cleanup.
+	wipeout="$(grep -c "${MyName}" "${outfile}" 2>/dev/null)"
+	echo "<${outmode}> ${wipeout:-0} Hosts"
+	gsed -i '/'"${MyName}"'/ d' "${outfile}" &>/dev/null
+	exit 0
     ;;
     *)
         echo "### ERROR: The mode specified \"${outmode}\" is not valid ###"
@@ -50,6 +59,9 @@ if ! [[ "${cidr}" =~ ^[0-9]+$ ]] || [ "${cidr}" -lt 0 ] || [ "${cidr}" -gt 32 ];
   echo "Invalid cidr: ${cidr}"
   exit 1
 fi
+
+# Get basic info.
+curinfo="${MyName}_$(date "+%s")"
 
 # Split the IP address into its four octets.
 IFS='.' read -r o1 o2 o3 o4 <<< "${ip}"
@@ -82,6 +94,7 @@ for (( i=0; i<num_addresses; i++ )); do
     fulladdress[0]="${a}.${b}.${c}.${d}"
     fulladdress[1]="${a}.${b}.${c}.${d}.${domain}"
     fulladdress[2]="${i}.${domain}"
+    fulladdress[3]="# ${curinfo}"
     if [[ "${outmode}" == "WRITE" ]]; then
         if ! grep "${fulladdress[1]}" "${outfile}" &>/dev/null; then
             echo "<${outmode}> ${fulladdress[*]}"
