@@ -285,15 +285,15 @@ fi
 CPrint "30:43" "Begin Step $((++ZT_STEP)): Configure Build [Target ${ZT_OWRT_BUILDTARGET}]."
 CPrint "30:47" "CMAKE SYNTAX:" "-1" && echo " cmake ${ZT_CONFIG_CMAKEOPTS[@]}"
 # This is a temporary measure until a patch can be submitted to update the CMakePresets.json file.
-jq 'if any(.configurePresets[]; .name == "ci-linux-mipsel")
+jq 'if any(.configurePresets[]; .name == "ci-linux-mips")
     then .
     else
         .configurePresets += [{
-            "name": "ci-linux-mipsel",
+            "name": "ci-linux-mips",
             "inherits": "ci-linux-x64",
             "cacheVariables": {
-                "VCPKG_TARGET_TRIPLET": "mipsel-linux",
-                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchains/mipsel-openwrt.cmake"
+                "VCPKG_TARGET_TRIPLET": "mips-linux",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchains/mips-openwrt.cmake"
             }
         }]
     end' "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets.json" > "${ZT_ROOT}/ziti-tunnel-sdk-c-${ZT_TUNVER}/CMakePresets_UPDATED.json"
