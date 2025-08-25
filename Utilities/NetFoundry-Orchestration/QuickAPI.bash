@@ -46,6 +46,8 @@ trap 'FX_AdvancedPrint "CLEARLINE:1" "END" && FX_GotoExit "2"' SIGINT SIGTERM SI
 ##################################################
 SECONDS="0"
 MyMode=""
+MyTokenMgr="DESTROY"
+MyMOPCredFile=""
 MyTargetName=""
 MyModifications=""
 MyMOPAuthURL="https://netfoundry-production-xfjiye.auth.us-east-1.amazoncognito.com/oauth2/token"
@@ -96,26 +98,44 @@ FX_GotoExit() {
   local MyExitCode="${1}" MyExitDescription="${2}"
   local MyRESTResponse
 
-  [[ "${MyExitCode}" -ne 99 ]] \
-    && FX_AdvancedPrint "COMPLEX:M:-1:1:${Bold};${FWhite};${BBlue}" "CONCLUDE AT $(date) (${SECONDS}s)" "END"
+  if [[ "${MyExitCode}" -ne 99 ]]; then
+    FX_AdvancedPrint "COMPLEX:M:-1:1:${Bold};${FWhite};${BBlue}" "CONCLUDE AT $(date) (${SECONDS}s)" "END"
 
-  # Removal of BEARER TOKEN (IF PRESENT).
-  if [[ -z "${MyAccessTokenEnv}" ]] && [[ -n "${MyAccessToken}" ]]; then
-    # REST API CALL: Release the BEARER TOKEN through a logout.
-    FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "RELEASE TOKEN"
-    MyRESTResponse="$(
-      FX_RESTConnect \
-        "LOGOUT:${MyAccessToken}" \
-        "POST:${MyMOPIdentityURL}/logout"
-    )"
-    MyAccessToken="$(jq -r '.loggedOut' <<< "${MyRESTResponse}" 2>/dev/null)"
-    if [[ -n ${MyAccessToken//null/} ]]; then
-      FX_AdvancedPrint "COMPLEX:L:65:0:${Normal}" "OK!" "END"
+    # Removal of BEARER TOKEN (IF PRESENT).
+    if [[ -z "${MyAccessTokenEnv}" ]] && [[ -n "${MyAccessToken}" ]] && [[ "${MyTokenMgr}" != "KEEP" ]]; then
+      # REST API CALL: Release the BEARER TOKEN through a logout.
+      FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "RELEASE TOKEN"
+      MyRESTResponse="$(
+        FX_RESTConnect \
+          "LOGOUT:${MyAccessToken}" \
+          "POST:${MyMOPIdentityURL}/logout"
+      )"
+      MyAccessToken="$(jq -r '.loggedOut' <<< "${MyRESTResponse}" 2>/dev/null)"
+      if [[ -n ${MyAccessToken//null/} ]]; then
+        FX_AdvancedPrint "COMPLEX:L:65:0:${Normal}" "OK!" "END"
+      else
+        FX_AdvancedPrint "COMPLEX:L:65:0:${FRed}" "FAILED!" "END"
+      fi
+      if [[ -f "${MyMOPCredFile}" ]]; then
+        jq '. + {lastBearer: ""}' "${MyMOPCredFile}" 2>/dev/null > "tmp.$$.json" \
+          && mv "tmp.$$.json" "${MyMOPCredFile}" 2>/dev/null \
+          && FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "RELEASE TOKEN" "COMPLEX:L:100:0:${Normal}" "REMOVED FROM \"${MyMOPCredFile}\"" "END" \
+          || FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "RELEASE TOKEN" "COMPLEX:L:100:0:${FRed}" "COULD NOT REMOVE FROM \"${MyMOPCredFile}\"" "END"
+      fi
+    elif [[ "${MyTokenMgr}" == "KEEP" ]]; then
+        if [[ -f "${MyMOPCredFile}" ]]; then
+          jq --arg MYACCESSTOKEN "${MyAccessToken}" '. + {lastBearer: $MYACCESSTOKEN}' "${MyMOPCredFile}" 2>/dev/null > "tmp.$$.json" \
+            && mv "tmp.$$.json" "${MyMOPCredFile}" 2>/dev/null \
+            && FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "RELEASE TOKEN" "COMPLEX:L:100:0:${Normal}" "KEPT PER REQUEST - STORED IN \"${MyMOPCredFile}\"" "END" \
+            || FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "RELEASE TOKEN" "COMPLEX:L:100:0:${FRed}" "COULD NOT STORE IN \"${MyMOPCredFile}\"" "END"
+        else
+          FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "RELEASE TOKEN" "COMPLEX:L:65:0:${Normal}" "KEPT PER REQUEST - SEE BELOW" "END"
+          echo "${MyAccessToken}"
+        fi
     else
-      FX_AdvancedPrint "COMPLEX:L:65:0:${FRed}" "FAILED!" "END"
+        FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "RELEASE TOKEN" "COMPLEX:L:65:0:${Normal}" "NOT REQUIRED" "END"
     fi
-  else
-    FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "RELEASE TOKEN" "COMPLEX:L:65:0:${Normal}" "NOT REQUIRED" "END"
+
   fi
 
   # Exit per the code passed in.
@@ -742,6 +762,7 @@ FX_PrintHelp() {
     "COMPLEX:M:-1:1:${Bold};${FWhite};${BBlue}" "PROGRAM HELP MENU" "NEXT" \
     "COMPLEX:L:0:0:${Bold}" "INPUT OPTIONS" "NEXT" \
     "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-c \"FILE\"" "COMPLEX:L:0:0:${Normal}" "INPUT: Read from MOP Credentials File." "NEXT" \
+    "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-t" "COMPLEX:L:0:0:${Normal}" "INPUT: Do not destroy a returned BEARER token (AccessToken)." "NEXT" \
     "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mER" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT REVIEW." "NEXT" \
     "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mEC" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT CREATE." "NEXT" \
     "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "${MyName}" "FILL:1:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "-mEM" "COMPLEX:L:0:0:${Normal}" "MODE: ENDPOINT MODIFY." "NEXT" \
@@ -785,13 +806,18 @@ FX_CheckEnvironment() {
       "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "FLAG_DebugMode" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${Normal}" "Toggle DEBUG printing ON/TRUE or OFF/FALSE (Currently: ${FLAG_DebugMode})." "NEXT" \
       "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "FLAG_IgnoreColorizer" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${Normal}" "Toggle COLORIZED printing OFF/TRUE or ON/FALSE (Currently: ${FLAG_IgnoreColorizer})." "NEXT" \
       "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "FLAG_LogoMessaging" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${Normal}" "Toggle LOGO printing ON/TRUE or OFF/FALSE (Currently: ${FLAG_LogoMessaging})." "END"
+    [[ -z "${MyAccessTokenEnv}" ]] \
+      && FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyAccessTokenEnv" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "The NetFoundry MOP API Bearer Value (Currently: NOT SET)." "END" \
+      || FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyAccessTokenEnv" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "The NetFoundry MOP API Bearer Value (Currently: SET)." "END"
     [[ -z "${MyMOPSecret}" ]] \
       && FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPSecret" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "The NetFoundry MOP API Secret Value (Currently: NOT SET)." "END" \
       || FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPSecret" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "The NetFoundry MOP API Secret Value (Currently: SET)." "END"
     [[ -z "${MyMOPClientID}" ]] \
-      && FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPClientID" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "The NetFoundry MOP API Secret Value (Currently: NOT SET)." "END" \
-      || FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPClientID" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "The NetFoundry MOP API Secret Value (Currently: SET)." "END"
+      && FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPClientID" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${FRed}" "The NetFoundry MOP API ClientID Value (Currently: NOT SET)." "END" \
+      || FX_AdvancedPrint "FILL:2:0:${Normal}" "COMPLEX:L:20:0:${Normal}" "MyMOPClientID" "FILL:21:0:${Normal}" "COMPLEX:L:0:0:${FGreen}" "The NetFoundry MOP API ClientID Value (Currently: SET)." "END"
   elif [[ ${MyType} == "RUNCONTEXT" ]]; then
+    [[ "${MyAccessTokenEnv}" ]] \
+      && return 0
     [[ -z "${MyMOPSecret}" ]] && [[ -z "${MyMOPClientID}" ]] \
       && FX_AdvancedPrint "COMPLEX:M:-1:0:${FRed}" "ERROR: MOPSECRET=NOT_SET | MOPCLIENTID=NOT_SET" "END" \
       && return 1
@@ -937,15 +963,24 @@ FX_RESTExtract() {
   IFS=$'\n' MyRestJSON=( ${2} )
   local MyOutput
 
-  # Extract information from the JSON.
-  mapfile -t MyOutput < <(
-    jq -r '
-      .RESULT = (.errors // "[[RETAOK]]" + (.'"${MyExtractKey}"' | tostring))
-      | .RESULT
-    ' <<< "${MyRestJSON[@]}"
-  )
+  # Ensure input is JSON befor parsing, then map to an array.
+  if jq -e . >/dev/null 2>&1 <<< "${MyRestJSON[@]}"; then
+    mapfile -t MyOutput < <(
+      jq -r '
+        (if type == "string" then fromjson? // . else . end)
+        | if type == "object" then
+          .RESULT = (.errors // ("[[RETAOK]]" + (.'"${MyExtractKey}"' | tostring)))
+          | .RESULT
+          else
+            .
+          end
+      ' <<< "${MyRestJSON[@]}" || echo "NOREPLY"
+    )
+  else
+    MyOutput="${MyRestJSON[@]}"
+  fi
 
-  # Review and return.
+  # Review and store each object - stop and return current object if it is an error.
   for ((i=0;i<${#MyOutput[@]};i++)); do
     if [[ "${MyOutput[${i}]:0:10}" != "[[RETAOK]]" ]]; then
       echo "[[RETNOK]]${MyOutput[${i}]:-${MyRestJSON[@]}}"
@@ -955,10 +990,11 @@ FX_RESTExtract() {
     fi
   done
 
-  # Success if assessment made it this far.
+  # Success - Output each object.
   for ((i=0;i<${#MyOutput[@]};i++)); do
     echo "${MyOutput[${i}]}"
   done
+
   return 0
 }
 
@@ -970,7 +1006,6 @@ FX_ObtainBearer() {
   FX_AdvancedPrint "COMPLEX:M:-1:1:${Bold};${FWhite};${BBlue}" "BEGIN AT $(date) (${SECONDS}s)" "END"
 
   # REST API CALL: Obtain BEARER TOKEN for interface to MOP.
-  echo $MyAccessTokenEnv
   FX_AdvancedPrint "COMPLEX:L:20:0:${Bold}" "ACCESS TOKEN"
   if [[ -n "${MyAccessTokenEnv}" ]] && ! FX_JWTDecoder "${MyAccessTokenEnv}" "VALIDATE" >/dev/null || [[ -z ${MyAccessTokenEnv} ]]; then
     # Token was available, but expired OR was not available at all.
@@ -999,7 +1034,7 @@ FX_ObtainBearer() {
 # Obtain All Objects.
 FX_ObtainObjects() {
   # Expecting 1/OBJECTTYPE.
-  local MyEmbeddedList
+  local MyEmbeddedList EachList
   local MyObjectType="${1}"
 
   # REST API CALL: Using BEARER TOKEN, Request all available objects.
@@ -1030,7 +1065,11 @@ FX_ObtainObjects() {
       FX_AdvancedPrint "COMPLEX:L:65:0:${Normal}" "OK! [FOUND ${#MyObjectsIDs[@]} ${MyObjectType^^} OBJECTS TOTAL]" "END"
   else
     FX_AdvancedPrint "COMPLEX:L:0:0:${FRed}" "FAILED [SEE OUTPUT FOLLOWING]" "END"
-    echo "${MyEmbeddedList:10}"
+    for EachList in "EMBEDDED  ${MyEmbeddedList}" "ALLOBJ    ${MyObjects}" "OBJNAMES  ${MyObjectsNames}" "OBJIDS    ${MyObjectsIDs}" "OBJATTRS  ${MyObjectsAttributes}"; do
+      if [[ "${EachList:20}" != "" ]] && [[ "${EachList:10:10}" == "[[RETNOK]]" ]]; then
+        echo "${EachList:0:10} > ${EachList:20}"
+      fi
+    done
     return 2
   fi
 }
@@ -1200,15 +1239,20 @@ FX_LogoMessaging "${SystemLogo}" "${MyPurpose[0]}" "${MyPurpose[1]}"
 
 # Switching syntax.
 # Get options from command line.
-	while getopts "c:n:N:m:a:A:ifFhH" ThisOpt; do
+	while getopts "tc:n:N:m:a:A:ifFhH" ThisOpt; do
 		case "${ThisOpt}" in
+      "t")
+        MyTokenMgr="KEEP"
+      ;;
       "c")
-        [[ ! -f "${OPTARG}" ]] \
+        ! jq -e '.' "${OPTARG}" >/dev/null 2>/dev/null \
           && FX_AdvancedPrint "COMPLEX:L:20:0:${FRed}" "ERROR" "COMPLEX:L:0:0:${Normal}" "The referenced credential file \"${OPTARG}\" is not valid." "END" \
-          && FX_GotoExit "1"
-          export MyMOPClientID="$(jq -r '.clientId // ""' "${OPTARG}" 2>/dev/null)"
-          export MyMOPSecret="$(jq -r '.password // ""' "${OPTARG}" 2>/dev/null)"
-          export MyMOPAuthURL="$(jq -r '.authenticationUrl  // ""' "${OPTARG}" 2>/dev/null)"
+          && FX_GotoExit "1" \
+          || MyMOPCredFile="${OPTARG}"
+          export MyMOPClientID="$(jq -r '.clientId // ""' "${MyMOPCredFile}" )"
+          export MyMOPSecret="$(jq -r '.password // ""' "${MyMOPCredFile}" 2>/dev/null)"
+          export MyMOPAuthURL="$(jq -r '.authenticationUrl  // ""' "${MyMOPCredFile}" 2>/dev/null)"
+          export MyAccessTokenEnv="$(jq -r '.lastBearer  // ""' "${MyMOPCredFile}" 2>/dev/null)"
       ;;
       "n")
         [[ "${#OPTARG}" -le 2 ]] \
