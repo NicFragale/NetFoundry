@@ -50,6 +50,7 @@ $ZTCLIRBinary   = "ziti.exe"
 $ZDERRepo       = "https://api.github.com/repos/openziti/desktop-edge-win/releases/latest"
 $ZCLIRRepo      = "https://api.github.com/repos/openziti/ziti/releases/latest"
 $ZDERTarget     = "https://github.com/openziti/desktop-edge-win/releases/download"
+$ZDERFIPSTarget = "https://netfoundry.jfrog.io/artifactory/downloads/desktop-edge-win-win32crypto"
 $ZCLIRTarget    = "https://github.com/openziti/ziti/releases/download"
 $DisplayName    = "NetFoundry DNS Redirect"
 $Comment        = "Created by $MyRootName"
@@ -68,6 +69,7 @@ $OptionalCmds	= @(
 $ConfigDefaults	= '
 	$script:DefaultMode     = "environment" # Default mode if no options arguments are passed in. See help menu for options.
 	$script:AutoUpdate      = "true" # Instructs the program to check for an update to itself from the specified server (true=try to update | false=ignore).
+	$script:FIPS		    = "false" # Instructs the program to download/install the FIPs enabled binary (true=FIPS | false=non-FIPS).
 	$script:ServerURL       = "https://raw.githubusercontent.com/NicFragale/NetFoundry/main/Utilities/OpenZITI-ZDEW" # Update server URL.
 	$script:ServerRootExec  = "NFZDEWHelper.ps1" # Filename of runtime on update server.
 	$script:ZDERVer         = "AUTO" # ZITI Desktop Edge (Win) version to target from repos (AUTO=find automatically | [X.XX.XX=target this version]).
@@ -369,6 +371,10 @@ function DownloadInstall {
 	if ($ZCLIRVer -EQ "AUTO" -AND $EnrollMethod -EQ "ZCLI") {
 		$ZCLIRVer = RunRepoResolve "$ZCLIRRepo"
 		$ZCLIRZip = "ziti-windows-amd64-$ZCLIRVer.zip"
+	}
+
+	if ($FIPS -EQ "true") {
+		$ZDERTarget = "$ZDERFIPSTarget"
 	}
 
 	if ($EnrollMethod -EQ "ZCLI") {
@@ -1110,4 +1116,5 @@ PrintBanner "TERM"
 ###################################################################################################################
 # EOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOF #
 ###################################################################################################################
+
 
