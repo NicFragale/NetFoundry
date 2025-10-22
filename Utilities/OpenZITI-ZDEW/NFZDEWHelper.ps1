@@ -29,7 +29,7 @@ param(
 ### STATIC VARIABLES LOADER ###
 $MyWarranty     = "This program comes without any warranty, implied or otherwise."
 $MyLicense      = "This program utilizes the Apache 2.0 license."
-$MyVersion      = "20250418"
+$MyVersion      = "20251022"
 $SystemRuntime  = [system.diagnostics.stopwatch]::StartNew()
 $MyPath         = Split-Path $MyInvocation.MyCommand.Path
 $ThisUser       = [System.Security.Principal.WindowsIdentity]::GetCurrent()
@@ -1116,6 +1116,7 @@ PrintBanner "TERM"
 ###################################################################################################################
 # EOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOF #
 ###################################################################################################################
+
 
 
 
