@@ -341,7 +341,7 @@ function DownloadMethod ($DLSource, $DLWhat, $DLDestination, $DLMethod="$DLDefau
 	GoToPrint "1" "Yellow" "Downloading [$DLWhat] from [$DLSource] using [$DLMethod], please wait..."
 	if ($DLMethod -EQ "WEBCLIENT") {
 		try {
-			Invoke-WebRequest -DisableKeepAlive -UseBasicParsing "$DLSource/$DLWhat" -OutFile "$DLDestination"
+			Invoke-WebRequest -DisableKeepAlive -UseBasicParsing "$DLSource/$DLWhat" -OutFile "$DLDestination\$DLWhat"
 		} catch {
 	  		$BTRETURN = $_
 		}
@@ -1116,6 +1116,7 @@ PrintBanner "TERM"
 ###################################################################################################################
 # EOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOF #
 ###################################################################################################################
+
 
 
 
