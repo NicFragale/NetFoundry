@@ -50,7 +50,7 @@ $ZTCLIRBinary   = "ziti.exe"
 $ZDERRepo       = "https://api.github.com/repos/openziti/desktop-edge-win/releases/latest"
 $ZCLIRRepo      = "https://api.github.com/repos/openziti/ziti/releases/latest"
 $ZDERTarget     = "https://github.com/openziti/desktop-edge-win/releases/download"
-$ZDERFIPSTarget = "https://netfoundry.jfrog.io/ui/native/downloads/desktop-edge-win-win32crypto"
+$ZDERFIPSTarget = "https://netfoundry.jfrog.io/artifactory/downloads/desktop-edge-win-win32crypto"
 $ZCLIRTarget    = "https://github.com/openziti/ziti/releases/download"
 $DisplayName    = "NetFoundry DNS Redirect"
 $Comment        = "Created by $MyRootName"
@@ -1116,6 +1116,7 @@ PrintBanner "TERM"
 ###################################################################################################################
 # EOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOF #
 ###################################################################################################################
+
 
 
 
