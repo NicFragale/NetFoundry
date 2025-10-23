@@ -1,4 +1,4 @@
-###################################################################################################################
+ ###################################################################################################################
 # NFZDEWHelper - A helper utility for installing/enrolling/DNSing NetFoundry OpenZiti Desktop Edge for Windows.
 # Written by Nic Fragale @ NetFoundry.
 ###################################################################################################################
@@ -27,34 +27,38 @@ param(
 )
 
 ### STATIC VARIABLES LOADER ###
-$MyWarranty     = "This program comes without any warranty, implied or otherwise."
-$MyLicense      = "This program utilizes the Apache 2.0 license."
-$MyVersion      = "20251022"
-$SystemRuntime  = [system.diagnostics.stopwatch]::StartNew()
-$MyPath         = Split-Path $MyInvocation.MyCommand.Path
-$ThisUser       = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-$MyRootExec     = $MyInvocation.MyCommand.Name
-$MyRootName     = $MyRootExec.split(".")[0]
-$MyCommandLine  = ($MyInvocation.Line -Replace ".*$([regex]::escape($MyRootExec))(.*);?.*",'$1').Trim()
-$MyConfig       = $MyPath + "\" + $MyRootName + "_config.ps1"
-$MyName         = $MyRootName + "_" + (Get-Random)
-$MyTmpPath      = $MyPath + "\" + $MyName
-$ZDEKSPath      = "$env:windir\System32\config\systemprofile\AppData\Roaming\NetFoundry"
-$ZSWName        = "NetFoundry Inc\Ziti Desktop Edge"
-$RegistryZSW    = "HKLM:\SOFTWARE\$ZSWName"
-$RegistryNRPT   = "HKLM:\SYSTEM\ControlSet001\Services\Dnscache\Parameters\DnsPolicyConfig"
-$ZRPath         = "${env:ProgramFiles(x86)}\$ZSWName"
-$ZTUNRBinary    = "ziti-tunnel.exe"
-$ZUIRBinary     = "ZitiDesktopEdge.exe"
-$ZTCLIRBinary   = "ziti.exe"
-$ZDERRepo       = "https://api.github.com/repos/openziti/desktop-edge-win/releases/latest"
-$ZCLIRRepo      = "https://api.github.com/repos/openziti/ziti/releases/latest"
-$ZDERTarget     = "https://github.com/openziti/desktop-edge-win/releases/download"
-$ZDERFIPSTarget = "https://netfoundry.jfrog.io/artifactory/downloads/desktop-edge-win-win32crypto"
-$ZCLIRTarget    = "https://github.com/openziti/ziti/releases/download"
-$DisplayName    = "NetFoundry DNS Redirect"
-$Comment        = "Created by $MyRootName"
-$RequiredCmds   = @(
+$MyWarranty      = "This program comes without any warranty, implied or otherwise."
+$MyLicense       = "This program utilizes the Apache 2.0 license."
+$MyVersion       = "20251023"
+$SystemRuntime   = [system.diagnostics.stopwatch]::StartNew()
+$MyPath          = Split-Path $MyInvocation.MyCommand.Path
+$ThisUser        = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+$MyRootExec      = $MyInvocation.MyCommand.Name
+$MyRootName      = $MyRootExec.split(".")[0]
+$MyCommandLine   = ($MyInvocation.Line -Replace ".*$([regex]::escape($MyRootExec))(.*);?.*",'$1').Trim()
+$MyConfig        = $MyPath + "\" + $MyRootName + "_config.ps1"
+$MyName          = $MyRootName + "_" + (Get-Random)
+$MyTmpPath       = $MyPath + "\" + $MyName
+$ZDEKSPath       = "$env:windir\System32\config\systemprofile\AppData\Roaming\NetFoundry"
+$ZSWName         = "NetFoundry Inc\Ziti Desktop Edge"
+$RegistryZSW     = "HKLM:\SOFTWARE\$ZSWName"
+$RegistryNRPT    = "HKLM:\SYSTEM\ControlSet001\Services\Dnscache\Parameters\DnsPolicyConfig"
+$ZRPath          = "${env:ProgramFiles(x86)}\$ZSWName"
+$ZTUNRBinary     = "ziti-tunnel.exe"
+$ZUIRBinary      = "ZitiDesktopEdge.exe"
+$ZTCLIRBinary    = "ziti.exe"
+$ZDERRepo        = "https://api.github.com/repos/openziti/desktop-edge-win/releases/latest"
+$ZCLIRRepo       = "https://api.github.com/repos/openziti/ziti/releases/latest"
+$ZDERTarget      = "https://github.com/openziti/desktop-edge-win/releases/download"
+$ZDERFIPSTarget  = "https://netfoundry.jfrog.io/artifactory/downloads/desktop-edge-win-win32crypto"
+$ZCLIRTarget     = "https://github.com/openziti/ziti/releases/download"
+$DisplayName     = "NetFoundry DNS Redirect"
+$NFZScriptsDir   = "C:\NFZScripts"
+$SchedScriptPath = "$NFZScriptsDir\check_ziti_service.ps1"
+$SchedLogPath    = "$NFZScriptsDir\netfoundry_ziti_service_log.txt"
+$NFZTaskName     = "Check NetFoundry Ziti Service"
+$Comment         = "Created by $MyRootName"
+$RequiredCmds    = @(
 	"Get-Command","Split-Path","Write-Host","Select-Object","Out-String","Format-Table","Sort-Object","Test-Path",
 	"Invoke-Expression","Invoke-Command","Get-FileHash","Get-CimInstance","Read-Host","ForEach-Object","Start-Sleep","Expand-Archive",
 	"Rename-Item","Get-ItemProperty","Set-Content","New-Object","Add-Member","Get-ChildItem","New-Item","Get-Content","Move-Item","Remove-Item",
@@ -78,6 +82,7 @@ $ConfigDefaults	= '
 	$script:JWTObtain       = "SEARCH" # Default Enrollment Action when no JWT string is passed in (ASK=Ask with prompt for JWT string | SEARCH=Find any JWTs in local dir).
 	$script:EnrollMethod    = "NATIVE" # Method in which to invoke enrollment (NATIVE=IPC | ZCLI=ZITI CLI).
 	$script:DLDefaultMethod = "BITS" # The default method by which to request downloads (BITS | WEBCLIENT).
+    $script:ServiceKeeper   = "false" # After installation of ZDEW, create and run a keep alive Windows Task (true=create/run | false=skip).
 	$script:LogElevation    = "true" # A flag which causes the elevation event and subsequent runtime to be placed into a log file (true=logging enabled | false=no logging).
 	$script:AddSuffix       = "domain.local" # Change the following DOMAIN and NAMESERVERS as appropriate.
 	$script:Domain          = @(
@@ -736,6 +741,11 @@ function RunInstall {
 				if ($InputMode -EQ "installadd") { RunAdd }
 			}
 		}
+        if ($ServiceKeeper = "true") {
+            KeepAliveSched
+        } else {
+            GoToPrint "1" "Yellow" "Service keepalive was not requested."
+        }
 		$error.clear()
 	}
 }
@@ -977,6 +987,60 @@ function CheckUpdate {
 	}
 }
 
+# For installation, if trigged to do so will also install a scheduler task to keep the service active.
+function KeepAliveSched {
+    GoToPrint "1" "Yellow" "Adding Windows Task Schedule to ensure runtime service is always active."
+
+    # Create the log folder for the scheduler runtime.
+	New-Item -ItemType Directory -Path "$NFZScriptsDir" -Force | Out-Null
+
+    # Dump the script that the scheduler will run.
+    # TODO: Allow dynamic allocation of the script log path.
+@'
+$serviceName = "ziti"
+$logFile     = "C:\NFZScripts\netfoundry_ziti_service_log.txt"
+
+function Log([string]$m){ Add-Content -Path $logFile -Value "$(Get-Date -Format s) $m" }
+
+try {
+    $svc = Get-Service -Name $serviceName -ErrorAction Stop
+} catch {
+    Log "ERROR: Service '$serviceName' not found. $_"
+    exit 1
+}
+
+if ($svc.Status -ne "Running") {
+    Log "Service '$serviceName' is $($svc.Status). Attempting to start..."
+    try {
+        Start-Service -Name $serviceName -ErrorAction Stop
+        Start-Sleep 2
+        Log "Service '$serviceName' started. Status: $((Get-Service $serviceName).Status)"
+    } catch {
+        Log "Start-Service failed: $($_.Exception.Message). Trying 'sc start $serviceName'..."
+        $p = Start-Process -FilePath sc.exe -ArgumentList "start $serviceName" -NoNewWindow -PassThru -Wait
+        if ($p.ExitCode -eq 0) { Log "sc.exe reported success." } else { Log "ERROR: sc.exe exit $($p.ExitCode). Need admin/SYSTEM?" ; exit $p.ExitCode }
+    }
+} else {
+    Log "Service '$serviceName' already running."
+}
+'@ | Set-Content -Path $SchedScriptPath -Encoding UTF8
+
+    # Unblock just in case.
+    Unblock-File -Path $SchedScriptPath -ErrorAction SilentlyContinue
+
+    # Remove any previous task if existing.
+    schtasks /delete /tn "$NFZTaskName" /f 2>$null | Out-Null
+
+    # Create task: every 30 minutes, run as SYSTEM, highest privileges.
+    # TODO: Allow dynamic selection of runtime interval.
+    GoToPrint "1" "Yellow" "Implementing the schedule."
+    schtasks /create /tn "$NFZTaskName" /sc minute /mo 30 /ru SYSTEM /rl HIGHEST /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$SchedScriptPath`"" /f 2>$null | Out-Null
+    schtasks /run /tn "$NFZTaskName" | Out-Null
+    Start-Sleep 5
+    GoToPrint "1" "Green" "Task created and implemented."
+    #Get-Content $SchedLogPath -ErrorAction SilentlyContinue | Select-Object -Last 10
+}
+
 # The help menu.
 function PrintHelp {
 	GoToPrint "1" "DarkGray" "[BLANK]                 : Will assume the default mode with no options of the program in its configuration parameters."
@@ -992,7 +1056,7 @@ function PrintHelp {
 	GoToPrint "1" "DarkGray" "-verbosity [0-3]        : [OPTION] Affects logging output where a higher number is more verbose."
 	GoToPrint "1" "DarkGray" "-force                  : [OPTION] Affects certain [MODE]s which normally prompt by forcing an affirmative answer."
 	GoToPrint "1" "DarkGray" "-JWT [STR]              : [OPTION] Affects certain [MODE]s which normally would seek a JWT."
-	GoToPrint "1" "DarkGray" "-conf (URL)       : [OPTION] Will attempt to load configuration from ""URL"" (EX: https://fragale.us/PDATA/NFZDEWHelper_conf.ps1)"
+	GoToPrint "1" "DarkGray" "-conf (URL)             : [OPTION] Will attempt to load configuration from ""URL"" (EX: https://fragale.us/PDATA/NFZDEWHelper_conf.ps1)"
 }
 
 # Cleanup any temporary files and folders before exit is called.
@@ -1115,10 +1179,4 @@ switch (CheckAdmin) {
 PrintBanner "TERM"
 ###################################################################################################################
 # EOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOFEOF #
-###################################################################################################################
-
-
-
-
-
-
+################################################################################################################### 
